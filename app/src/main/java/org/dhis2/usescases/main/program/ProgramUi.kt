@@ -505,6 +505,14 @@ fun ProgramItemCard(
                     text = "Há duas horas",
                     modifier = Modifier.padding(top = 8.dp, start = 8.dp, end = 4.dp)
                 )
+                Icon(
+                    painter = painterResource(id = R.drawable.temp_animated_sync_green),
+                    modifier = modifier
+                        .size(24.dp)
+                        .padding(top = 8.dp),
+                    contentDescription = null,
+                    tint = Color.Green
+                )
             }
         }
     }
@@ -513,7 +521,7 @@ fun ProgramItemCard(
 @Composable
 private fun TextProgramItemCardTitle(
     title: String,
-    modifier: Modifier,
+    modifier: Modifier
 ) {
     Row(
         modifier = Modifier
