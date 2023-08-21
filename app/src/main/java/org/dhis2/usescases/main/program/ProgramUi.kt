@@ -406,18 +406,6 @@ fun ProgramItemCard(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            androidx.compose.material3.Text(
-                text = programViewModel.typeName,
-                fontSize = 17.sp,
-                fontWeight = FontWeight.Medium,
-                color = colorResource(id = R.color.textPrimary),
-                maxLines = 2,
-                softWrap = true,
-                overflow = TextOverflow.Ellipsis,
-                style = LocalTextStyle.current.copy(
-                    fontFamily = FontFamily(Font(R.font.rubik_regular))
-                )
-            )
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
