@@ -519,6 +519,15 @@ private fun TextCount(text: String) {
 }
 
 @Composable
+private fun LineDivider(modifier: Modifier) {
+    Divider(
+        modifier = modifier,
+        color = colorResource(id = R.color.divider_bg),
+        thickness = 1.dp
+    )
+}
+
+@Composable
 fun ProgramItem(
     modifier: Modifier = Modifier,
     programViewModel: ProgramViewModel,
