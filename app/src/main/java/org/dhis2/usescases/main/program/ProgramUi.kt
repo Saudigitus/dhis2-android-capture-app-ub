@@ -269,8 +269,10 @@ fun GridLayout(
                 modifier = Modifier.padding(8.dp),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold
+                fontSize = 22.sp,
+                style = LocalTextStyle.current.copy(
+                    fontFamily = FontFamily(Font(R.font.rubik_regular))
+                )
             )
 
             LazyVerticalGrid(
@@ -338,8 +340,10 @@ fun ListLayout(
                 modifier = Modifier.padding(8.dp),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold
+                fontSize = 22.sp,
+                style = LocalTextStyle.current.copy(
+                    fontFamily = FontFamily(Font(R.font.rubik_regular))
+                )
             )
 
             LazyColumn(
