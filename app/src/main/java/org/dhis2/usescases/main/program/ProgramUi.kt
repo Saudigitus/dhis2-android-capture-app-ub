@@ -262,6 +262,8 @@ fun GridLayout(
         Column(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            Spacer(modifier = Modifier.height(16.dp))
+
             Text(
                 text = labelGrid[0],
                 modifier = Modifier.padding(8.dp),
@@ -270,6 +272,7 @@ fun GridLayout(
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Bold
             )
+
             LazyVerticalGrid(
                 columns = GridCells.Adaptive(128.dp),
                 modifier = Modifier
