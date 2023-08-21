@@ -484,22 +484,28 @@ fun ProgramItemCard(
                     }
                 }
             }
-            androidx.compose.material3.Text(
-                text = if (programViewModel.downloadState == ProgramDownloadState.DOWNLOADING) {
-                    stringResource(R.string.syncing_resource, programViewModel.typeName.lowercase())
-                } else {
-                    programViewModel.countDescription()
-                },
-                color = colorResource(id = R.color.textSecondary),
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Medium,
-                maxLines = 2,
-                softWrap = true,
-                overflow = TextOverflow.Ellipsis,
-                style = LocalTextStyle.current.copy(
-                    fontFamily = FontFamily(Font(R.font.rubik_regular))
-                )
+
+            TextCount(text = programViewModel.count.toString())
+
+            LineDivider(modifier = Modifier.padding(vertical = 4.dp))
+
+            TextProgramItemCardTitle(
+                title = programViewModel.typeName,
+                modifier = Modifier.padding(horizontal = 16.dp)
             )
+
+            LineDivider(modifier = Modifier.padding(vertical = 4.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                TextTimeFromLastDataUpdate(
+                    text = "Há duas horas",
+                    modifier = Modifier.padding(top = 8.dp, start = 8.dp, end = 4.dp)
+                )
+            }
         }
     }
 }
