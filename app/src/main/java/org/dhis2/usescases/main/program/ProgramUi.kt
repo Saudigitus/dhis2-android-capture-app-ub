@@ -81,6 +81,27 @@ import org.dhis2.usescases.uiboost.data.model.DataStoreAppConfig
 import org.dhis2.usescases.uiboost.data.model.Program
 import org.hisp.dhis.android.core.common.State
 
+@Preview(showBackground = true)
+@Composable
+fun PreviewProgramList() {
+    ProgramList(
+        programs = listOf(
+            testingProgramModel().copy(state = State.WARNING),
+            testingProgramModel().copy(state = State.ERROR),
+            testingProgramModel().copy(state = State.SYNCED),
+            testingProgramModel().copy(state = State.TO_POST),
+            testingProgramModel().copy(state = State.TO_UPDATE),
+            testingProgramModel().copy(state = State.SYNCED_VIA_SMS),
+            testingProgramModel().copy(state = State.SENT_VIA_SMS)
+        ),
+        dataStore = null,
+        presenter = null,
+        onItemClick = {},
+        onGranularSyncClick = {},
+        downLoadState = SyncStatusData(true, true, emptyMap())
+    )
+}
+
 @Composable
 fun ProgramList(
     programs: List<ProgramViewModel>,
