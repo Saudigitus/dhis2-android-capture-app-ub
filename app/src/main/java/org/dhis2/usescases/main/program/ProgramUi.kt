@@ -318,20 +318,6 @@ fun GridLayout(
 }
 
 @Composable
-private fun TextLayoutTitle(title: String) {
-    Text(
-        text = title,
-        modifier = Modifier.padding(8.dp),
-        maxLines = 1,
-        overflow = TextOverflow.Ellipsis,
-        fontSize = 22.sp,
-        style = LocalTextStyle.current.copy(
-            fontFamily = FontFamily(Font(R.font.rubik_regular))
-        )
-    )
-}
-
-@Composable
 fun ListLayout(
     programs: List<ProgramViewModel>,
     flatProgramsList: List<Program>,
