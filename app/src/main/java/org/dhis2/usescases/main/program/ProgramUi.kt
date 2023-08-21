@@ -407,7 +407,7 @@ fun ProgramItemCard(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             androidx.compose.material3.Text(
-                text = programViewModel.title,
+                text = programViewModel.typeName,
                 fontSize = 17.sp,
                 fontWeight = FontWeight.Medium,
                 color = colorResource(id = R.color.textPrimary),
