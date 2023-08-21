@@ -461,7 +461,7 @@ fun ProgramItemCard(
                 }
             }
             Box(
-                modifier = Modifier.padding(vertical = 16.dp),
+                modifier = Modifier.padding(vertical = 8.dp),
                 contentAlignment = Alignment.BottomEnd
             ) {
                 MetadataIcon(
