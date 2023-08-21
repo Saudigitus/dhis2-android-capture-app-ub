@@ -505,6 +505,33 @@ fun ProgramItemCard(
 }
 
 @Composable
+private fun TextProgramItemCardTitle(
+    title: String,
+    modifier: Modifier,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .then(modifier),
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        androidx.compose.material3.Text(
+            text = title,
+            fontSize = 16.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = colorResource(id = R.color.textPrimary),
+            maxLines = 2,
+            softWrap = true,
+            overflow = TextOverflow.Ellipsis,
+            style = LocalTextStyle.current.copy(
+                fontFamily = FontFamily(Font(R.font.rubik_regular))
+            )
+        )
+    }
+}
+
+@Composable
 private fun TextTimeFromLastDataUpdate(text: String, modifier: Modifier) {
     androidx.compose.material3.Text(
         text = text,
