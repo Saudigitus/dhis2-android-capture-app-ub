@@ -505,6 +505,20 @@ fun ProgramItemCard(
 }
 
 @Composable
+private fun TextCount(text: String) {
+    Text(
+        text = text,
+        color = colorResource(id = R.color.textPrimary),
+        fontSize = 28.sp,
+        fontWeight = FontWeight.SemiBold,
+        maxLines = 1,
+        style = LocalTextStyle.current.copy(
+            fontFamily = FontFamily(Font(R.font.rubik_regular))
+        )
+    )
+}
+
+@Composable
 fun ProgramItem(
     modifier: Modifier = Modifier,
     programViewModel: ProgramViewModel,
