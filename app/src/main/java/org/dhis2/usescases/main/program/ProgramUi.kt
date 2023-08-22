@@ -511,10 +511,7 @@ fun ProgramItemCard(
 }
 
 @Composable
-private fun TextProgramItemCardTitle(
-    title: String,
-    modifier: Modifier
-) {
+private fun TextProgramItemCardTitle(title: String, modifier: Modifier) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
