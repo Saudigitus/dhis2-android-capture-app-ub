@@ -479,33 +479,12 @@ fun ProgramItemCard(
 
             TextCount(text = programViewModel.count.toString())
 
-            LineDivider(modifier = Modifier.padding(vertical = 4.dp))
+            LineDivider(modifier = Modifier.padding(vertical = 16.dp))
 
             TextProgramItemCardTitle(
                 title = programViewModel.typeName,
                 modifier = Modifier.padding(horizontal = 16.dp)
             )
-
-            LineDivider(modifier = Modifier.padding(vertical = 4.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                TextTimeFromLastDataUpdate(
-                    text = "Há duas horas",
-                    modifier = Modifier.padding(top = 8.dp, start = 8.dp, end = 4.dp)
-                )
-                Icon(
-                    painter = painterResource(id = R.drawable.temp_animated_sync_green),
-                    modifier = modifier
-                        .size(24.dp)
-                        .padding(top = 8.dp),
-                    contentDescription = null,
-                    tint = Color.Green
-                )
-            }
         }
     }
 }
