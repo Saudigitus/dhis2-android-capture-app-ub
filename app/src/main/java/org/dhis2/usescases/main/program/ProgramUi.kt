@@ -514,23 +514,6 @@ private fun TextProgramItemCardTitle(title: String, modifier: Modifier) {
 }
 
 @Composable
-private fun TextTimeFromLastDataUpdate(text: String, modifier: Modifier) {
-    androidx.compose.material3.Text(
-        text = text,
-        modifier = modifier,
-        color = colorResource(id = R.color.textSecondary),
-        fontSize = 14.sp,
-        fontWeight = FontWeight.Medium,
-        maxLines = 2,
-        softWrap = true,
-        overflow = TextOverflow.Ellipsis,
-        style = LocalTextStyle.current.copy(
-            fontFamily = FontFamily(Font(R.font.rubik_regular))
-        )
-    )
-}
-
-@Composable
 private fun TextCount(text: String) {
     Text(
         text = text,
