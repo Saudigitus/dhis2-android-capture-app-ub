@@ -80,6 +80,8 @@ import org.dhis2.ui.MetadataIconData
 import org.dhis2.usescases.uiboost.data.model.DataStoreAppConfig
 import org.dhis2.usescases.uiboost.data.model.Program
 import org.hisp.dhis.android.core.common.State
+import java.util.UUID
+import kotlin.random.Random
 
 @Preview(showBackground = true)
 @Composable
@@ -102,6 +104,105 @@ fun PreviewProgramList() {
     )
 }
 
+@Preview(showBackground = true)
+@Composable
+private fun PreviewGridLayout() {
+    DemoGridLayout(
+        programs = listOf(
+            testingProgramModel().copy(state = State.WARNING),
+            testingProgramModel().copy(state = State.ERROR),
+            testingProgramModel().copy(state = State.SYNCED),
+            testingProgramModel().copy(state = State.TO_POST),
+            testingProgramModel().copy(state = State.TO_UPDATE),
+            testingProgramModel().copy(state = State.SYNCED_VIA_SMS),
+            testingProgramModel().copy(state = State.SENT_VIA_SMS)
+        ),
+        flatPrograms = generateRandomProgramList(5),
+        onItemClick = {},
+        presenter = null,
+        labelGrid = emptyList(),
+        onGranularSyncClick = {}
+    )
+}
+
+fun generateRandomProgramList(numberOfPrograms: Int): List<Program> {
+    val defaultProgramUid = "qweqwe"
+    val randomProgramUid = UUID.randomUUID().toString()
+
+    val randomPrograms = (0 until numberOfPrograms).map {
+        Program(
+            hidden = listOf("true", "false").random(),
+            icon = "",
+            program = listOf(randomProgramUid, defaultProgramUid).random()
+        )
+    }
+    return randomPrograms
+}
+
+@Composable
+private fun DemoGridLayout(
+    programs: List<ProgramViewModel>,
+    flatPrograms: List<Program>,
+    labelGrid: List<String>,
+    presenter: ProgramPresenter?,
+    onItemClick: (programViewModel: ProgramViewModel) -> Unit,
+    onGranularSyncClick: (programViewModel: ProgramViewModel) -> Unit,
+) {
+    LazyVerticalGrid(
+        columns = GridCells.Adaptive(128.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .wrapContentHeight()
+            .testTag(HOME_ITEMS),
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(
+            16.dp,
+            Alignment.Top
+        ),
+        horizontalArrangement = Arrangement.spacedBy(
+            16.dp,
+            Alignment.CenterHorizontally
+        )
+    ) {
+        val list = getFilteredPrograms(
+            programs = programs,
+            flatPrograms = flatPrograms
+        )
+
+        presenter?.setProgramsGrid(list)
+
+        itemsIndexed(
+            items = list
+        ) { index, program ->
+            ProgramItemCard(
+                modifier = Modifier.semantics {
+                    testTag = HOME_ITEM.format(index)
+                },
+                programViewModel = program,
+                onItemClick = onItemClick,
+                onGranularSyncClick = onGranularSyncClick
+            )
+        }
+    }
+}
+
+private fun getFilteredPrograms(
+    programs: List<ProgramViewModel>,
+    flatPrograms: List<Program>,
+): ArrayList<ProgramViewModel> {
+    val list: ArrayList<ProgramViewModel> = ArrayList()
+    for (program in programs) {
+        for (flat in flatPrograms) {
+            if ((flat.program == program.uid) &&
+                flat.hidden == "false"
+            ) {
+                list.add(program)
+            }
+        }
+    }
+    return list
+}
+
 @Composable
 fun ProgramList(
     programs: List<ProgramViewModel>,
@@ -109,7 +210,7 @@ fun ProgramList(
     presenter: ProgramPresenter?,
     onItemClick: (programViewModel: ProgramViewModel) -> Unit,
     onGranularSyncClick: (programViewModel: ProgramViewModel) -> Unit,
-    downLoadState: SyncStatusData?
+    downLoadState: SyncStatusData?,
 ) {
     val conf = LocalConfiguration.current
     Column {
@@ -179,7 +280,7 @@ fun ProgramList(
                                 )
                             } else {
                                 if (gridOrder[0] == 0) {
-                                    GridLayout(
+                                    DemoGridLayout(
                                         programs,
                                         flatPrograms,
                                         labelGrid,
@@ -210,7 +311,7 @@ fun ProgramList(
                                     )
                                 }
                                 if (gridOrder[0] == 1) {
-                                    GridLayout(
+                                    DemoGridLayout(
                                         programs,
                                         flatPrograms,
                                         labelGrid,
@@ -249,6 +350,7 @@ fun ProgramList(
     }
 }
 
+@Deprecated("")
 @Composable
 fun GridLayout(
     programs: List<ProgramViewModel>,
@@ -256,7 +358,7 @@ fun GridLayout(
     labelGrid: List<String>,
     presenter: ProgramPresenter?,
     onItemClick: (programViewModel: ProgramViewModel) -> Unit,
-    onGranularSyncClick: (programViewModel: ProgramViewModel) -> Unit
+    onGranularSyncClick: (programViewModel: ProgramViewModel) -> Unit,
 ) {
     if (flatPrograms.isNotEmpty()) {
         Column(
@@ -326,7 +428,7 @@ fun ListLayout(
     labelList: List<String>,
     presenter: ProgramPresenter?,
     onItemClick: (programViewModel: ProgramViewModel) -> Unit,
-    onGranularSyncClick: (programViewModel: ProgramViewModel) -> Unit
+    onGranularSyncClick: (programViewModel: ProgramViewModel) -> Unit,
 ) {
     if (flatProgramsList.isNotEmpty()) {
         Column(
@@ -390,7 +492,7 @@ fun ProgramItemCard(
     modifier: Modifier = Modifier,
     programViewModel: ProgramViewModel,
     onItemClick: (programViewModel: ProgramViewModel) -> Unit = {},
-    onGranularSyncClick: (programViewModel: ProgramViewModel) -> Unit = {}
+    onGranularSyncClick: (programViewModel: ProgramViewModel) -> Unit = {},
 ) {
     androidx.compose.material3.Card(
         modifier = modifier,
@@ -541,7 +643,7 @@ fun ProgramItem(
     modifier: Modifier = Modifier,
     programViewModel: ProgramViewModel,
     onItemClick: (programViewModel: ProgramViewModel) -> Unit = {},
-    onGranularSyncClick: (programViewModel: ProgramViewModel) -> Unit = {}
+    onGranularSyncClick: (programViewModel: ProgramViewModel) -> Unit = {},
 ) {
     Row(
         modifier = modifier
@@ -866,7 +968,7 @@ private fun testingProgramModel() = ProgramViewModel(
         programColor = android.graphics.Color.parseColor("#00BCD4"),
         iconResource = R.drawable.ic_positive_negative
     ),
-    count = 12,
+    count = Random.nextInt(10, 100),
     type = "type",
     typeName = "Persons",
     programType = "WITH_REGISTRATION",
