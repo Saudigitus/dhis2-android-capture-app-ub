@@ -501,7 +501,7 @@ private fun TextProgramItemCardTitle(title: String, modifier: Modifier) {
         androidx.compose.material3.Text(
             text = title,
             fontSize = 16.sp,
-            fontWeight = FontWeight.SemiBold,
+            fontWeight = FontWeight.Normal,
             color = colorResource(id = R.color.textPrimary),
             maxLines = 2,
             softWrap = true,
