@@ -5,7 +5,6 @@ import android.os.Handler
 import android.os.Looper
 import android.view.animation.OvershootInterpolator
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandIn
 import androidx.compose.animation.shrinkOut
@@ -100,14 +99,18 @@ fun PreviewProgramList() {
         presenter = null,
         onItemClick = {},
         onGranularSyncClick = {},
-        downLoadState = SyncStatusData(true, true, emptyMap())
+        downLoadState = SyncStatusData(
+            running = true,
+            downloadingMedia = true,
+            programSyncStatusMap = emptyMap()
+        )
     )
 }
 
 @Preview(showBackground = true)
 @Composable
 private fun PreviewGridLayout() {
-    DemoGridLayout(
+    NewGridLayout(
         programs = listOf(
             testingProgramModel().copy(state = State.WARNING),
             testingProgramModel().copy(state = State.ERROR),
@@ -140,7 +143,7 @@ fun generateRandomProgramList(numberOfPrograms: Int): List<Program> {
 }
 
 @Composable
-private fun DemoGridLayout(
+private fun NewGridLayout(
     programs: List<ProgramViewModel>,
     flatPrograms: List<Program>,
     labelGrid: List<String>,
@@ -280,7 +283,7 @@ fun ProgramList(
                                 )
                             } else {
                                 if (gridOrder[0] == 0) {
-                                    DemoGridLayout(
+                                    NewGridLayout(
                                         programs,
                                         flatPrograms,
                                         labelGrid,
@@ -311,7 +314,7 @@ fun ProgramList(
                                     )
                                 }
                                 if (gridOrder[0] == 1) {
-                                    DemoGridLayout(
+                                    NewGridLayout(
                                         programs,
                                         flatPrograms,
                                         labelGrid,
@@ -350,7 +353,7 @@ fun ProgramList(
     }
 }
 
-@Deprecated("")
+@Deprecated("Uses the @NewGridLayout because he supports UI preview and makes easy to create UI tests")
 @Composable
 fun GridLayout(
     programs: List<ProgramViewModel>,
@@ -756,7 +759,6 @@ fun DownloadingProgress() {
     )
 }
 
-@OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun DownloadedIcon(programViewModel: ProgramViewModel) {
     val visible = visibility(programViewModel)
@@ -951,7 +953,11 @@ fun ListPreview() {
         presenter = null,
         onItemClick = {},
         onGranularSyncClick = {},
-        downLoadState = SyncStatusData(true, true, emptyMap())
+        downLoadState = SyncStatusData(
+            running = true,
+            downloadingMedia = true,
+            programSyncStatusMap = emptyMap()
+        )
     )
 }
 
