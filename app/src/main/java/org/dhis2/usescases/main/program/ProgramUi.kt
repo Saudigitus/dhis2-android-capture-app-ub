@@ -151,6 +151,19 @@ private fun NewGridLayout(
     onItemClick: (programViewModel: ProgramViewModel) -> Unit,
     onGranularSyncClick: (programViewModel: ProgramViewModel) -> Unit,
 ) {
+    Spacer(modifier = Modifier.height(16.dp))
+
+    Text(
+        text = labelGrid[0],
+        modifier = Modifier.padding(8.dp),
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
+        fontSize = 22.sp,
+        style = LocalTextStyle.current.copy(
+            fontFamily = FontFamily(Font(R.font.rubik_regular))
+        )
+    )
+
     LazyVerticalGrid(
         columns = GridCells.Adaptive(128.dp),
         modifier = Modifier
@@ -187,6 +200,8 @@ private fun NewGridLayout(
             )
         }
     }
+
+    Spacer(modifier = Modifier.height(16.dp))
 }
 
 private fun getFilteredPrograms(
@@ -440,6 +455,8 @@ fun ListLayout(
                 .wrapContentHeight(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            Spacer(modifier = Modifier.height(16.dp))
+
             Text(
                 text = labelList[0],
                 modifier = Modifier.padding(8.dp),
@@ -453,7 +470,6 @@ fun ListLayout(
 
             LazyColumn(
                 modifier = Modifier.testTag(HOME_ITEMS),
-                contentPadding = PaddingValues(bottom = 56.dp)
             ) {
                 val list: ArrayList<ProgramViewModel> =
                     ArrayList()
@@ -485,6 +501,8 @@ fun ListLayout(
                     )
                 }
             }
+
+            Spacer(modifier = Modifier.height(16.dp))
         }
     }
 }
