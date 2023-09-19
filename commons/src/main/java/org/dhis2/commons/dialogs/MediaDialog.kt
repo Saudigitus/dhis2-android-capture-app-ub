@@ -249,7 +249,7 @@ private fun MediaDialogItemIcon(
 @Composable
 private fun MediaDialogMainIcon() {
     val imageSize = 72.dp
-    val imageDrawable = R.drawable.media_dialog_icon
+    val imageDrawable = R.drawable.media_dialog_hands
 
     Image(
         painter = painterResource(imageDrawable),
