@@ -18,12 +18,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.OutlinedButton
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -48,10 +48,10 @@ const val SPACE_STRING = " "
 @Composable
 private fun PreviewMediaDialog() {
     MediaDialog(
-        title = "Tem local para lavar as mãos",
-        subTitle = "Pode ser uma torneira com água canalizada ou recepientes",
-        listOfAudioUrl = generateRandomURLs(),
-        listOfVideosUrl = generateRandomURLs(),
+        title = randomTitle(),
+        subTitle = randomSubTitle(),
+        audiosEntity = randomMediaEntities(DialogMediaType.AUDIO),
+        videosEntity = randomMediaEntities(DialogMediaType.VIDEO),
         onMediaItemClicked = {},
         onDismiss = {},
     )
@@ -62,11 +62,11 @@ private fun PreviewMediaDialog() {
 @Composable
 private fun PreviewVideoMediaItem() {
     MediaDialogItem(
-        type = MediaType.VIDEO,
-        title = "Como lavar as mãos",
-        url = generateRandomURLs()[0],
-        duration = generateRandomDuration(),
-        dateOfLastUpdate = generateRandomDate()
+        dialogMediaType = DialogMediaType.VIDEO,
+        title = randomTitle(),
+        url = randomAudioURLs().random(),
+        duration = randomDuration(),
+        dateOfLastUpdate = randomDate()
     ) {}
 }
 
@@ -75,11 +75,11 @@ private fun PreviewVideoMediaItem() {
 @Composable
 private fun PreviewAudioMediaItem() {
     MediaDialogItem(
-        type = MediaType.AUDIO,
-        title = "Como lavar as mãos",
-        url = generateRandomURLs()[0],
-        duration = generateRandomDuration(),
-        dateOfLastUpdate = generateRandomDate()
+        dialogMediaType = DialogMediaType.AUDIO,
+        title = randomTitle(),
+        url = randomAudioURLs().random(),
+        duration = randomDuration(),
+        dateOfLastUpdate = randomDate()
     ) {}
 }
 
@@ -88,8 +88,8 @@ private fun PreviewAudioMediaItem() {
 fun MediaDialog(
     title: String,
     subTitle: String,
-    listOfVideosUrl: List<String>, //Todo: create and use different object instead of String
-    listOfAudioUrl: List<String>, //Todo: create and use different object instead of String
+    videosEntity: List<DialogMediaEntity>,
+    audiosEntity: List<DialogMediaEntity>,
     onMediaItemClicked: (url: String) -> Unit,
     onDismiss: () -> Unit,
 ) {
@@ -105,7 +105,10 @@ fun MediaDialog(
                         horizontalArrangement = Arrangement.Center,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        MediaDialogMainIcon()
+                        MediaDialogIcon(
+                            imageDrawable = R.drawable.media_dialog_hands,
+                            imageSize = 72.dp
+                        )
                     }
                     Spacer(modifier = Modifier.height(16.dp))
 
@@ -127,31 +130,25 @@ fun MediaDialog(
                     Spacer(modifier = Modifier.height(16.dp))
 
                     LazyColumn(modifier = Modifier.fillMaxWidth()) {
-
-                        for (videoUrl in listOfVideosUrl) {
-                            item {
-                                MediaDialogItem(
-                                    type = MediaType.VIDEO,
-                                    title = "Como lavar as mãos", //Todo: use object field instead
-                                    url = videoUrl,
-                                    duration = generateRandomDuration(), //Todo: use object field instead
-                                    onClickMediaItem = { url -> onMediaItemClicked.invoke(url) },
-                                    dateOfLastUpdate = generateRandomDate() //Todo: use object field instead
-                                )
-                            }
+                        items(videosEntity) {
+                            MediaDialogItem(
+                                dialogMediaType = DialogMediaType.VIDEO,
+                                title = it.title,
+                                url = it.url,
+                                duration = it.duration,
+                                onClickMediaItem = { url -> onMediaItemClicked.invoke(url) },
+                                dateOfLastUpdate = it.dateOfLastUpdate
+                            )
                         }
-
-                        for (audioUrl in listOfAudioUrl) {
-                            item {
-                                MediaDialogItem(
-                                    type = MediaType.AUDIO,
-                                    title = "Como lavar as mãos", //Todo: use object field instead
-                                    url = audioUrl,
-                                    duration = generateRandomDuration(), //Todo: use object field instead
-                                    onClickMediaItem = { url -> onMediaItemClicked.invoke(url) },
-                                    dateOfLastUpdate = generateRandomDate() //Todo: use object field instead
-                                )
-                            }
+                        items(audiosEntity) {
+                            MediaDialogItem(
+                                dialogMediaType = DialogMediaType.AUDIO,
+                                title = it.title,
+                                url = it.url,
+                                duration = it.duration,
+                                onClickMediaItem = { url -> onMediaItemClicked.invoke(url) },
+                                dateOfLastUpdate = it.dateOfLastUpdate
+                            )
                         }
                     }
 
@@ -192,77 +189,40 @@ private fun MediaData(
     dateOfLastUpdate: String,
     onClickMediaItem: (url: String) -> Unit,
 ) {
-    val textSize = remember { 12.sp }
-    val labelDuration = stringResource(R.string.media_dialog_label_duration)
-    val labelUpdate = stringResource(R.string.media_dialog_label_update)
-
     Column(Modifier.clickable { onClickMediaItem.invoke(url) }) {
         Text(
             text = title,
-            fontSize = textSize,
+            fontSize = 12.sp,
             fontWeight = FontWeight.Bold,
         )
         Row {
             Text(
-                text = "$labelDuration:$SPACE_STRING",
-                fontSize = textSize,
+                text = "${stringResource(R.string.media_dialog_label_duration)}:$SPACE_STRING",
+                fontSize = 12.sp,
                 fontWeight = FontWeight.Bold,
             )
             Text(
                 text = duration,
-                fontSize = textSize,
+                fontSize = 12.sp,
             )
         }
         Row {
             Text(
-                text = "$labelUpdate:$SPACE_STRING",
-                fontSize = textSize,
+                text = "${stringResource(R.string.media_dialog_label_update)}:$SPACE_STRING",
+                fontSize = 12.sp,
                 fontWeight = FontWeight.Bold,
             )
             Text(
                 text = dateOfLastUpdate,
-                fontSize = textSize,
+                fontSize = 12.sp,
             )
         }
     }
 }
 
 @Composable
-private fun MediaDialogItemIcon(
-    type: MediaType,
-    size: Dp,
-) {
-    val mediaDrawableIcon = if (MediaType.VIDEO == type) {
-        R.drawable.media_dialog_video
-    } else {
-        R.drawable.media_dialog_audio
-    }
-    Image(
-        painter = painterResource(mediaDrawableIcon),
-        contentDescription = null,
-        contentScale = ContentScale.Crop,
-        alignment = Alignment.Center,
-        modifier = Modifier.size(size)
-    )
-}
-
-@Composable
-private fun MediaDialogMainIcon() {
-    val imageSize = 72.dp
-    val imageDrawable = R.drawable.media_dialog_hands
-
-    Image(
-        painter = painterResource(imageDrawable),
-        contentDescription = null,
-        contentScale = ContentScale.Crop,
-        alignment = Alignment.Center,
-        modifier = Modifier.size(imageSize)
-    )
-}
-
-@Composable
 private fun MediaDialogItem(
-    type: MediaType,
+    dialogMediaType: DialogMediaType,
     title: String,
     url: String,
     duration: String,
@@ -287,10 +247,11 @@ private fun MediaDialogItem(
                     horizontal = 8.dp
                 )
         ) {
-            MediaDialogItemIcon(
-                type = type,
-                size = 56.dp
+            MediaDialogIcon(
+                imageDrawable = getMediaIconByType(dialogMediaType = dialogMediaType),
+                imageSize = 56.dp
             )
+
             Spacer(modifier = Modifier.width(16.dp))
             MediaData(
                 title = title,
@@ -303,12 +264,57 @@ private fun MediaDialogItem(
     }
 }
 
-enum class MediaType {
-    VIDEO,
-    AUDIO,
+private fun getMediaIconByType(dialogMediaType: DialogMediaType): Int {
+    return if (DialogMediaType.VIDEO == dialogMediaType) {
+        R.drawable.media_dialog_video
+    } else {
+        R.drawable.media_dialog_audio
+    }
 }
 
-fun generateRandomDate(): String {
+@Composable
+private fun MediaDialogIcon(
+    imageDrawable: Int,
+    imageSize: Dp,
+) {
+    Image(
+        painter = painterResource(imageDrawable),
+        contentDescription = null,
+        contentScale = ContentScale.Crop,
+        alignment = Alignment.Center,
+        modifier = Modifier.size(imageSize)
+    )
+}
+
+private fun randomMediaEntity(mediaType: DialogMediaType): DialogMediaEntity {
+    val randomUrl: String = if (mediaType == DialogMediaType.VIDEO) {
+        randomVideoURLs().random()
+    } else {
+        randomAudioURLs().random()
+    }
+    return DialogMediaEntity(
+        title = randomTitle(),
+        duration = randomDuration(),
+        dateOfLastUpdate = randomDate(),
+        url = randomUrl,
+        dialogMediaType = mediaType
+    )
+}
+
+private fun randomTitle(): String = listOf(
+    "Como lavar as mãos",
+    "Como escolher o sabonete certo",
+    "A maneira errada de lavar as mãos",
+    "Devo usar cinzas de carvão?"
+).random()
+
+private fun randomSubTitle(): String = listOf(
+    "Pode ser uma torneira com água canalizada ou recipientes",
+    "Em diferentes cenários, pode ser uma torneira com água canalizada.",
+    "É válido ter um recipiente e água canalizada"
+).random()
+
+private fun randomDate(): String {
     val random = Random(System.currentTimeMillis())
 
     val day = random.nextInt(1, 32)
@@ -318,7 +324,7 @@ fun generateRandomDate(): String {
     return "%02d-%02d-%04d".format(day, month, year)
 }
 
-fun generateRandomDuration(): String {
+private fun randomDuration(): String {
     val random = Random(System.currentTimeMillis())
     val hour = random.nextInt(0, 24)
     val minute = random.nextInt(0, 60)
@@ -326,16 +332,23 @@ fun generateRandomDuration(): String {
     return "%02d:%02d minutos".format(hour, minute)
 }
 
-fun generateRandomURLs(): List<String> {
-    val urls = listOf("url0", "url1", "url2")
-    val random = Random(System.currentTimeMillis())
-    val count = random.nextInt(
-        from = 1,
-        until = 3
-    ) // Max of 3 media items for videos/audio respectively
+private fun randomMediaEntities(mediaType: DialogMediaType): List<DialogMediaEntity> {
+    val maxListSize = 3
+    val listSize = Random.nextInt(1, maxListSize)
+    val mediaEntities = mutableListOf<DialogMediaEntity>()
 
-    return List(count) {
-        val randomIndex = random.nextInt(from = 0, until = urls.size)
-        urls[randomIndex]
+    repeat(listSize) {
+        mediaEntities.add(element = randomMediaEntity(mediaType))
     }
+    return mediaEntities
 }
+
+private fun randomVideoURLs(): List<String> = listOf(
+    "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+    "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4",
+)
+
+private fun randomAudioURLs(): List<String> = listOf(
+    "https://actions.google.com/sounds/v1/weather/rain_heavy_loud.ogg",
+    "https://actions.google.com/sounds/v1/emergency/ambulance_siren_distant.ogg",
+)
