@@ -600,8 +600,7 @@ private fun TextProgramItemCardTitle(
                 )
             )
             Row(
-                modifier = Modifier.fillMaxWidth()
-                    .padding(start = 8.dp)
+                modifier = Modifier.padding(start = 8.dp)
             ) {
                 when (programViewModel.downloadState) {
                     ProgramDownloadState.DOWNLOADING -> {
