@@ -533,12 +533,74 @@ fun ProgramItemCard(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+
+            Box(
+                modifier = Modifier.padding(vertical = 8.dp),
+                contentAlignment = Alignment.BottomEnd
+            ) {
+                MetadataIcon(
+                    modifier = Modifier.alpha(programViewModel.getAlphaValue()),
+                    metadataIconData = programViewModel.metadataIconData
+                )
+                var openDescriptionDialog by remember {
+                    mutableStateOf(false) // Initially dialog is closed
+                }
+
+                if (programViewModel.description != null) {
+                    ProgramDescriptionIcon {
+                        openDescriptionDialog = true
+                    }
+                }
+
+                if (openDescriptionDialog) {
+                    ProgramDescriptionDialog(programViewModel.description ?: "") {
+                        openDescriptionDialog = false
+                    }
+                }
+            }
+
+            TextCount(text = programViewModel.count.toString())
+
+            LineDivider(modifier = Modifier.padding(vertical = 16.dp))
+
+            TextProgramItemCardTitle(
+                title = programViewModel.typeName,
+                programViewModel = programViewModel,
+                onGranularSyncClick = onGranularSyncClick,
+                modifier = Modifier.padding(horizontal = 16.dp)
+            )
+        }
+    }
+}
+
+@Composable
+private fun TextProgramItemCardTitle(
+    title: String,
+    programViewModel: ProgramViewModel,
+    onGranularSyncClick: (programViewModel: ProgramViewModel) -> Unit = {},
+    modifier: Modifier) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .then(modifier),
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Row{
+            androidx.compose.material3.Text(
+                text = title,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Normal,
+                color = colorResource(id = R.color.textPrimary),
+                maxLines = 2,
+                softWrap = true,
+                overflow = TextOverflow.Ellipsis,
+                style = LocalTextStyle.current.copy(
+                    fontFamily = FontFamily(Font(R.font.rubik_regular))
+                )
+            )
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically
+                modifier = Modifier.padding(start = 8.dp)
             ) {
                 when (programViewModel.downloadState) {
                     ProgramDownloadState.DOWNLOADING -> {
@@ -575,64 +637,7 @@ fun ProgramItemCard(
                     )
                 }
             }
-            Box(
-                modifier = Modifier.padding(vertical = 8.dp),
-                contentAlignment = Alignment.BottomEnd
-            ) {
-                MetadataIcon(
-                    modifier = Modifier.alpha(programViewModel.getAlphaValue()),
-                    metadataIconData = programViewModel.metadataIconData
-                )
-                var openDescriptionDialog by remember {
-                    mutableStateOf(false) // Initially dialog is closed
-                }
-
-                if (programViewModel.description != null) {
-                    ProgramDescriptionIcon {
-                        openDescriptionDialog = true
-                    }
-                }
-
-                if (openDescriptionDialog) {
-                    ProgramDescriptionDialog(programViewModel.description ?: "") {
-                        openDescriptionDialog = false
-                    }
-                }
-            }
-
-            TextCount(text = programViewModel.count.toString())
-
-            LineDivider(modifier = Modifier.padding(vertical = 16.dp))
-
-            TextProgramItemCardTitle(
-                title = programViewModel.typeName,
-                modifier = Modifier.padding(horizontal = 16.dp)
-            )
         }
-    }
-}
-
-@Composable
-private fun TextProgramItemCardTitle(title: String, modifier: Modifier) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .then(modifier),
-        horizontalArrangement = Arrangement.Center,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        androidx.compose.material3.Text(
-            text = title,
-            fontSize = 16.sp,
-            fontWeight = FontWeight.Normal,
-            color = colorResource(id = R.color.textPrimary),
-            maxLines = 2,
-            softWrap = true,
-            overflow = TextOverflow.Ellipsis,
-            style = LocalTextStyle.current.copy(
-                fontFamily = FontFamily(Font(R.font.rubik_regular))
-            )
-        )
     }
 }
 
