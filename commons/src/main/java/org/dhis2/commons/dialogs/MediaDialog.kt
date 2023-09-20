@@ -38,9 +38,9 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import kotlin.random.Random
 import org.dhis2.commons.R
 import org.dhis2.commons.dialogs.util.Constants.SPACE_STRING
-import kotlin.random.Random
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Preview
@@ -51,7 +51,7 @@ private fun PreviewMediaDialog() {
         subTitle = randomSubTitle(),
         mediaEntities = randomMediaEntities(),
         onMediaItemClicked = {},
-        onDismiss = {},
+        onDismiss = {}
     )
 }
 
@@ -88,7 +88,7 @@ fun MediaDialog(
     subTitle: String,
     mediaEntities: List<DialogMediaEntity>,
     onMediaItemClicked: (url: String) -> Unit,
-    onDismiss: () -> Unit,
+    onDismiss: () -> Unit
 ) {
     val sortedMediaEntities = sortMediaEntities(mediaEntities)
 
@@ -115,7 +115,7 @@ fun MediaDialog(
                         text = title,
                         modifier = Modifier.fillMaxWidth(),
                         textAlign = TextAlign.Center,
-                        fontSize = 20.sp,
+                        fontSize = 20.sp
                     )
                     Spacer(modifier = Modifier.height(16.dp))
 
@@ -156,10 +156,7 @@ fun MediaDialog(
 }
 
 @Composable
-private fun ButtonClose(
-    modifier: Modifier,
-    onClick: () -> Unit,
-) {
+private fun ButtonClose(modifier: Modifier, onClick: () -> Unit) {
     OutlinedButton(
         onClick = onClick,
         border = BorderStroke(0.5.dp, colorResource(R.color.colorPrimary_b0b)),
@@ -180,34 +177,34 @@ private fun MediaData(
     url: String,
     duration: String,
     dateOfLastUpdate: String,
-    onClickMediaItem: (url: String) -> Unit,
+    onClickMediaItem: (url: String) -> Unit
 ) {
     Column(Modifier.clickable { onClickMediaItem.invoke(url) }) {
         Text(
             text = title,
             fontSize = 12.sp,
-            fontWeight = FontWeight.Bold,
+            fontWeight = FontWeight.Bold
         )
         Row {
             Text(
                 text = "${stringResource(R.string.media_dialog_label_duration)}:$SPACE_STRING",
                 fontSize = 12.sp,
-                fontWeight = FontWeight.Bold,
+                fontWeight = FontWeight.Bold
             )
             Text(
                 text = duration,
-                fontSize = 12.sp,
+                fontSize = 12.sp
             )
         }
         Row {
             Text(
                 text = "${stringResource(R.string.media_dialog_label_update)}:$SPACE_STRING",
                 fontSize = 12.sp,
-                fontWeight = FontWeight.Bold,
+                fontWeight = FontWeight.Bold
             )
             Text(
                 text = dateOfLastUpdate,
-                fontSize = 12.sp,
+                fontSize = 12.sp
             )
         }
     }
@@ -220,7 +217,7 @@ private fun MediaDialogItem(
     url: String,
     duration: String,
     dateOfLastUpdate: String,
-    onClickMediaItem: (url: String) -> Unit,
+    onClickMediaItem: (url: String) -> Unit
 ) {
     Column(
         Modifier
@@ -278,10 +275,7 @@ private fun randomMediaType(): DialogMediaType {
 }
 
 @Composable
-private fun MediaDialogIcon(
-    imageDrawable: Int,
-    imageSize: Dp,
-) {
+private fun MediaDialogIcon(imageDrawable: Int, imageSize: Dp) {
     Image(
         painter = painterResource(imageDrawable),
         contentDescription = null,
@@ -352,10 +346,10 @@ private fun randomMediaEntities(): List<DialogMediaEntity> {
 
 private fun randomVideoURLs(): List<String> = listOf(
     "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
-    "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4",
+    "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4"
 )
 
 private fun randomAudioURLs(): List<String> = listOf(
     "https://actions.google.com/sounds/v1/weather/rain_heavy_loud.ogg",
-    "https://actions.google.com/sounds/v1/emergency/ambulance_siren_distant.ogg",
+    "https://actions.google.com/sounds/v1/emergency/ambulance_siren_distant.ogg"
 )
