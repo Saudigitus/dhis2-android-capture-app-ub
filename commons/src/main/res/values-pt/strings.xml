@@ -127,4 +127,9 @@
     <string name="complete">Completo</string>
     <string name="default_table_header_label">Valor</string>
     <string name="discard_changes">Descartar mudanças</string>
-    </resources>
+
+    <!-- Media Dialog -->
+    <string name="media_dialog_label_duration">Duração</string>
+    <string name="media_dialog_label_update">Atualização</string>
+    <string name="media_dialog_label_close">Fechar</string>
+</resources>

@@ -11,3 +11,5 @@
 /venv
 /*.secrets.yml
 /gradle.deps
+hs_err_pid9172.log
+replay_pid9172.log
