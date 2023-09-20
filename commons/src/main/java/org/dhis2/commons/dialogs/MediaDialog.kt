@@ -50,8 +50,7 @@ private fun PreviewMediaDialog() {
     MediaDialog(
         title = randomTitle(),
         subTitle = randomSubTitle(),
-        audiosEntity = randomMediaEntities(DialogMediaType.AUDIO),
-        videosEntity = randomMediaEntities(DialogMediaType.VIDEO),
+        mediaEntities = randomMediaEntities(),
         onMediaItemClicked = {},
         onDismiss = {},
     )
@@ -88,11 +87,12 @@ private fun PreviewAudioMediaItem() {
 fun MediaDialog(
     title: String,
     subTitle: String,
-    videosEntity: List<DialogMediaEntity>,
-    audiosEntity: List<DialogMediaEntity>,
+    mediaEntities: List<DialogMediaEntity>,
     onMediaItemClicked: (url: String) -> Unit,
     onDismiss: () -> Unit,
 ) {
+    val sortedMediaEntities = sortMediaEntities(mediaEntities)
+
     Dialog(onDismissRequest = { onDismiss.invoke() }) {
         Surface(
             shape = RoundedCornerShape(16.dp),
@@ -130,25 +130,19 @@ fun MediaDialog(
                     Spacer(modifier = Modifier.height(16.dp))
 
                     LazyColumn(modifier = Modifier.fillMaxWidth()) {
-                        items(videosEntity) {
-                            MediaDialogItem(
-                                dialogMediaType = DialogMediaType.VIDEO,
-                                title = it.title,
-                                url = it.url,
-                                duration = it.duration,
-                                onClickMediaItem = { url -> onMediaItemClicked.invoke(url) },
-                                dateOfLastUpdate = it.dateOfLastUpdate
-                            )
-                        }
-                        items(audiosEntity) {
-                            MediaDialogItem(
-                                dialogMediaType = DialogMediaType.AUDIO,
-                                title = it.title,
-                                url = it.url,
-                                duration = it.duration,
-                                onClickMediaItem = { url -> onMediaItemClicked.invoke(url) },
-                                dateOfLastUpdate = it.dateOfLastUpdate
-                            )
+                        items(sortedMediaEntities) { mediaEntity ->
+                            when (mediaEntity.dialogMediaType) {
+                                DialogMediaType.VIDEO, DialogMediaType.AUDIO -> {
+                                    MediaDialogItem(
+                                        dialogMediaType = mediaEntity.dialogMediaType,
+                                        title = mediaEntity.title,
+                                        url = mediaEntity.url,
+                                        duration = mediaEntity.duration,
+                                        onClickMediaItem = { url -> onMediaItemClicked.invoke(url) },
+                                        dateOfLastUpdate = mediaEntity.dateOfLastUpdate
+                                    )
+                                }
+                            }
                         }
                     }
 
@@ -272,6 +266,18 @@ private fun getMediaIconByType(dialogMediaType: DialogMediaType): Int {
     }
 }
 
+private fun sortMediaEntities(mediaEntities: List<DialogMediaEntity>): List<DialogMediaEntity> {
+    return mediaEntities.sortedByDescending {
+        if (it.dialogMediaType == DialogMediaType.VIDEO) 1 else 0
+    }
+}
+
+private fun randomMediaType(): DialogMediaType {
+    val values = DialogMediaType.values()
+    val randomIndex = Random.nextInt(values.size)
+    return values[randomIndex]
+}
+
 @Composable
 private fun MediaDialogIcon(
     imageDrawable: Int,
@@ -286,18 +292,20 @@ private fun MediaDialogIcon(
     )
 }
 
-private fun randomMediaEntity(mediaType: DialogMediaType): DialogMediaEntity {
-    val randomUrl: String = if (mediaType == DialogMediaType.VIDEO) {
+private fun randomMediaEntity(): DialogMediaEntity {
+    val randomMediaType = randomMediaType()
+    val randomUrl: String = if (randomMediaType == DialogMediaType.VIDEO) {
         randomVideoURLs().random()
     } else {
         randomAudioURLs().random()
     }
+
     return DialogMediaEntity(
         title = randomTitle(),
         duration = randomDuration(),
         dateOfLastUpdate = randomDate(),
         url = randomUrl,
-        dialogMediaType = mediaType
+        dialogMediaType = randomMediaType
     )
 }
 
@@ -332,13 +340,13 @@ private fun randomDuration(): String {
     return "%02d:%02d minutos".format(hour, minute)
 }
 
-private fun randomMediaEntities(mediaType: DialogMediaType): List<DialogMediaEntity> {
+private fun randomMediaEntities(): List<DialogMediaEntity> {
     val maxListSize = 3
     val listSize = Random.nextInt(1, maxListSize)
     val mediaEntities = mutableListOf<DialogMediaEntity>()
 
     repeat(listSize) {
-        mediaEntities.add(element = randomMediaEntity(mediaType))
+        mediaEntities.add(element = randomMediaEntity())
     }
     return mediaEntities
 }
