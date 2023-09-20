@@ -39,9 +39,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import org.dhis2.commons.R
+import org.dhis2.commons.dialogs.util.Constants.SPACE_STRING
 import kotlin.random.Random
-
-const val SPACE_STRING = " "
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Preview
