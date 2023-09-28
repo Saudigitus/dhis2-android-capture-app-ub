@@ -9,24 +9,34 @@ class VideoViewModel : ViewModel(), Player.Listener {
 
     lateinit var exoPlayer: ExoPlayer
 
-    @Deprecated("")
-    fun setupPlayer(exoPlayer: ExoPlayer) {
-        this.exoPlayer = exoPlayer
-        exoPlayer.prepare()
-        exoPlayer.addListener(this)
-        exoPlayer.playWhenReady = true
+    fun setupPlayer(
+        exoPlayer: ExoPlayer,
+        videoUrl: String,
+    ) {
+        this.exoPlayer = initPlayer(player = exoPlayer)
+
+        setupMediaFile(
+            exoPlayer = this.exoPlayer,
+            videoUrl = videoUrl
+        )
     }
 
-    @Deprecated("")
-    fun setupMP4File(url: String) {
-        val mediaItem = MediaItem.fromUri(url)
+    private fun initPlayer(player: ExoPlayer): ExoPlayer {
+        player.prepare()
+        player.addListener(this)
+        player.playWhenReady = true
+        return player
+    }
+
+    private fun setupMediaFile(
+        exoPlayer: ExoPlayer,
+        videoUrl: String,
+    ) {
+        val mediaItem = MediaItem.fromUri(videoUrl)
         exoPlayer.addMediaItem(mediaItem)
     }
 
     fun playVideo(seekTime: Long) {
-        if (exoPlayer.playbackState == Player.STATE_IDLE) {
-            setupPlayer(exoPlayer)
-        }
         exoPlayer.seekTo(seekTime)
         exoPlayer.play()
     }

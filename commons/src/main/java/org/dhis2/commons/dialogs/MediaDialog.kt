@@ -43,8 +43,8 @@ import androidx.compose.ui.window.Dialog
 import androidx.core.content.ContextCompat
 import org.dhis2.commons.R
 import org.dhis2.commons.dialogs.util.Constants.SPACE_STRING
-import org.dhis2.commons.video.FullScreenActivity
-import org.dhis2.commons.video.FullScreenActivity.Companion.KEY_VIDEO_URL_VALUE
+import org.dhis2.commons.video.VideoActivity
+import org.dhis2.commons.video.VideoActivity.Companion.KEY_VIDEO_URL_VALUE
 import kotlin.random.Random
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -64,7 +64,7 @@ fun playVideo(
     context: Context,
     videoUrl: String,
 ) {
-    val intent = Intent(context, FullScreenActivity::class.java)
+    val intent = Intent(context, VideoActivity::class.java)
     intent.putExtra(KEY_VIDEO_URL_VALUE, videoUrl)
     ContextCompat.startActivity(context, intent, null)
 }

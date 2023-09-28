@@ -21,27 +21,24 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
 import timber.log.Timber
-import javax.inject.Inject
 
-class FullScreenActivity : ComponentActivity() {
+class VideoActivity : ComponentActivity() {
 
-//    private lateinit var viewModel: VideoViewModel
-
-    @Inject
-    lateinit var videoViewModelFactory: VideoViewModelFactory
     private lateinit var videoViewModel: VideoViewModel
-//    private val viewModel: VideoViewModel by viewModels { videoViewModelFactory }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Todo: Inject exoplayer dependency here using the project DI (Dagger)
+        val exoPlayer = ExoPlayer.Builder(this).build()
         val videoUrl = intent.getStringExtra(KEY_VIDEO_URL_VALUE) ?: KEY_VIDEO_URL_ERROR
 
-//        viewModel = getViewModel()
-        val exoPlayer = ExoPlayer.Builder(this).build()
         val factory = VideoViewModelFactory()
         videoViewModel = ViewModelProvider(this, factory)[VideoViewModel::class.java]
-        videoViewModel.setupPlayer(exoPlayer)
-        videoViewModel.setupMP4File(videoUrl)
+        videoViewModel.setupPlayer(
+            exoPlayer = exoPlayer,
+            videoUrl = videoUrl
+        )
 
         if (savedInstanceState != null) {
             val seekTime = savedInstanceState.getLong(SEEK_TIME)
@@ -127,8 +124,8 @@ class FullScreenActivity : ComponentActivity() {
     }
 
     companion object {
-        private const val SEEK_TIME: String = "SeekTime"
         const val KEY_VIDEO_URL_VALUE: String = "video_url"
+        private const val SEEK_TIME: String = "SeekTime"
         private const val KEY_VIDEO_URL_ERROR: String = "video_url_error"
     }
 }
