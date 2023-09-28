@@ -1,7 +1,5 @@
 package org.dhis2.commons.dialogs
 
-import android.content.Context
-import android.content.Intent
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.BorderStroke
@@ -30,6 +28,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -40,11 +39,9 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
-import androidx.core.content.ContextCompat
 import org.dhis2.commons.R
 import org.dhis2.commons.dialogs.util.Constants.SPACE_STRING
-import org.dhis2.commons.video.VideoActivity
-import org.dhis2.commons.video.VideoActivity.Companion.KEY_VIDEO_URL_VALUE
+import org.dhis2.commons.extensions.playVideo
 import kotlin.random.Random
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -55,18 +52,8 @@ private fun PreviewMediaDialog() {
         title = randomTitle(),
         subTitle = randomSubTitle(),
         mediaEntities = randomMediaEntities(),
-        onMediaItemClicked = {},
         onDismiss = {}
     )
-}
-
-fun playVideo(
-    context: Context,
-    videoUrl: String,
-) {
-    val intent = Intent(context, VideoActivity::class.java)
-    intent.putExtra(KEY_VIDEO_URL_VALUE, videoUrl)
-    ContextCompat.startActivity(context, intent, null)
 }
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -95,15 +82,14 @@ private fun PreviewAudioMediaItem() {
     ) {}
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun MediaDialog(
     title: String,
     subTitle: String,
     mediaEntities: List<DialogMediaEntity>,
-    onMediaItemClicked: (url: String) -> Unit,
     onDismiss: () -> Unit,
 ) {
+    val context = LocalContext.current
     val sortedMediaEntities = sortMediaEntities(mediaEntities)
 
     Dialog(onDismissRequest = { onDismiss.invoke() }) {
@@ -151,7 +137,9 @@ fun MediaDialog(
                                         title = mediaEntity.title,
                                         url = mediaEntity.url,
                                         duration = mediaEntity.duration,
-                                        onClickMediaItem = { url -> onMediaItemClicked.invoke(url) },
+                                        onClickMediaItem = { url ->
+                                            context.playVideo(videoUrl = url)
+                                        },
                                         dateOfLastUpdate = mediaEntity.dateOfLastUpdate
                                     )
                                 }
@@ -316,14 +304,14 @@ private fun randomMediaEntity(): DialogMediaEntity {
     )
 }
 
-private fun randomTitle(): String = listOf(
+fun randomTitle(): String = listOf(
     "Como lavar as mãos",
     "Como escolher o sabonete certo",
     "A maneira errada de lavar as mãos",
     "Devo usar cinzas de carvão?"
 ).random()
 
-private fun randomSubTitle(): String = listOf(
+fun randomSubTitle(): String = listOf(
     "Pode ser uma torneira com água canalizada ou recipientes",
     "Em diferentes cenários, pode ser uma torneira com água canalizada.",
     "É válido ter um recipiente e água canalizada"
@@ -347,7 +335,7 @@ private fun randomDuration(): String {
     return "%02d:%02d minutos".format(hour, minute)
 }
 
-private fun randomMediaEntities(): List<DialogMediaEntity> {
+fun randomMediaEntities(): List<DialogMediaEntity> {
     val maxListSize = 3
     val listSize = Random.nextInt(1, maxListSize)
     val mediaEntities = mutableListOf<DialogMediaEntity>()

@@ -151,6 +151,16 @@ private fun NewGridLayout(
     onItemClick: (programViewModel: ProgramViewModel) -> Unit,
     onGranularSyncClick: (programViewModel: ProgramViewModel) -> Unit,
 ) {
+    /**
+     *
+     * USE THIS ON YOUR CODE REVIEW TO TEST MEDIA DIALOG, AFTER THAT
+     * REMOVE THESE COMMENTS BEFORE MERGE THE BRANCH
+     *
+     * TODO: REMOVE THESE COMMENTS BEFORE MERGE!
+     *
+     * */
+//    val showDialog = remember { mutableStateOf(false) }
+
     Spacer(modifier = Modifier.height(16.dp))
 
     Text(
@@ -196,12 +206,39 @@ private fun NewGridLayout(
                 },
                 programViewModel = program,
                 onItemClick = onItemClick,
+                /**
+                 *
+                 * USE THIS ON YOUR CODE REVIEW TO TEST MEDIA DIALOG, AFTER THAT
+                 * REMOVE THESE COMMENTS BEFORE MERGE THE BRANCH
+                 *
+                 * TODO: REMOVE THESE COMMENTS BEFORE MERGE!
+                 *
+                 * */
+                // onItemClick = {
+                //  showDialog.value = true
+                //  },
                 onGranularSyncClick = onGranularSyncClick
             )
         }
     }
 
     Spacer(modifier = Modifier.height(16.dp))
+    /**
+     *
+     * USE THIS ON YOUR CODE REVIEW TO TEST MEDIA DIALOG, AFTER THAT
+     * REMOVE THESE COMMENTS BEFORE MERGE THE BRANCH
+     *
+     * TODO: REMOVE THESE COMMENTS BEFORE MERGE!
+     *
+     * */
+//    if (showDialog.value) {
+//        MediaDialog(
+//            title = randomTitle(),
+//            subTitle = randomSubTitle(),
+//            mediaEntities = randomMediaEntities(),
+//            onDismiss = { showDialog.value = false }
+//        )
+//    }
 }
 
 private fun getFilteredPrograms(
