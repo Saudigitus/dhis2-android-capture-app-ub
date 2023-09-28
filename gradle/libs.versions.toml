@@ -1,4 +1,6 @@
 [versions]
+activityComposeVersion = "1.7.2"
+media3Exoplayer = "1.1.1"
 ndk = "21.4.7075529"
 sdk = "33"
 minSdk = "21"
@@ -102,6 +104,9 @@ preference_ktx = "1.2.0"
 uiautomator = "2.2.0"
 
 [libraries]
+androidx-activity-compose-1_7_2 = { module = "androidx.activity:activity-compose", version.ref = "activityComposeVersion" }
+androidx-media3-exoplayer = { module = "androidx.media3:media3-exoplayer", version.ref = "media3Exoplayer" }
+androidx-media3-ui = { module = "androidx.media3:media3-ui", version.ref = "media3Exoplayer" }
 gradlePlugin = { group = "com.android.tools.build", name = "gradle", version.ref = "gradle" }
 kotlinPlugin = { group = "org.jetbrains.kotlin", name = "kotlin-gradle-plugin", version.ref = "kotlin" }
 kotlinSerialization = { group = "org.jetbrains.kotlin", name = "kotlin-serialization", version.ref = "kotlin" }

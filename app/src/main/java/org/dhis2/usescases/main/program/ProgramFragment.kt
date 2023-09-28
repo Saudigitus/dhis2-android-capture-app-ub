@@ -32,6 +32,8 @@ import org.dhis2.android.rtsm.commons.Constants.INTENT_EXTRA_APP_CONFIG
 import org.dhis2.android.rtsm.data.AppConfig
 import org.dhis2.android.rtsm.ui.home.HomeActivity
 import org.dhis2.commons.Constants
+import org.dhis2.commons.dialogs.playVideo
+import org.dhis2.commons.dialogs.randomVideoURLs
 import org.dhis2.commons.filters.FilterManager
 import org.dhis2.commons.orgunitselector.OUTreeFragment
 import org.dhis2.commons.sync.OnDismissListener
@@ -111,7 +113,11 @@ class ProgramFragment : FragmentGlobalAbstract(), ProgramView {
                         ),
                     presenter = presenter,
                     onItemClick = {
-                        presenter.onItemClick(it)
+//                        presenter.onItemClick(it)
+                        playVideo(
+                            context = context,
+                            videoUrl = randomVideoURLs().random(),
+                        )
                     },
                     onGranularSyncClick = {
                         showSyncDialog(it)

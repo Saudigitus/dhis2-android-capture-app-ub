@@ -1,5 +1,7 @@
 package org.dhis2.commons.dialogs
 
+import android.content.Context
+import android.content.Intent
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.BorderStroke
@@ -38,9 +40,12 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
-import kotlin.random.Random
+import androidx.core.content.ContextCompat
 import org.dhis2.commons.R
 import org.dhis2.commons.dialogs.util.Constants.SPACE_STRING
+import org.dhis2.commons.video.FullScreenActivity
+import org.dhis2.commons.video.FullScreenActivity.Companion.KEY_VIDEO_URL_VALUE
+import kotlin.random.Random
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Preview
@@ -53,6 +58,15 @@ private fun PreviewMediaDialog() {
         onMediaItemClicked = {},
         onDismiss = {}
     )
+}
+
+fun playVideo(
+    context: Context,
+    videoUrl: String,
+) {
+    val intent = Intent(context, FullScreenActivity::class.java)
+    intent.putExtra(KEY_VIDEO_URL_VALUE, videoUrl)
+    ContextCompat.startActivity(context, intent, null)
 }
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -88,7 +102,7 @@ fun MediaDialog(
     subTitle: String,
     mediaEntities: List<DialogMediaEntity>,
     onMediaItemClicked: (url: String) -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
 ) {
     val sortedMediaEntities = sortMediaEntities(mediaEntities)
 
@@ -177,7 +191,7 @@ private fun MediaData(
     url: String,
     duration: String,
     dateOfLastUpdate: String,
-    onClickMediaItem: (url: String) -> Unit
+    onClickMediaItem: (url: String) -> Unit,
 ) {
     Column(Modifier.clickable { onClickMediaItem.invoke(url) }) {
         Text(
@@ -217,7 +231,7 @@ private fun MediaDialogItem(
     url: String,
     duration: String,
     dateOfLastUpdate: String,
-    onClickMediaItem: (url: String) -> Unit
+    onClickMediaItem: (url: String) -> Unit,
 ) {
     Column(
         Modifier
@@ -344,7 +358,7 @@ private fun randomMediaEntities(): List<DialogMediaEntity> {
     return mediaEntities
 }
 
-private fun randomVideoURLs(): List<String> = listOf(
+fun randomVideoURLs(): List<String> = listOf(
     "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
     "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4"
 )
