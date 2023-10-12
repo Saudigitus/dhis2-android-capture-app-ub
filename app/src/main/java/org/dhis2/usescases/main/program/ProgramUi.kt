@@ -70,6 +70,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import java.util.UUID
+import kotlin.random.Random
 import org.dhis2.R
 import org.dhis2.commons.resources.ColorUtils
 import org.dhis2.commons.ui.icons.toIconData
@@ -79,8 +81,6 @@ import org.dhis2.ui.MetadataIconData
 import org.dhis2.usescases.uiboost.data.model.DataStoreAppConfig
 import org.dhis2.usescases.uiboost.data.model.Program
 import org.hisp.dhis.android.core.common.State
-import java.util.UUID
-import kotlin.random.Random
 
 @Preview(showBackground = true)
 @Composable
@@ -149,7 +149,7 @@ private fun NewGridLayout(
     labelGrid: List<String>,
     presenter: ProgramPresenter?,
     onItemClick: (programViewModel: ProgramViewModel) -> Unit,
-    onGranularSyncClick: (programViewModel: ProgramViewModel) -> Unit,
+    onGranularSyncClick: (programViewModel: ProgramViewModel) -> Unit
 ) {
     Spacer(modifier = Modifier.height(16.dp))
 
@@ -206,7 +206,7 @@ private fun NewGridLayout(
 
 private fun getFilteredPrograms(
     programs: List<ProgramViewModel>,
-    flatPrograms: List<Program>,
+    flatPrograms: List<Program>
 ): ArrayList<ProgramViewModel> {
     val list: ArrayList<ProgramViewModel> = ArrayList()
     for (program in programs) {
@@ -228,7 +228,7 @@ fun ProgramList(
     presenter: ProgramPresenter?,
     onItemClick: (programViewModel: ProgramViewModel) -> Unit,
     onGranularSyncClick: (programViewModel: ProgramViewModel) -> Unit,
-    downLoadState: SyncStatusData?,
+    downLoadState: SyncStatusData?
 ) {
     val conf = LocalConfiguration.current
     Column {
@@ -378,7 +378,7 @@ fun GridLayout(
     labelGrid: List<String>,
     presenter: ProgramPresenter?,
     onItemClick: (programViewModel: ProgramViewModel) -> Unit,
-    onGranularSyncClick: (programViewModel: ProgramViewModel) -> Unit,
+    onGranularSyncClick: (programViewModel: ProgramViewModel) -> Unit
 ) {
     if (flatPrograms.isNotEmpty()) {
         Column(
@@ -448,7 +448,7 @@ fun ListLayout(
     labelList: List<String>,
     presenter: ProgramPresenter?,
     onItemClick: (programViewModel: ProgramViewModel) -> Unit,
-    onGranularSyncClick: (programViewModel: ProgramViewModel) -> Unit,
+    onGranularSyncClick: (programViewModel: ProgramViewModel) -> Unit
 ) {
     if (flatProgramsList.isNotEmpty()) {
         Column(
@@ -515,7 +515,7 @@ fun ProgramItemCard(
     modifier: Modifier = Modifier,
     programViewModel: ProgramViewModel,
     onItemClick: (programViewModel: ProgramViewModel) -> Unit = {},
-    onGranularSyncClick: (programViewModel: ProgramViewModel) -> Unit = {},
+    onGranularSyncClick: (programViewModel: ProgramViewModel) -> Unit = {}
 ) {
     androidx.compose.material3.Card(
         modifier = modifier,
@@ -666,7 +666,7 @@ fun ProgramItem(
     modifier: Modifier = Modifier,
     programViewModel: ProgramViewModel,
     onItemClick: (programViewModel: ProgramViewModel) -> Unit = {},
-    onGranularSyncClick: (programViewModel: ProgramViewModel) -> Unit = {},
+    onGranularSyncClick: (programViewModel: ProgramViewModel) -> Unit = {}
 ) {
     Row(
         modifier = modifier

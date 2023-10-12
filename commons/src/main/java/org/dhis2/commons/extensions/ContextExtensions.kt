@@ -10,7 +10,3 @@ fun Context.playVideo(videoUrl: String) {
     intent.putExtra(VideoActivity.KEY_VIDEO_URL_VALUE, videoUrl)
     ContextCompat.startActivity(this, intent, null)
 }
-
-fun Context.playAudio(audioUrl: String) {
-    //Todo: Implements this feature
-}

@@ -9,10 +9,7 @@ class VideoViewModel : ViewModel(), Player.Listener {
 
     lateinit var exoPlayer: ExoPlayer
 
-    fun setupPlayer(
-        exoPlayer: ExoPlayer,
-        videoUrl: String,
-    ) {
+    fun setupPlayer(exoPlayer: ExoPlayer, videoUrl: String) {
         this.exoPlayer = initPlayer(player = exoPlayer)
 
         setupMediaFile(
@@ -28,10 +25,7 @@ class VideoViewModel : ViewModel(), Player.Listener {
         return player
     }
 
-    private fun setupMediaFile(
-        exoPlayer: ExoPlayer,
-        videoUrl: String,
-    ) {
+    private fun setupMediaFile(exoPlayer: ExoPlayer, videoUrl: String) {
         val mediaItem = MediaItem.fromUri(videoUrl)
         exoPlayer.addMediaItem(mediaItem)
     }

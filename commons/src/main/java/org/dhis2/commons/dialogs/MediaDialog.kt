@@ -40,17 +40,17 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import kotlin.random.Random
 import org.dhis2.commons.R
 import org.dhis2.commons.R.color
 import org.dhis2.commons.dialogs.util.Constants.SPACE_STRING
 import org.dhis2.commons.extensions.playVideo
-import kotlin.random.Random
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Preview(
     showSystemUi = true,
     showBackground = true,
-    uiMode = Configuration.UI_MODE_NIGHT_YES or Configuration.UI_MODE_TYPE_NORMAL,
+    uiMode = Configuration.UI_MODE_NIGHT_YES or Configuration.UI_MODE_TYPE_NORMAL
 )
 @Composable
 private fun PreviewMediaDialog() {
@@ -93,13 +93,13 @@ fun MediaDialog(
     title: String,
     subTitle: String,
     mediaEntities: List<DialogMediaEntity>,
-    onDismiss: () -> Unit,
+    onDismiss: () -> Unit
 ) {
     val context = LocalContext.current
     val sortedMediaEntities = sortMediaEntities(mediaEntities)
 
     Dialog(
-        onDismissRequest = { onDismiss.invoke() },
+        onDismissRequest = { onDismiss.invoke() }
     ) {
         Surface(
             elevation = 12.dp,
@@ -188,7 +188,7 @@ private fun MediaData(
     url: String,
     duration: String,
     dateOfLastUpdate: String,
-    onClickMediaItem: (url: String) -> Unit,
+    onClickMediaItem: (url: String) -> Unit
 ) {
     Column(Modifier.clickable { onClickMediaItem.invoke(url) }) {
         Text(
@@ -228,7 +228,7 @@ private fun MediaDialogItem(
     url: String,
     duration: String,
     dateOfLastUpdate: String,
-    onClickMediaItem: (url: String) -> Unit,
+    onClickMediaItem: (url: String) -> Unit
 ) {
     Column(
         Modifier
