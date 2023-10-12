@@ -1,5 +1,6 @@
 package org.dhis2.commons.dialogs
 
+import android.content.res.Configuration
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.BorderStroke
@@ -40,12 +41,17 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import org.dhis2.commons.R
+import org.dhis2.commons.R.color
 import org.dhis2.commons.dialogs.util.Constants.SPACE_STRING
 import org.dhis2.commons.extensions.playVideo
 import kotlin.random.Random
 
 @RequiresApi(Build.VERSION_CODES.O)
-@Preview
+@Preview(
+    showSystemUi = true,
+    showBackground = true,
+    uiMode = Configuration.UI_MODE_NIGHT_YES or Configuration.UI_MODE_TYPE_NORMAL,
+)
 @Composable
 private fun PreviewMediaDialog() {
     MediaDialog(
@@ -92,8 +98,11 @@ fun MediaDialog(
     val context = LocalContext.current
     val sortedMediaEntities = sortMediaEntities(mediaEntities)
 
-    Dialog(onDismissRequest = { onDismiss.invoke() }) {
+    Dialog(
+        onDismissRequest = { onDismiss.invoke() },
+    ) {
         Surface(
+            elevation = 12.dp,
             shape = RoundedCornerShape(16.dp),
             color = Color.White
         ) {
@@ -124,7 +133,7 @@ fun MediaDialog(
                         fontSize = 12.sp,
                         textAlign = TextAlign.Center,
                         modifier = Modifier.fillMaxWidth(),
-                        color = colorResource(id = R.color.colorPrimary_f57)
+                        color = colorResource(id = color.colorPrimary_f57)
                     )
                     Spacer(modifier = Modifier.height(16.dp))
 
@@ -161,14 +170,14 @@ fun MediaDialog(
 private fun ButtonClose(modifier: Modifier, onClick: () -> Unit) {
     OutlinedButton(
         onClick = onClick,
-        border = BorderStroke(0.5.dp, colorResource(R.color.colorPrimary_b0b)),
+        border = BorderStroke(0.5.dp, colorResource(color.colorPrimary_b0b)),
         shape = RoundedCornerShape(50),
         modifier = modifier
     ) {
         Text(
             text = stringResource(id = R.string.media_dialog_label_close),
             fontSize = 12.sp,
-            color = colorResource(R.color.textPrimary)
+            color = colorResource(color.textPrimary)
         )
     }
 }
@@ -230,7 +239,7 @@ private fun MediaDialogItem(
             modifier = Modifier
                 .border(
                     width = 0.5.dp,
-                    color = colorResource(R.color.colorPrimary_b0b),
+                    color = colorResource(color.colorPrimary_b0b),
                     shape = RoundedCornerShape(1)
                 )
                 .fillMaxWidth()
