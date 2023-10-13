@@ -535,7 +535,6 @@ fun ProgramItemCard(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-
             Box(
                 modifier = Modifier.padding(vertical = 8.dp),
                 contentAlignment = Alignment.BottomEnd
@@ -580,7 +579,8 @@ private fun TextProgramItemCardTitle(
     title: String,
     programViewModel: ProgramViewModel,
     onGranularSyncClick: (programViewModel: ProgramViewModel) -> Unit = {},
-    modifier: Modifier) {
+    modifier: Modifier
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -588,7 +588,7 @@ private fun TextProgramItemCardTitle(
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Row{
+        Row {
             androidx.compose.material3.Text(
                 text = title,
                 fontSize = 16.sp,
