@@ -1,5 +1,6 @@
 package org.dhis2.commons.dialogs
 
+import android.content.res.Configuration
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.BorderStroke
@@ -28,6 +29,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -40,22 +42,25 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import kotlin.random.Random
 import org.dhis2.commons.R
+import org.dhis2.commons.R.color
 import org.dhis2.commons.dialogs.util.Constants.SPACE_STRING
+import org.dhis2.commons.extensions.playMedia
 
-@RequiresApi(Build.VERSION_CODES.O)
-@Preview
+@Preview(
+    showSystemUi = true,
+    showBackground = true,
+    uiMode = Configuration.UI_MODE_NIGHT_YES or Configuration.UI_MODE_TYPE_NORMAL
+)
 @Composable
 private fun PreviewMediaDialog() {
     MediaDialog(
         title = randomTitle(),
         subTitle = randomSubTitle(),
         mediaEntities = randomMediaEntities(),
-        onMediaItemClicked = {},
         onDismiss = {}
     )
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
 @Preview(backgroundColor = 0xFFFFFFFF)
 @Composable
 private fun PreviewVideoMediaItem() {
@@ -81,19 +86,21 @@ private fun PreviewAudioMediaItem() {
     ) {}
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun MediaDialog(
     title: String,
     subTitle: String,
     mediaEntities: List<DialogMediaEntity>,
-    onMediaItemClicked: (url: String) -> Unit,
     onDismiss: () -> Unit
 ) {
+    val context = LocalContext.current
     val sortedMediaEntities = sortMediaEntities(mediaEntities)
 
-    Dialog(onDismissRequest = { onDismiss.invoke() }) {
+    Dialog(
+        onDismissRequest = { onDismiss.invoke() }
+    ) {
         Surface(
+            elevation = 12.dp,
             shape = RoundedCornerShape(16.dp),
             color = Color.White
         ) {
@@ -124,7 +131,7 @@ fun MediaDialog(
                         fontSize = 12.sp,
                         textAlign = TextAlign.Center,
                         modifier = Modifier.fillMaxWidth(),
-                        color = colorResource(id = R.color.colorPrimary_f57)
+                        color = colorResource(id = color.colorPrimary_f57)
                     )
                     Spacer(modifier = Modifier.height(16.dp))
 
@@ -137,7 +144,9 @@ fun MediaDialog(
                                         title = mediaEntity.title,
                                         url = mediaEntity.url,
                                         duration = mediaEntity.duration,
-                                        onClickMediaItem = { url -> onMediaItemClicked.invoke(url) },
+                                        onClickMediaItem = { url ->
+                                            context.playMedia(mediaUrl = url)
+                                        },
                                         dateOfLastUpdate = mediaEntity.dateOfLastUpdate
                                     )
                                 }
@@ -159,14 +168,14 @@ fun MediaDialog(
 private fun ButtonClose(modifier: Modifier, onClick: () -> Unit) {
     OutlinedButton(
         onClick = onClick,
-        border = BorderStroke(0.5.dp, colorResource(R.color.colorPrimary_b0b)),
+        border = BorderStroke(0.5.dp, colorResource(color.colorPrimary_b0b)),
         shape = RoundedCornerShape(50),
         modifier = modifier
     ) {
         Text(
             text = stringResource(id = R.string.media_dialog_label_close),
             fontSize = 12.sp,
-            color = colorResource(R.color.textPrimary)
+            color = colorResource(color.textPrimary)
         )
     }
 }
@@ -228,7 +237,7 @@ private fun MediaDialogItem(
             modifier = Modifier
                 .border(
                     width = 0.5.dp,
-                    color = colorResource(R.color.colorPrimary_b0b),
+                    color = colorResource(color.colorPrimary_b0b),
                     shape = RoundedCornerShape(1)
                 )
                 .fillMaxWidth()
@@ -302,14 +311,14 @@ private fun randomMediaEntity(): DialogMediaEntity {
     )
 }
 
-private fun randomTitle(): String = listOf(
+fun randomTitle(): String = listOf(
     "Como lavar as mãos",
     "Como escolher o sabonete certo",
     "A maneira errada de lavar as mãos",
     "Devo usar cinzas de carvão?"
 ).random()
 
-private fun randomSubTitle(): String = listOf(
+fun randomSubTitle(): String = listOf(
     "Pode ser uma torneira com água canalizada ou recipientes",
     "Em diferentes cenários, pode ser uma torneira com água canalizada.",
     "É válido ter um recipiente e água canalizada"
@@ -333,7 +342,7 @@ private fun randomDuration(): String {
     return "%02d:%02d minutos".format(hour, minute)
 }
 
-private fun randomMediaEntities(): List<DialogMediaEntity> {
+fun randomMediaEntities(): List<DialogMediaEntity> {
     val maxListSize = 3
     val listSize = Random.nextInt(1, maxListSize)
     val mediaEntities = mutableListOf<DialogMediaEntity>()
@@ -344,7 +353,7 @@ private fun randomMediaEntities(): List<DialogMediaEntity> {
     return mediaEntities
 }
 
-private fun randomVideoURLs(): List<String> = listOf(
+fun randomVideoURLs(): List<String> = listOf(
     "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
     "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4"
 )

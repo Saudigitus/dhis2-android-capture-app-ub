@@ -49,6 +49,7 @@ import org.dhis2.utils.analytics.TYPE_PROGRAM_SELECTED
 import org.dhis2.utils.granularsync.SyncStatusDialog
 import org.hisp.dhis.android.core.program.ProgramType
 import timber.log.Timber
+
 class ProgramFragment : FragmentGlobalAbstract(), ProgramView {
 
     private lateinit var binding: FragmentProgramBinding

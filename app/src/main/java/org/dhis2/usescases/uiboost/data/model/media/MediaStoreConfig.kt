@@ -33,5 +33,4 @@ class MediaStoreConfig : ArrayList<MediaStoreConfigItem>() {
             }
         }
     }
-
 }
