@@ -1,4 +1,4 @@
-package org.dhis2.commons.video
+package org.dhis2.commons.media
 
 import android.os.Bundle
 import android.view.ViewGroup
@@ -22,48 +22,47 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
 import timber.log.Timber
 
-class VideoActivity : ComponentActivity() {
+class MediaActivity : ComponentActivity() {
 
-    private lateinit var videoViewModel: VideoViewModel
+    private lateinit var mediaViewModel: MediaViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Todo: Inject exoplayer dependency here using the project DI (Dagger)
         val exoPlayer = ExoPlayer.Builder(this).build()
-        val videoUrl = intent.getStringExtra(KEY_VIDEO_URL_VALUE) ?: KEY_VIDEO_URL_ERROR
+        val mediaUrl = intent.getStringExtra(KEY_MEDIA_URL_VALUE) ?: KEY_MEDIA_URL_ERROR
 
-        val factory = VideoViewModelFactory()
-        videoViewModel = ViewModelProvider(this, factory)[VideoViewModel::class.java]
-        videoViewModel.setupPlayer(
+        val factory = MediaViewModelFactory()
+        mediaViewModel = ViewModelProvider(this, factory)[MediaViewModel::class.java]
+        mediaViewModel.setupPlayer(
             exoPlayer = exoPlayer,
-            videoUrl = videoUrl
+            mediaUrl = mediaUrl
         )
 
         if (savedInstanceState != null) {
             val seekTime = savedInstanceState.getLong(SEEK_TIME)
-            videoScreen(seekTime)
+            mediaScreen(seekTime)
         } else {
             val seekTime = 0L
-            videoScreen(seekTime)
+            mediaScreen(seekTime)
         }
     }
 
-    private fun videoScreen(seekTime: Long) {
+    private fun mediaScreen(seekTime: Long) {
         setContent {
-            ComposeVideo(seekTime)
+            ComposeMedia(seekTime)
         }
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
-        val currentPosition = videoViewModel.exoPlayer.currentPosition
+        val currentPosition = mediaViewModel.exoPlayer.currentPosition
         outState.putLong(SEEK_TIME, currentPosition)
         Timber.d("Saved SeekTime: $currentPosition")
     }
 
     @Composable
-    fun ComposeVideo(seekTime: Long) {
+    fun ComposeMedia(seekTime: Long) {
         val context = LocalContext.current
         val lifecycleOwner = rememberUpdatedState(LocalLifecycleOwner.current)
 
@@ -74,7 +73,7 @@ class VideoActivity : ComponentActivity() {
                     .background(Color.Black),
                 factory = {
                     PlayerView(context).apply {
-                        player = videoViewModel.exoPlayer
+                        player = mediaViewModel.exoPlayer
                         useController = true
                         FrameLayout.LayoutParams(
                             ViewGroup.LayoutParams.MATCH_PARENT,
@@ -87,22 +86,22 @@ class VideoActivity : ComponentActivity() {
             val observer = LifecycleEventObserver { _, event ->
                 when (event) {
                     Lifecycle.Event.ON_CREATE -> {
-                        videoViewModel.playVideo(seekTime)
+                        mediaViewModel.playMedia(seekTime)
                         Timber.d("ON_CREATE")
                     }
 
                     Lifecycle.Event.ON_PAUSE -> {
-                        videoViewModel.pauseVideo()
+                        mediaViewModel.pauseMedia()
                         Timber.d("ON_PAUSE")
                     }
 
                     Lifecycle.Event.ON_RESUME -> {
-                        videoViewModel.playVideo(seekTime)
+                        mediaViewModel.playMedia(seekTime)
                         Timber.d("ON_RESUME")
                     }
 
                     Lifecycle.Event.ON_STOP -> {
-                        videoViewModel.stopVideo()
+                        mediaViewModel.stopMedia()
                         Timber.d("ON_STOP")
                     }
 
@@ -117,15 +116,15 @@ class VideoActivity : ComponentActivity() {
 
             onDispose {
                 lifecycle.removeObserver(observer)
-                videoViewModel.exoPlayer.release()
+                mediaViewModel.exoPlayer.release()
                 Timber.d("ExoPlayer released!")
             }
         }
     }
 
     companion object {
-        const val KEY_VIDEO_URL_VALUE: String = "video_url"
+        const val KEY_MEDIA_URL_VALUE: String = "media_url"
         private const val SEEK_TIME: String = "SeekTime"
-        private const val KEY_VIDEO_URL_ERROR: String = "video_url_error"
+        private const val KEY_MEDIA_URL_ERROR: String = "media_url_error"
     }
 }

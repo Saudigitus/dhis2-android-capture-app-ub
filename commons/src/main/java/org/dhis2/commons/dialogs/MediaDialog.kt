@@ -44,7 +44,7 @@ import kotlin.random.Random
 import org.dhis2.commons.R
 import org.dhis2.commons.R.color
 import org.dhis2.commons.dialogs.util.Constants.SPACE_STRING
-import org.dhis2.commons.extensions.playVideo
+import org.dhis2.commons.extensions.playMedia
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Preview(
@@ -147,7 +147,7 @@ fun MediaDialog(
                                         url = mediaEntity.url,
                                         duration = mediaEntity.duration,
                                         onClickMediaItem = { url ->
-                                            context.playVideo(videoUrl = url)
+                                            context.playMedia(mediaUrl = url)
                                         },
                                         dateOfLastUpdate = mediaEntity.dateOfLastUpdate
                                     )

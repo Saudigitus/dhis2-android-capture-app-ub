@@ -3,10 +3,10 @@ package org.dhis2.commons.extensions
 import android.content.Context
 import android.content.Intent
 import androidx.core.content.ContextCompat
-import org.dhis2.commons.video.VideoActivity
+import org.dhis2.commons.media.MediaActivity
 
-fun Context.playVideo(videoUrl: String) {
-    val intent = Intent(this, VideoActivity::class.java)
-    intent.putExtra(VideoActivity.KEY_VIDEO_URL_VALUE, videoUrl)
+fun Context.playMedia(mediaUrl: String) {
+    val intent = Intent(this, MediaActivity::class.java)
+    intent.putExtra(MediaActivity.KEY_MEDIA_URL_VALUE, mediaUrl)
     ContextCompat.startActivity(this, intent, null)
 }

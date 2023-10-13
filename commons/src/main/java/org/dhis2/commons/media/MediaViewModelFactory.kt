@@ -1,15 +1,15 @@
-package org.dhis2.commons.video
+package org.dhis2.commons.media
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.CreationExtras
 
-class VideoViewModelFactory : ViewModelProvider.Factory {
+class MediaViewModelFactory : ViewModelProvider.Factory {
 
     override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
-        if (modelClass.isAssignableFrom(VideoViewModel::class.java)) {
+        if (modelClass.isAssignableFrom(MediaViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return VideoViewModel() as T
+            return MediaViewModel() as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }
