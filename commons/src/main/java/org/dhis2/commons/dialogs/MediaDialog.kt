@@ -46,7 +46,6 @@ import org.dhis2.commons.R.color
 import org.dhis2.commons.dialogs.util.Constants.SPACE_STRING
 import org.dhis2.commons.extensions.playMedia
 
-@RequiresApi(Build.VERSION_CODES.O)
 @Preview(
     showSystemUi = true,
     showBackground = true,
@@ -62,7 +61,6 @@ private fun PreviewMediaDialog() {
     )
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
 @Preview(backgroundColor = 0xFFFFFFFF)
 @Composable
 private fun PreviewVideoMediaItem() {
