@@ -519,10 +519,9 @@ class FormView : Fragment() {
             is RecyclerViewUiEvents.OpenYearMonthDayAgeCalendar -> showYearMonthDayAgeCalendar(
                 uiEvent
             )
+
             is RecyclerViewUiEvents.OpenTimePicker -> showTimePicker(uiEvent)
-            is RecyclerViewUiEvents.ShowDescriptionLabelDialog -> showDescriptionLabelDialog(
-                uiEvent
-            )
+            is RecyclerViewUiEvents.ShowDescriptionLabelDialog -> showDescriptionLabelDialog()
             is RecyclerViewUiEvents.RequestCurrentLocation -> requestCurrentLocation(uiEvent)
             is RecyclerViewUiEvents.RequestLocationByMap -> requestLocationByMap(uiEvent)
             is RecyclerViewUiEvents.DisplayQRCode -> displayQRImage(uiEvent)
@@ -556,6 +555,7 @@ class FormView : Fragment() {
                     Intent.ACTION_DIAL -> {
                         data = Uri.parse("tel:${currentValue.value}")
                     }
+
                     Intent.ACTION_SENDTO -> {
                         data = Uri.parse("mailto:${currentValue.value}")
                     }
@@ -661,6 +661,7 @@ class FormView : Fragment() {
                                 datePicker.dayOfMonth
                             )
                         )
+
                         else -> intentHandler(
                             dialogDelegate.handleDateInput(
                                 intent.uid,
@@ -732,9 +733,7 @@ class FormView : Fragment() {
             .show()
     }
 
-    private fun showDescriptionLabelDialog(
-        intent: RecyclerViewUiEvents.ShowDescriptionLabelDialog
-    ) {
+    private fun showDescriptionLabelDialog() {
         ComposeDialogFragment()
             .show(childFragmentManager, "ComposeDialog")
     }
