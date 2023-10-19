@@ -22,8 +22,10 @@ import android.widget.DatePicker
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
+import androidx.compose.ui.platform.ComposeView
 import androidx.core.content.FileProvider
 import androidx.databinding.DataBindingUtil
+import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.viewModels
@@ -45,9 +47,13 @@ import org.dhis2.commons.bindings.getFileFromGallery
 import org.dhis2.commons.bindings.rotateImage
 import org.dhis2.commons.dialogs.AlertBottomDialog
 import org.dhis2.commons.dialogs.CustomDialog
+import org.dhis2.commons.dialogs.MediaDialog
 import org.dhis2.commons.dialogs.calendarpicker.CalendarPicker
 import org.dhis2.commons.dialogs.calendarpicker.OnDatePickerListener
 import org.dhis2.commons.dialogs.imagedetail.ImageDetailBottomDialog
+import org.dhis2.commons.dialogs.randomMediaEntities
+import org.dhis2.commons.dialogs.randomSubTitle
+import org.dhis2.commons.dialogs.randomTitle
 import org.dhis2.commons.extensions.closeKeyboard
 import org.dhis2.commons.extensions.serializable
 import org.dhis2.commons.extensions.truncate
@@ -281,7 +287,8 @@ class FormView : Fragment() {
         val contextWrapper = ContextThemeWrapper(context, R.style.searchFormInputText)
         binding = DataBindingUtil.inflate(inflater, R.layout.view_form, container, false)
         binding.lifecycleOwner = viewLifecycleOwner
-        dataEntryHeaderHelper = DataEntryHeaderHelper(binding.headerContainer, binding.recyclerView)
+        dataEntryHeaderHelper =
+            DataEntryHeaderHelper(binding.headerContainer, binding.recyclerView)
         dialogDelegate = DialogDelegate()
         binding.recyclerView.layoutManager =
             object : LinearLayoutManager(contextWrapper, VERTICAL, false) {
@@ -481,7 +488,8 @@ class FormView : Fragment() {
             .setTitle(getString(R.string.info))
             .setMessage(getString(R.string.location_permission_denied))
             .setPositiveButton(R.string.action_accept) { _, _ ->
-                val intent = Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                val intent =
+                    Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
                 intent.data = Uri.fromParts("package", requireActivity().packageName, null)
                 permissionSettings.launch(intent)
             }
@@ -511,10 +519,9 @@ class FormView : Fragment() {
             is RecyclerViewUiEvents.OpenYearMonthDayAgeCalendar -> showYearMonthDayAgeCalendar(
                 uiEvent
             )
+
             is RecyclerViewUiEvents.OpenTimePicker -> showTimePicker(uiEvent)
-            is RecyclerViewUiEvents.ShowDescriptionLabelDialog -> showDescriptionLabelDialog(
-                uiEvent
-            )
+            is RecyclerViewUiEvents.ShowDescriptionLabelDialog -> showDescriptionLabelDialog()
             is RecyclerViewUiEvents.RequestCurrentLocation -> requestCurrentLocation(uiEvent)
             is RecyclerViewUiEvents.RequestLocationByMap -> requestLocationByMap(uiEvent)
             is RecyclerViewUiEvents.DisplayQRCode -> displayQRImage(uiEvent)
@@ -548,6 +555,7 @@ class FormView : Fragment() {
                     Intent.ACTION_DIAL -> {
                         data = Uri.parse("tel:${currentValue.value}")
                     }
+
                     Intent.ACTION_SENDTO -> {
                         data = Uri.parse("mailto:${currentValue.value}")
                     }
@@ -596,7 +604,6 @@ class FormView : Fragment() {
         myFirstPositionView?.let {
             offset = it.top
         }
-
         adapter.swap(
             items
         ) {
@@ -654,6 +661,7 @@ class FormView : Fragment() {
                                 datePicker.dayOfMonth
                             )
                         )
+
                         else -> intentHandler(
                             dialogDelegate.handleDateInput(
                                 intent.uid,
@@ -725,18 +733,30 @@ class FormView : Fragment() {
             .show()
     }
 
-    private fun showDescriptionLabelDialog(
-        intent: RecyclerViewUiEvents.ShowDescriptionLabelDialog
-    ) {
-        CustomDialog(
-            requireContext(),
-            intent.title,
-            intent.message ?: requireContext().getString(R.string.empty_description),
-            requireContext().getString(R.string.action_close),
-            null,
-            Constants.DESCRIPTION_DIALOG,
-            null
-        ).show()
+    private fun showDescriptionLabelDialog() {
+        ComposeDialogFragment()
+            .show(childFragmentManager, "ComposeDialog")
+    }
+
+    class ComposeDialogFragment : DialogFragment() {
+        override fun onCreateView(
+            inflater: LayoutInflater,
+            container: ViewGroup?,
+            savedInstanceState: Bundle?
+        ): View {
+            return ComposeView(requireContext()).apply {
+                setContent {
+                    MediaDialog(
+                        title = randomTitle(),
+                        subTitle = randomSubTitle(),
+                        mediaEntities = randomMediaEntities(),
+                        onDismiss = {
+                            dismiss()
+                        }
+                    )
+                }
+            }
+        }
     }
 
     private fun requestCurrentLocation(event: RecyclerViewUiEvents.RequestCurrentLocation) {
@@ -778,7 +798,12 @@ class FormView : Fragment() {
     private fun requestLocationByMap(event: RecyclerViewUiEvents.RequestLocationByMap) {
         onActivityForResult?.invoke()
         mapContent.launch(
-            MapSelectorActivity.create(requireContext(), event.uid, event.featureType, event.value)
+            MapSelectorActivity.create(
+                requireContext(),
+                event.uid,
+                event.featureType,
+                event.value
+            )
         )
     }
 
@@ -852,7 +877,11 @@ class FormView : Fragment() {
                         }
 
                         requireContext().getString(R.string.from_gallery) -> {
-                            pickImage.launch(Intent(Intent.ACTION_PICK).apply { type = "image/*" })
+                            pickImage.launch(
+                                Intent(Intent.ACTION_PICK).apply {
+                                    type = "image/*"
+                                }
+                            )
                         }
                     }
                     dialog.dismiss()
