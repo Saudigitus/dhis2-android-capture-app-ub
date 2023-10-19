@@ -8,6 +8,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandIn
 import androidx.compose.animation.shrinkOut
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -81,6 +82,7 @@ import org.dhis2.ui.MetadataIconData
 import org.dhis2.usescases.uiboost.data.model.DataStoreAppConfig
 import org.dhis2.usescases.uiboost.data.model.Program
 import org.hisp.dhis.android.core.common.State
+import timber.log.Timber
 
 @Preview(showBackground = true)
 @Composable
@@ -214,7 +216,9 @@ private fun getFilteredPrograms(
             if ((flat.program == program.uid) &&
                 flat.hidden == "false"
             ) {
-                list.add(program)
+                list.add(program.copy(
+                    reference = flat.icon
+                ))
             }
         }
     }
@@ -480,7 +484,9 @@ fun ListLayout(
                         if ((flat.program == program.uid) &&
                             flat.hidden == "false"
                         ) {
-                            list.add(program)
+                            list.add(program.copy(
+                                reference = flat.icon
+                            ))
                         }
                     }
                 }
@@ -539,10 +545,40 @@ fun ProgramItemCard(
                 modifier = Modifier.padding(vertical = 8.dp),
                 contentAlignment = Alignment.BottomEnd
             ) {
-                MetadataIcon(
-                    modifier = Modifier.alpha(programViewModel.getAlphaValue()),
-                    metadataIconData = programViewModel.metadataIconData
-                )
+                if (programViewModel.reference == null) {
+                    MetadataIcon(
+                        modifier = Modifier.alpha(programViewModel.getAlphaValue()),
+                        metadataIconData = programViewModel.metadataIconData
+                    )
+                } else {
+                    when(programViewModel.reference) {
+                        "utente" -> {
+                            Image(
+                                painter = painterResource(id = R.drawable.utente2),
+                                contentDescription = "",
+                                modifier = Modifier.size(50.dp)
+                            )
+                        }
+                        "agregado" -> {
+                            Image(
+                                painter = painterResource(id = R.drawable.agregado),
+                                contentDescription = "",
+                                modifier = Modifier.size(50.dp)
+                            )
+                        }
+                        else -> {
+//                            Image(
+//                                painter = painterResource(id = R.drawable.agregado),
+//                                contentDescription = "",
+//                                modifier = Modifier.size(50.dp)
+//                            )
+                            MetadataIcon(
+                                modifier = Modifier.alpha(programViewModel.getAlphaValue()),
+                                metadataIconData = programViewModel.metadataIconData
+                            )
+                        }
+                    }
+                }
                 var openDescriptionDialog by remember {
                     mutableStateOf(false) // Initially dialog is closed
                 }
@@ -686,6 +722,122 @@ fun ProgramItem(
         Box(
             contentAlignment = Alignment.BottomEnd
         ) {
+            if (programViewModel.reference == null) {
+                MetadataIcon(
+                    modifier = Modifier.alpha(programViewModel.getAlphaValue()),
+                    metadataIconData = programViewModel.metadataIconData
+                )
+            } else {
+                when(programViewModel.reference) {
+                    "stock" -> {
+                        Image(
+                            painter = painterResource(id = R.drawable.utente),
+                            contentDescription = "",
+                            modifier = Modifier.size(30.dp)
+                        )
+                    }
+                    "comunidade" -> {
+                        Image(
+                            painter = painterResource(id = R.drawable.comunidade),
+                            contentDescription = "",
+                            modifier = Modifier.size(30.dp)
+                        )
+                    }
+                    else -> {
+                        MetadataIcon(
+                            modifier = Modifier.alpha(programViewModel.getAlphaValue()),
+                            metadataIconData = programViewModel.metadataIconData
+                        )
+                    }
+                }
+            }
+            var openDescriptionDialog by remember {
+                mutableStateOf(false) // Initially dialog is closed
+            }
+
+            if (programViewModel.description != null) {
+                ProgramDescriptionIcon {
+                    openDescriptionDialog = true
+                }
+            }
+
+            if (openDescriptionDialog) {
+                ProgramDescriptionDialog(programViewModel.description ?: "") {
+                    openDescriptionDialog = false
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.width(16.dp))
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .alpha(programViewModel.getAlphaValue())
+        ) {
+            Text(
+                text = programViewModel.title,
+                color = colorResource(id = R.color.textPrimary),
+                fontSize = 14.sp,
+                style = LocalTextStyle.current.copy(
+                    fontFamily = FontFamily(Font(R.font.rubik_regular))
+                )
+            )
+            Text(
+                text = if (programViewModel.downloadState == ProgramDownloadState.DOWNLOADING) {
+                    stringResource(R.string.syncing_resource, programViewModel.typeName.lowercase())
+                } else {
+                    programViewModel.countDescription()
+                },
+                color = colorResource(id = R.color.textSecondary),
+                fontSize = 12.sp,
+                style = LocalTextStyle.current.copy(
+                    fontFamily = FontFamily(Font(R.font.rubik_regular))
+                )
+            )
+        }
+
+        when (programViewModel.downloadState) {
+            ProgramDownloadState.DOWNLOADING -> DownloadingProgress()
+            ProgramDownloadState.DOWNLOADED -> DownloadedIcon(programViewModel)
+            ProgramDownloadState.NONE -> StateIcon(programViewModel.state) {
+                onGranularSyncClick(programViewModel)
+            }
+
+            ProgramDownloadState.ERROR -> DownloadErrorIcon {
+                onGranularSyncClick(programViewModel)
+            }
+        }
+
+        if (programViewModel.hasOverdueEvent) {
+            Icon(
+                painter = painterResource(id = R.drawable.ic_overdue),
+                contentDescription = "Overdue",
+                tint = Color.Unspecified
+            )
+        }
+    }
+}
+
+@Composable
+fun ProgramItemCustom(
+    modifier: Modifier = Modifier,
+    programViewModel: ProgramViewModel,
+    onItemClick: (programViewModel: ProgramViewModel) -> Unit = {},
+    onGranularSyncClick: (programViewModel: ProgramViewModel) -> Unit = {}
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable(enabled = !programViewModel.isDownloading()) {
+                onItemClick(programViewModel)
+            }
+            .background(color = Color.White)
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            contentAlignment = Alignment.BottomEnd
+        ) {
             MetadataIcon(
                 modifier = Modifier.alpha(programViewModel.getAlphaValue()),
                 metadataIconData = programViewModel.metadataIconData
@@ -756,6 +908,7 @@ fun ProgramItem(
         }
     }
 }
+
 
 @Composable
 fun StateIcon(state: State, onClick: () -> Unit) {

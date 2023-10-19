@@ -18,7 +18,8 @@ data class ProgramViewModel(
     val hasOverdueEvent: Boolean,
     val filtersAreActive: Boolean,
     val downloadState: ProgramDownloadState,
-    val downloadActive: Boolean = false
+    val downloadActive: Boolean = false,
+    val reference: String? = null
 ) {
     private var hasShownCompleteSyncAnimation = false
 
