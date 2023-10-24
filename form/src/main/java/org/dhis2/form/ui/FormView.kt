@@ -521,7 +521,7 @@ class FormView : Fragment() {
             )
 
             is RecyclerViewUiEvents.OpenTimePicker -> showTimePicker(uiEvent)
-            is RecyclerViewUiEvents.ShowDescriptionLabelDialog -> showDescriptionLabelDialog()
+            is RecyclerViewUiEvents.ShowDescriptionLabelDialog -> showDialog(uiEvent)
             is RecyclerViewUiEvents.RequestCurrentLocation -> requestCurrentLocation(uiEvent)
             is RecyclerViewUiEvents.RequestLocationByMap -> requestLocationByMap(uiEvent)
             is RecyclerViewUiEvents.DisplayQRCode -> displayQRImage(uiEvent)
@@ -733,12 +733,30 @@ class FormView : Fragment() {
             .show()
     }
 
-    private fun showDescriptionLabelDialog() {
-        ComposeDialogFragment()
-            .show(childFragmentManager, "ComposeDialog")
+    private fun showDialog(intent: RecyclerViewUiEvents.ShowDescriptionLabelDialog) {
+        if (true) {
+            MediaDialogFragment()
+                .show(childFragmentManager, "ComposeDialog")
+        } else {
+            showDescriptionLabelDialog(intent)
+        }
     }
 
-    class ComposeDialogFragment : DialogFragment() {
+    private fun showDescriptionLabelDialog(
+        intent: RecyclerViewUiEvents.ShowDescriptionLabelDialog
+    ) {
+        CustomDialog(
+            requireContext(),
+            intent.title,
+            intent.message ?: requireContext().getString(R.string.empty_description),
+            requireContext().getString(R.string.action_close),
+            null,
+            Constants.DESCRIPTION_DIALOG,
+            null
+        ).show()
+    }
+
+    class MediaDialogFragment : DialogFragment() {
         override fun onCreateView(
             inflater: LayoutInflater,
             container: ViewGroup?,

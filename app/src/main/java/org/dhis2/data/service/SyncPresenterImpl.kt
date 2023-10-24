@@ -89,7 +89,7 @@ class SyncPresenterImpl(
                 ).doOnError {
                     Timber.d("error while downloading Data store")
                 }.onErrorComplete()
-                    .doOnComplete { Timber.d("finished datastore download")  }
+                    .doOnComplete { Timber.d("finished datastore download") }
             )
             .andThen(
                 Completable.fromObservable(
@@ -100,7 +100,7 @@ class SyncPresenterImpl(
                 ).doOnError {
                     Timber.d("error while downloading File resources")
                 }.onErrorComplete()
-                    .doOnComplete { Timber.d("finished file resources download")  }
+                    .doOnComplete { Timber.d("finished file resources download") }
             )
             .andThen(
                 Completable.fromObservable(

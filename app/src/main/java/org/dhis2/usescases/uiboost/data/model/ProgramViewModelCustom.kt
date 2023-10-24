@@ -22,4 +22,3 @@ data class ProgramViewModelCustom(
     val downloadActive: Boolean = false,
     val reference: String
 )
-
