@@ -20,6 +20,7 @@ import org.dhis2.commons.matomo.MatomoAnalyticsController
 import org.dhis2.commons.schedulers.SchedulerProvider
 import org.dhis2.data.service.SyncStatusController
 import org.dhis2.usescases.uiboost.data.model.DataStoreAppConfig
+import org.dhis2.usescases.uiboost.network.UBService
 import org.dhis2.usescases.uiboost.ui.model.ProgramGridUiState
 import org.hisp.dhis.android.core.datastore.DataStoreEntry
 import org.hisp.dhis.android.core.organisationunit.OrganisationUnit
@@ -77,6 +78,9 @@ class ProgramPresenter internal constructor(
                 }
             }
         }
+    }
+    private fun donwloadMedia() {
+
     }
 
     fun setProgramsGrid(program: List<ProgramViewModel>) {
