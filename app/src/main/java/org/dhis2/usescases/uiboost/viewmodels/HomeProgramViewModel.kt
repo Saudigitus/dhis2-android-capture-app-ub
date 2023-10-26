@@ -51,6 +51,7 @@ class HomeProgramViewModel @Inject internal constructor(
 
     init {
         getPrograms()
+        getMediaDataStore()
     }
 
     fun getPrograms() {
