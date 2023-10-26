@@ -91,7 +91,7 @@ fun MediaDialog(
     title: String,
     subTitle: String,
     mediaEntities: List<DialogMediaEntity>,
-    onDismiss: () -> Unit,
+    onDismiss: () -> Unit
 ) {
     val context = LocalContext.current
     val sortedMediaEntities = sortMediaEntities(mediaEntities)
@@ -140,7 +140,7 @@ fun MediaDialog(
                             when (mediaEntity.dialogMediaType) {
                                 DialogMediaType.VIDEO,
                                 DialogMediaType.AUDIO,
-                                DialogMediaType.UNKNOWN,
+                                DialogMediaType.UNKNOWN
                                 -> {
                                     MediaDialogItem(
                                         dialogMediaType = mediaEntity.dialogMediaType,
@@ -189,7 +189,7 @@ private fun MediaData(
     url: String,
     duration: String,
     dateOfLastUpdate: String,
-    onClickMediaItem: (url: String) -> Unit,
+    onClickMediaItem: (url: String) -> Unit
 ) {
     Column(Modifier.clickable { onClickMediaItem.invoke(url) }) {
         Text(
@@ -229,7 +229,7 @@ private fun MediaDialogItem(
     url: String,
     duration: String,
     dateOfLastUpdate: String,
-    onClickMediaItem: (url: String) -> Unit,
+    onClickMediaItem: (url: String) -> Unit
 ) {
     Column(
         Modifier

@@ -32,7 +32,7 @@ data class FieldUiModelImpl(
     override val keyboardActionType: KeyboardActionType? = null,
     override val fieldMask: String? = null,
     override val isLoadingData: Boolean = false,
-    override var optionSetConfiguration: OptionSetConfiguration?,
+    override var optionSetConfiguration: OptionSetConfiguration?
 ) : FieldUiModel {
 
     private var callback: FieldUiModel.Callback? = null

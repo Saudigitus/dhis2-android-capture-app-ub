@@ -8,7 +8,7 @@ data class DialogMediaEntity(
     val duration: String,
     val dateOfLastUpdate: String,
     val url: String,
-    val dialogMediaType: DialogMediaType,
+    val dialogMediaType: DialogMediaType
 ) : Parcelable {
 
     constructor(parcel: Parcel) : this(
@@ -45,4 +45,3 @@ data class DialogMediaEntity(
             }
     }
 }
-

@@ -26,7 +26,7 @@ class MediaDialogFragment : DialogFragment() {
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
-        savedInstanceState: Bundle?,
+        savedInstanceState: Bundle?
     ): View {
         return ComposeView(requireContext()).apply {
             setContent {
@@ -51,7 +51,7 @@ class MediaDialogFragment : DialogFragment() {
         fun newInstance(
             title: String,
             message: String,
-            mediaEntities: List<DialogMediaEntity>,
+            mediaEntities: List<DialogMediaEntity>
         ): MediaDialogFragment {
             val mediaDialogFragment = MediaDialogFragment()
             val arguments = Bundle()

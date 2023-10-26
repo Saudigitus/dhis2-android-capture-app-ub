@@ -35,6 +35,8 @@ import com.google.android.material.timepicker.MaterialTimePicker
 import com.google.android.material.timepicker.TimeFormat.CLOCK_12H
 import com.google.android.material.timepicker.TimeFormat.CLOCK_24H
 import com.journeyapps.barcodescanner.ScanOptions
+import java.io.File
+import java.util.Calendar
 import org.dhis2.commons.ActivityResultObservable
 import org.dhis2.commons.ActivityResultObserver
 import org.dhis2.commons.Constants
@@ -92,9 +94,6 @@ import org.hisp.dhis.android.core.common.FeatureType
 import org.hisp.dhis.android.core.common.ValueType
 import org.hisp.dhis.android.core.common.ValueTypeRenderingType
 import timber.log.Timber
-import java.io.File
-import java.util.Calendar
-
 
 class FormView : Fragment() {
     private var onItemChangeListener: ((action: RowAction) -> Unit)? = null
@@ -148,7 +147,7 @@ class FormView : Fragment() {
                     override fun onActivityResult(
                         requestCode: Int,
                         resultCode: Int,
-                        data: Intent?,
+                        data: Intent?
                     ) {
                         if (resultCode != RESULT_OK) {
                             showAddImageOptions()
@@ -158,7 +157,7 @@ class FormView : Fragment() {
                     override fun onRequestPermissionsResult(
                         requestCode: Int,
                         permissions: Array<String?>,
-                        grantResults: IntArray,
+                        grantResults: IntArray
                     ) {
                         if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                             showAddImageOptions()
@@ -282,7 +281,7 @@ class FormView : Fragment() {
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
-        savedInstanceState: Bundle?,
+        savedInstanceState: Bundle?
     ): View {
         val contextWrapper = ContextThemeWrapper(context, R.style.searchFormInputText)
         binding = DataBindingUtil.inflate(inflater, R.layout.view_form, container, false)
@@ -620,9 +619,9 @@ class FormView : Fragment() {
             binding.recyclerView.layoutManager as LinearLayoutManager
         val lastVisiblePosition = layoutManager.findLastVisibleItemPosition()
         return lastVisiblePosition != -1 && (
-                lastVisiblePosition == adapter.itemCount - 1 ||
-                        adapter.getItemViewType(lastVisiblePosition) == R.layout.form_section
-                )
+            lastVisiblePosition == adapter.itemCount - 1 ||
+                adapter.getItemViewType(lastVisiblePosition) == R.layout.form_section
+            )
     }
 
     private fun handleKeyBoardOnFocusChange(items: List<FieldUiModel>) {
@@ -703,7 +702,7 @@ class FormView : Fragment() {
     }
 
     private fun showYearMonthDayAgeCalendar(
-        intent: RecyclerViewUiEvents.OpenYearMonthDayAgeCalendar,
+        intent: RecyclerViewUiEvents.OpenYearMonthDayAgeCalendar
     ) {
         alertDialogView =
             LayoutInflater.from(requireContext()).inflate(R.layout.dialog_age, null)
@@ -749,7 +748,7 @@ class FormView : Fragment() {
     }
 
     private fun showDescriptionLabelDialog(
-        intent: RecyclerViewUiEvents.ShowDescriptionLabelDialog,
+        intent: RecyclerViewUiEvents.ShowDescriptionLabelDialog
     ) {
         CustomDialog(
             requireContext(),
@@ -973,7 +972,7 @@ class FormView : Fragment() {
     }
 
     private fun displayConfigurationErrors(
-        configurationError: List<RulesUtilsProviderConfigurationError>,
+        configurationError: List<RulesUtilsProviderConfigurationError>
     ) {
         if (displayConfErrors && configurationError.isNotEmpty()) {
             MaterialAlertDialogBuilder(requireContext(), R.style.DhisMaterialDialog)
@@ -1058,7 +1057,7 @@ class FormView : Fragment() {
         completionListener: ((percentage: Float) -> Unit)?,
         resultDialogUiProvider: EnrollmentResultDialogUiProvider?,
         actionIconsActivate: Boolean,
-        openErrorLocation: Boolean,
+        openErrorLocation: Boolean
     ) {
         this.locationProvider = locationProvider
         this.needToForceUpdate = needToForceUpdate
@@ -1075,7 +1074,7 @@ class FormView : Fragment() {
         onFinishDataEntry: (() -> Unit)?,
         onActivityForResult: (() -> Unit)?,
         onDataIntegrityCheck: ((result: DataIntegrityCheckResult) -> Unit)?,
-        onFieldItemsRendered: ((fieldsEmpty: Boolean) -> Unit)?,
+        onFieldItemsRendered: ((fieldsEmpty: Boolean) -> Unit)?
     ) {
         this.onItemChangeListener = onItemChangeListener
         this.onLoadingListener = onLoadingListener
