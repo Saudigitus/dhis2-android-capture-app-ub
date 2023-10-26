@@ -91,7 +91,7 @@ fun MediaDialog(
     title: String,
     subTitle: String,
     mediaEntities: List<DialogMediaEntity>,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
 ) {
     val context = LocalContext.current
     val sortedMediaEntities = sortMediaEntities(mediaEntities)
@@ -138,7 +138,10 @@ fun MediaDialog(
                     LazyColumn(modifier = Modifier.fillMaxWidth()) {
                         items(sortedMediaEntities) { mediaEntity ->
                             when (mediaEntity.dialogMediaType) {
-                                DialogMediaType.VIDEO, DialogMediaType.AUDIO -> {
+                                DialogMediaType.VIDEO,
+                                DialogMediaType.AUDIO,
+                                DialogMediaType.UNKNOWN,
+                                -> {
                                     MediaDialogItem(
                                         dialogMediaType = mediaEntity.dialogMediaType,
                                         title = mediaEntity.title,
@@ -186,7 +189,7 @@ private fun MediaData(
     url: String,
     duration: String,
     dateOfLastUpdate: String,
-    onClickMediaItem: (url: String) -> Unit
+    onClickMediaItem: (url: String) -> Unit,
 ) {
     Column(Modifier.clickable { onClickMediaItem.invoke(url) }) {
         Text(
@@ -226,7 +229,7 @@ private fun MediaDialogItem(
     url: String,
     duration: String,
     dateOfLastUpdate: String,
-    onClickMediaItem: (url: String) -> Unit
+    onClickMediaItem: (url: String) -> Unit,
 ) {
     Column(
         Modifier

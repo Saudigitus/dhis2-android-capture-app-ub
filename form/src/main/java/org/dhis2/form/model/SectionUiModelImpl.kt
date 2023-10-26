@@ -41,7 +41,7 @@ data class SectionUiModelImpl(
     var rendering: String? = null,
     var selectedField: ObservableField<String?> = ObservableField(null),
     override val isLoadingData: Boolean = false,
-    override var optionSetConfiguration: OptionSetConfiguration? = null
+    override var optionSetConfiguration: OptionSetConfiguration? = null,
 ) : FieldUiModel {
 
     private var sectionNumber: Int = 0
@@ -124,8 +124,8 @@ data class SectionUiModelImpl(
     override fun onDescriptionClick() {
         callback?.recyclerViewUiEvents(
             RecyclerViewUiEvents.ShowDescriptionLabelDialog(
-                label,
-                description
+                title = label,
+                message = description
             )
         )
     }
@@ -193,14 +193,14 @@ data class SectionUiModelImpl(
     override fun equals(item: FieldUiModel): Boolean {
         item as SectionUiModelImpl
         return super.equals(item) &&
-            this.showBottomShadow == item.showBottomShadow &&
-            this.lastPositionShouldChangeHeight == item.lastPositionShouldChangeHeight &&
-            this.isOpen == item.isOpen &&
-            this.totalFields == item.totalFields &&
-            this.completedFields == item.completedFields &&
-            this.errors == item.errors &&
-            this.warnings == item.warnings &&
-            this.sectionNumber == item.sectionNumber
+                this.showBottomShadow == item.showBottomShadow &&
+                this.lastPositionShouldChangeHeight == item.lastPositionShouldChangeHeight &&
+                this.isOpen == item.isOpen &&
+                this.totalFields == item.totalFields &&
+                this.completedFields == item.completedFields &&
+                this.errors == item.errors &&
+                this.warnings == item.warnings &&
+                this.sectionNumber == item.sectionNumber
     }
 
     companion object {

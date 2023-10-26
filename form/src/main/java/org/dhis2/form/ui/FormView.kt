@@ -22,10 +22,8 @@ import android.widget.DatePicker
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
-import androidx.compose.ui.platform.ComposeView
 import androidx.core.content.FileProvider
 import androidx.databinding.DataBindingUtil
-import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.viewModels
@@ -37,23 +35,21 @@ import com.google.android.material.timepicker.MaterialTimePicker
 import com.google.android.material.timepicker.TimeFormat.CLOCK_12H
 import com.google.android.material.timepicker.TimeFormat.CLOCK_24H
 import com.journeyapps.barcodescanner.ScanOptions
-import java.io.File
-import java.util.Calendar
 import org.dhis2.commons.ActivityResultObservable
 import org.dhis2.commons.ActivityResultObserver
 import org.dhis2.commons.Constants
+import org.dhis2.commons.bindings.dataElement
 import org.dhis2.commons.bindings.getFileFrom
 import org.dhis2.commons.bindings.getFileFromGallery
 import org.dhis2.commons.bindings.rotateImage
 import org.dhis2.commons.dialogs.AlertBottomDialog
 import org.dhis2.commons.dialogs.CustomDialog
-import org.dhis2.commons.dialogs.MediaDialog
+import org.dhis2.commons.dialogs.MediaDialogFragment.Companion.MEDIA_DIALOG_TAG
+import org.dhis2.commons.dialogs.MediaDialogFragment.Companion.newInstance
 import org.dhis2.commons.dialogs.calendarpicker.CalendarPicker
 import org.dhis2.commons.dialogs.calendarpicker.OnDatePickerListener
 import org.dhis2.commons.dialogs.imagedetail.ImageDetailBottomDialog
 import org.dhis2.commons.dialogs.randomMediaEntities
-import org.dhis2.commons.dialogs.randomSubTitle
-import org.dhis2.commons.dialogs.randomTitle
 import org.dhis2.commons.extensions.closeKeyboard
 import org.dhis2.commons.extensions.serializable
 import org.dhis2.commons.extensions.truncate
@@ -89,12 +85,16 @@ import org.dhis2.maps.views.MapSelectorActivity.Companion.LOCATION_TYPE_EXTRA
 import org.dhis2.ui.ErrorFieldList
 import org.dhis2.ui.dialogs.bottomsheet.BottomSheetDialog
 import org.dhis2.ui.dialogs.signature.SignatureDialog
+import org.hisp.dhis.android.core.D2Manager.getD2
 import org.hisp.dhis.android.core.arch.helpers.FileResourceDirectoryHelper
 import org.hisp.dhis.android.core.arch.helpers.GeometryHelper
 import org.hisp.dhis.android.core.common.FeatureType
 import org.hisp.dhis.android.core.common.ValueType
 import org.hisp.dhis.android.core.common.ValueTypeRenderingType
 import timber.log.Timber
+import java.io.File
+import java.util.Calendar
+
 
 class FormView : Fragment() {
     private var onItemChangeListener: ((action: RowAction) -> Unit)? = null
@@ -148,7 +148,7 @@ class FormView : Fragment() {
                     override fun onActivityResult(
                         requestCode: Int,
                         resultCode: Int,
-                        data: Intent?
+                        data: Intent?,
                     ) {
                         if (resultCode != RESULT_OK) {
                             showAddImageOptions()
@@ -158,7 +158,7 @@ class FormView : Fragment() {
                     override fun onRequestPermissionsResult(
                         requestCode: Int,
                         permissions: Array<String?>,
-                        grantResults: IntArray
+                        grantResults: IntArray,
                     ) {
                         if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                             showAddImageOptions()
@@ -282,7 +282,7 @@ class FormView : Fragment() {
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
-        savedInstanceState: Bundle?
+        savedInstanceState: Bundle?,
     ): View {
         val contextWrapper = ContextThemeWrapper(context, R.style.searchFormInputText)
         binding = DataBindingUtil.inflate(inflater, R.layout.view_form, container, false)
@@ -620,9 +620,9 @@ class FormView : Fragment() {
             binding.recyclerView.layoutManager as LinearLayoutManager
         val lastVisiblePosition = layoutManager.findLastVisibleItemPosition()
         return lastVisiblePosition != -1 && (
-            lastVisiblePosition == adapter.itemCount - 1 ||
-                adapter.getItemViewType(lastVisiblePosition) == R.layout.form_section
-            )
+                lastVisiblePosition == adapter.itemCount - 1 ||
+                        adapter.getItemViewType(lastVisiblePosition) == R.layout.form_section
+                )
     }
 
     private fun handleKeyBoardOnFocusChange(items: List<FieldUiModel>) {
@@ -703,7 +703,7 @@ class FormView : Fragment() {
     }
 
     private fun showYearMonthDayAgeCalendar(
-        intent: RecyclerViewUiEvents.OpenYearMonthDayAgeCalendar
+        intent: RecyclerViewUiEvents.OpenYearMonthDayAgeCalendar,
     ) {
         alertDialogView =
             LayoutInflater.from(requireContext()).inflate(R.layout.dialog_age, null)
@@ -734,16 +734,24 @@ class FormView : Fragment() {
     }
 
     private fun showDialog(intent: RecyclerViewUiEvents.ShowDescriptionLabelDialog) {
-        if (true) {
-            MediaDialogFragment()
-                .show(childFragmentManager, "ComposeDialog")
+        val dataElement = getD2().dataElement(intent.uid)
+        val valueType = dataElement.valueType()
+
+        if (valueType?.isFile == true) {
+            val mediaDialogFragment = newInstance(
+                title = intent.title,
+                subTitle = intent.message,
+                mediaEntities = randomMediaEntities()
+            )
+            mediaDialogFragment.show(childFragmentManager, MEDIA_DIALOG_TAG)
         } else {
             showDescriptionLabelDialog(intent)
         }
     }
 
+
     private fun showDescriptionLabelDialog(
-        intent: RecyclerViewUiEvents.ShowDescriptionLabelDialog
+        intent: RecyclerViewUiEvents.ShowDescriptionLabelDialog,
     ) {
         CustomDialog(
             requireContext(),
@@ -754,27 +762,6 @@ class FormView : Fragment() {
             Constants.DESCRIPTION_DIALOG,
             null
         ).show()
-    }
-
-    class MediaDialogFragment : DialogFragment() {
-        override fun onCreateView(
-            inflater: LayoutInflater,
-            container: ViewGroup?,
-            savedInstanceState: Bundle?
-        ): View {
-            return ComposeView(requireContext()).apply {
-                setContent {
-                    MediaDialog(
-                        title = randomTitle(),
-                        subTitle = randomSubTitle(),
-                        mediaEntities = randomMediaEntities(),
-                        onDismiss = {
-                            dismiss()
-                        }
-                    )
-                }
-            }
-        }
     }
 
     private fun requestCurrentLocation(event: RecyclerViewUiEvents.RequestCurrentLocation) {
@@ -988,7 +975,7 @@ class FormView : Fragment() {
     }
 
     private fun displayConfigurationErrors(
-        configurationError: List<RulesUtilsProviderConfigurationError>
+        configurationError: List<RulesUtilsProviderConfigurationError>,
     ) {
         if (displayConfErrors && configurationError.isNotEmpty()) {
             MaterialAlertDialogBuilder(requireContext(), R.style.DhisMaterialDialog)
@@ -1073,7 +1060,7 @@ class FormView : Fragment() {
         completionListener: ((percentage: Float) -> Unit)?,
         resultDialogUiProvider: EnrollmentResultDialogUiProvider?,
         actionIconsActivate: Boolean,
-        openErrorLocation: Boolean
+        openErrorLocation: Boolean,
     ) {
         this.locationProvider = locationProvider
         this.needToForceUpdate = needToForceUpdate
@@ -1090,7 +1077,7 @@ class FormView : Fragment() {
         onFinishDataEntry: (() -> Unit)?,
         onActivityForResult: (() -> Unit)?,
         onDataIntegrityCheck: ((result: DataIntegrityCheckResult) -> Unit)?,
-        onFieldItemsRendered: ((fieldsEmpty: Boolean) -> Unit)?
+        onFieldItemsRendered: ((fieldsEmpty: Boolean) -> Unit)?,
     ) {
         this.onItemChangeListener = onItemChangeListener
         this.onLoadingListener = onLoadingListener

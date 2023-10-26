@@ -30,6 +30,7 @@ sealed class RecyclerViewUiEvents {
     ) : RecyclerViewUiEvents()
 
     data class ShowDescriptionLabelDialog(
+        val uid: String = "",
         val title: String,
         val message: String?
     ) : RecyclerViewUiEvents()
