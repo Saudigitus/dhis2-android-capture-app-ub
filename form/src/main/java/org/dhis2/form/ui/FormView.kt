@@ -735,12 +735,11 @@ class FormView : Fragment() {
 
     private fun showDialog(intent: RecyclerViewUiEvents.ShowDescriptionLabelDialog) {
         val dataElement = getD2().dataElement(intent.uid)
-        val valueType = dataElement.valueType()
 
-        if (valueType?.isFile == true) {
+        if (dataElement.valueType()?.isFile == true) {
             val mediaDialogFragment = newInstance(
                 title = intent.title,
-                subTitle = intent.message,
+                message = intent.message ?: requireContext().getString(R.string.empty_description),
                 mediaEntities = randomMediaEntities()
             )
             mediaDialogFragment.show(childFragmentManager, MEDIA_DIALOG_TAG)
@@ -748,7 +747,6 @@ class FormView : Fragment() {
             showDescriptionLabelDialog(intent)
         }
     }
-
 
     private fun showDescriptionLabelDialog(
         intent: RecyclerViewUiEvents.ShowDescriptionLabelDialog,

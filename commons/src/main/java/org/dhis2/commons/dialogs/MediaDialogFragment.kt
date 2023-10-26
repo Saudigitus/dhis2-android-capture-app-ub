@@ -10,16 +10,16 @@ import androidx.fragment.app.DialogFragment
 class MediaDialogFragment : DialogFragment() {
 
     private var title: String? = null
-    private var subTitle: String? = null
+    private var message: String? = null
     private var mediaEntities: List<DialogMediaEntity>? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         arguments?.let {
-            title = it.getString("title")
-            subTitle = it.getString("subTitle")
-            mediaEntities = it.getParcelableArrayList("mediaEntities")
+            title = it.getString(MEDIA_DIALOG_TITLE)
+            message = it.getString(MEDIA_DIALOG_MESSAGE)
+            mediaEntities = it.getParcelableArrayList(MEDIA_DIALOG_MEDIA_ENTITIES)
         }
     }
 
@@ -32,7 +32,7 @@ class MediaDialogFragment : DialogFragment() {
             setContent {
                 MediaDialog(
                     title = title ?: randomTitle(),
-                    subTitle = subTitle ?: randomSubTitle(),
+                    subTitle = message ?: randomSubTitle(),
                     mediaEntities = mediaEntities ?: randomMediaEntities(),
                     onDismiss = {
                         dismiss()
@@ -44,19 +44,22 @@ class MediaDialogFragment : DialogFragment() {
 
     companion object {
         const val MEDIA_DIALOG_TAG = "media_dialog_tag"
+        private const val MEDIA_DIALOG_TITLE = "title"
+        private const val MEDIA_DIALOG_MESSAGE = "message"
+        private const val MEDIA_DIALOG_MEDIA_ENTITIES = "media_entities"
 
         fun newInstance(
-            title: String?,
-            subTitle: String?,
-            mediaEntities: List<DialogMediaEntity>?,
+            title: String,
+            message: String,
+            mediaEntities: List<DialogMediaEntity>,
         ): MediaDialogFragment {
-            val fragment = MediaDialogFragment()
-            val args = Bundle()
-            args.putString("title", title)
-            args.putString("subTitle", subTitle)
-            args.putParcelableArrayList("mediaEntities", ArrayList(mediaEntities))
-            fragment.arguments = args
-            return fragment
+            val mediaDialogFragment = MediaDialogFragment()
+            val arguments = Bundle()
+            arguments.putString(MEDIA_DIALOG_TITLE, title)
+            arguments.putString(MEDIA_DIALOG_MESSAGE, message)
+            arguments.putParcelableArrayList(MEDIA_DIALOG_MEDIA_ENTITIES, ArrayList(mediaEntities))
+            mediaDialogFragment.arguments = arguments
+            return mediaDialogFragment
         }
     }
 }
