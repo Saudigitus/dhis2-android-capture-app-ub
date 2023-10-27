@@ -1,5 +1,8 @@
 package org.dhis2.form.data
 
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
+import org.dhis2.form.data.helper.Constants
 import org.dhis2.form.model.ActionType
 import org.dhis2.form.model.FieldUiModel
 import org.dhis2.form.model.RowAction
@@ -10,6 +13,8 @@ import org.dhis2.form.ui.provider.LegendValueProvider
 import org.dhis2.form.ui.validation.FieldErrorMessageProvider
 import org.dhis2.ui.dialogs.bottomsheet.FieldWithIssue
 import org.dhis2.ui.dialogs.bottomsheet.IssueType
+import org.dhis2.usescases.uiboost.data.model.media.MediaStoreConfig
+import org.hisp.dhis.android.core.D2
 import org.hisp.dhis.android.core.common.ValueType
 import org.hisp.dhis.android.core.common.ValueType.LONG_TEXT
 import org.hisp.dhis.rules.models.RuleEffect
@@ -23,7 +28,8 @@ class FormRepositoryImpl(
     private val dataEntryRepository: DataEntryRepository?,
     private val ruleEngineRepository: RuleEngineRepository?,
     private val rulesUtilsProvider: RulesUtilsProvider?,
-    private val legendValueProvider: LegendValueProvider?
+    private val legendValueProvider: LegendValueProvider?,
+    private val d2: D2
 ) : FormRepository {
 
     private var completionPercentage: Float = 0f
@@ -452,4 +458,16 @@ class FormRepositoryImpl(
 
     fun <E> Iterable<E>.updated(index: Int, elem: E): List<E> =
         mapIndexed { i, existing -> if (i == index) elem else existing }
+
+
+    override fun getMediaDataStore(): Flow<MediaStoreConfig?> {
+        val dataStore = MediaStoreConfig.fromJson(
+            d2.dataStoreModule().dataStore().byKey()
+                .eq(Constants.MEDIA_DATA_STORE_KEY).blockingGet()
+                .getOrNull(
+                    0
+                )?.value()
+        )
+        return flowOf(dataStore)
+    }
 }

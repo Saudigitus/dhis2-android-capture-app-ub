@@ -61,6 +61,10 @@ dependencies {
 
     implementation(project(":commons"))
     implementation(project(":dhis2_android_maps"))
+    implementation(libs.kotlin.serialization.json)
     testImplementation(libs.bundles.form.test)
     androidTestImplementation(libs.bundles.form.androidTest)
+}
+kapt {
+    correctErrorTypes = true
 }
