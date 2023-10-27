@@ -22,6 +22,8 @@ import android.widget.DatePicker
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.platform.ComposeView
 import androidx.core.content.FileProvider
 import androidx.databinding.DataBindingUtil
@@ -89,6 +91,7 @@ import org.dhis2.maps.views.MapSelectorActivity.Companion.LOCATION_TYPE_EXTRA
 import org.dhis2.ui.ErrorFieldList
 import org.dhis2.ui.dialogs.bottomsheet.BottomSheetDialog
 import org.dhis2.ui.dialogs.signature.SignatureDialog
+import org.dhis2.usescases.uiboost.data.model.media.DataElement
 import org.hisp.dhis.android.core.arch.helpers.FileResourceDirectoryHelper
 import org.hisp.dhis.android.core.arch.helpers.GeometryHelper
 import org.hisp.dhis.android.core.common.FeatureType
@@ -349,6 +352,10 @@ class FormView : Fragment() {
         }
 
         setObservers()
+
+        viewModel.getMediaDataStore()
+
+        viewModel.checkDataElement("djduey4984930")
     }
 
     private fun setObservers() {
@@ -1206,5 +1213,29 @@ class FormView : Fragment() {
     companion object {
         const val RECORDS = "RECORDS"
         const val TEMP_FILE = "tempFile.png"
+    }
+
+    fun checkDataElement(uid: String): List<DataElement>? {
+        val store = viewModel.mediaDataStore.value
+        Timber.tag("FORM_VIEW").d("${store}")
+
+
+        var resp: List<DataElement>? = null
+        store?.let {
+
+           val res =  it.map {
+               it.dataElements
+           }
+         val response =   res.map {
+              it?.let {
+                  it.filter {
+                  it.dataElement == uid
+              }
+              }
+            }
+            resp = response.get(0)
+        }
+        Timber.tag("FORM_VIEW").d("${resp}")
+        return resp
     }
 }

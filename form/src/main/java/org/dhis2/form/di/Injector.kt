@@ -95,7 +95,8 @@ object Injector {
                 repositoryRecords.recordUid
             ),
             rulesUtilsProvider = provideRulesUtilsProvider(),
-            legendValueProvider = provideLegendValueProvider(context)
+            legendValueProvider = provideLegendValueProvider(context),
+            d2 = D2Manager.getD2()
         )
     }
 

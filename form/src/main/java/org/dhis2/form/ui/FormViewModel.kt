@@ -4,12 +4,17 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import org.dhis2.commons.viewmodel.DispatcherProvider
 import org.dhis2.form.R
 import org.dhis2.form.data.DataIntegrityCheckResult
@@ -29,6 +34,8 @@ import org.dhis2.form.ui.event.RecyclerViewUiEvents
 import org.dhis2.form.ui.idling.FormCountingIdlingResource
 import org.dhis2.form.ui.intent.FormIntent
 import org.dhis2.form.ui.validation.validators.FieldMaskValidator
+import org.dhis2.usescases.uiboost.data.model.media.DataElement
+import org.dhis2.usescases.uiboost.data.model.media.MediaStoreConfig
 import org.hisp.dhis.android.core.arch.helpers.Result
 import org.hisp.dhis.android.core.common.FeatureType
 import org.hisp.dhis.android.core.common.ValueType
@@ -66,6 +73,9 @@ class FormViewModel(
     val calculationLoop = _calculationLoop
 
     private val _pendingIntents = MutableSharedFlow<FormIntent>()
+
+    private val _mediaDataStore = MutableStateFlow<MediaStoreConfig?>(null)
+    val mediaDataStore: StateFlow<MediaStoreConfig?> = _mediaDataStore
 
     init {
         viewModelScope.launch {
@@ -622,4 +632,33 @@ class FormViewModel(
     companion object {
         const val TAG = "FormViewModel"
     }
+    fun getMediaDataStore() {
+        viewModelScope.launch {
+            repository.getMediaDataStore().collectLatest {
+                _mediaDataStore.value = it
+                Timber.tag("MEDIA_DATA_STORE").d("${it}")
+            }
+        }
+    }
+    fun checkDataElement(uid: String): List<DataElement>? {
+        val store = mediaDataStore.value
+
+        var resp: List<DataElement>? = null
+        store?.let {
+
+            val res =  it.map {
+                it.dataElements
+            }
+            val response =   res.map {
+                it?.let {
+                    it.filter {
+                        it.dataElement == uid
+                    }
+                }
+            }
+            resp = response.get(0)
+        }
+        return resp
+    }
+
 }

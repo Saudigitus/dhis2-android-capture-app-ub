@@ -112,9 +112,9 @@ class HomeProgramViewModel @Inject internal constructor(
     fun getMediaDataStore() {
         runBlocking(Dispatchers.IO) {
             launch {
-                uBoostRepository.getDataStore().collectLatest {
-                    _dataStoreDataElement.value = (it)
-                }
+//                uBoostRepository.getDataStore().collectLatest {
+//                    _dataStoreDataElement.value = (it)
+//                }
                 uBoostRepository.getFilteredMediaDataStore().collectLatest {
                     _mediaDataStoreFiltered.value = it
                 }
