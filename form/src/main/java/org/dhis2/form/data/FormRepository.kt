@@ -1,8 +1,10 @@
 package org.dhis2.form.data
 
+import kotlinx.coroutines.flow.Flow
 import org.dhis2.form.model.FieldUiModel
 import org.dhis2.form.model.RowAction
 import org.dhis2.form.model.StoreResult
+import org.dhis2.usescases.uiboost.data.model.media.MediaStoreConfig
 import org.hisp.dhis.android.core.common.ValueType
 
 interface FormRepository {
@@ -24,4 +26,6 @@ interface FormRepository {
     fun setFieldRequestingCoordinates(uid: String, requestInProcess: Boolean)
     fun clearFocusItem()
     fun storeFile(id: String, filePath: String?): StoreResult?
+    fun getMediaDataStore(): Flow<MediaStoreConfig?>
+
 }

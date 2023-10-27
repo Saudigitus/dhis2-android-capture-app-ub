@@ -9,6 +9,6 @@ interface UBDataStoreRepository {
 
     suspend fun downloadDataStore()
 
-    suspend fun getDataStore(): Flow<List<DataStoreEntry>>
+//    suspend fun getDataStore(): Flow<List<DataStoreEntry>>
     suspend fun getFilteredMediaDataStore(): Flow<MediaStoreConfig?>
 }
