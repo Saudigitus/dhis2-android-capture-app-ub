@@ -17,12 +17,12 @@ class UBDataStoreRepositoryImpl @Inject constructor(
         val result = d2.dataStoreModule().dataStore().blockingGet()
     }
 
-    override suspend fun getDataStore(): Flow<List<DataStoreEntry>> {
-      val dataStore = d2.dataStoreModule()
-          .dataStore().byKey().eq(Constants.MEDIA_DATA_STORE_KEY).blockingGet()
-
-        return flowOf(dataStore)
-    }
+//    override suspend fun getDataStore(): Flow<List<DataStoreEntry>> {
+//      val dataStore = d2.dataStoreModule()
+//          .dataStore().byKey().eq(Constants.MEDIA_DATA_STORE_KEY).blockingGet()
+//
+//        return flowOf(dataStore)
+//    }
 
     override suspend fun getFilteredMediaDataStore(): Flow<MediaStoreConfig?> {
         val dataStore = MediaStoreConfig.fromJson(
