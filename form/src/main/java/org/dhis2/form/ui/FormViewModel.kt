@@ -656,8 +656,14 @@ class FormViewModel(
                     }
                 }
             }
-            resp = response.get(0)
+
+            if (response.get(0)?.isNotEmpty() == true) {
+                resp = response.get(0)
+            } else {
+                resp = null
+            }
         }
+        Timber.tag("FORM_VIEW").d("${resp}")
         return resp
     }
 

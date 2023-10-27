@@ -355,7 +355,9 @@ class FormView : Fragment() {
 
         viewModel.getMediaDataStore()
 
-        viewModel.checkDataElement("djduey4984930")
+       val result = viewModel.checkDataElement("djduey498493")
+
+        Timber.tag("MIGUEL_MEDIA_STORE").d("${result!!.get(0)}")
     }
 
     private fun setObservers() {
