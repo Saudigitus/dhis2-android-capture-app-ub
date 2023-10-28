@@ -98,6 +98,7 @@ import org.hisp.dhis.android.core.common.FeatureType
 import org.hisp.dhis.android.core.common.ValueType
 import org.hisp.dhis.android.core.common.ValueTypeRenderingType
 import timber.log.Timber
+import java.lang.IndexOutOfBoundsException
 
 class FormView : Fragment() {
     private var onItemChangeListener: ((action: RowAction) -> Unit)? = null
@@ -151,7 +152,7 @@ class FormView : Fragment() {
                     override fun onActivityResult(
                         requestCode: Int,
                         resultCode: Int,
-                        data: Intent?
+                        data: Intent?,
                     ) {
                         if (resultCode != RESULT_OK) {
                             showAddImageOptions()
@@ -161,7 +162,7 @@ class FormView : Fragment() {
                     override fun onRequestPermissionsResult(
                         requestCode: Int,
                         permissions: Array<String?>,
-                        grantResults: IntArray
+                        grantResults: IntArray,
                     ) {
                         if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                             showAddImageOptions()
@@ -285,7 +286,7 @@ class FormView : Fragment() {
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
-        savedInstanceState: Bundle?
+        savedInstanceState: Bundle?,
     ): View {
         val contextWrapper = ContextThemeWrapper(context, R.style.searchFormInputText)
         binding = DataBindingUtil.inflate(inflater, R.layout.view_form, container, false)
@@ -355,7 +356,7 @@ class FormView : Fragment() {
 
         viewModel.getMediaDataStore()
 
-       val result = viewModel.checkDataElement("djduey498493")
+        val result = viewModel.checkDataElement("djduey498493")
 
         Timber.tag("MIGUEL_MEDIA_STORE").d("${result!!.get(0)}")
     }
@@ -629,9 +630,9 @@ class FormView : Fragment() {
             binding.recyclerView.layoutManager as LinearLayoutManager
         val lastVisiblePosition = layoutManager.findLastVisibleItemPosition()
         return lastVisiblePosition != -1 && (
-            lastVisiblePosition == adapter.itemCount - 1 ||
-                adapter.getItemViewType(lastVisiblePosition) == R.layout.form_section
-            )
+                lastVisiblePosition == adapter.itemCount - 1 ||
+                        adapter.getItemViewType(lastVisiblePosition) == R.layout.form_section
+                )
     }
 
     private fun handleKeyBoardOnFocusChange(items: List<FieldUiModel>) {
@@ -712,7 +713,7 @@ class FormView : Fragment() {
     }
 
     private fun showYearMonthDayAgeCalendar(
-        intent: RecyclerViewUiEvents.OpenYearMonthDayAgeCalendar
+        intent: RecyclerViewUiEvents.OpenYearMonthDayAgeCalendar,
     ) {
         alertDialogView =
             LayoutInflater.from(requireContext()).inflate(R.layout.dialog_age, null)
@@ -743,22 +744,30 @@ class FormView : Fragment() {
     }
 
     private fun showDialog(intent: RecyclerViewUiEvents.ShowDescriptionLabelDialog) {
-        val dataElement = getD2().dataElement(intent.uid)
+//        val result = checkDataElement("djduey498493")
+        val result = checkDataElement(intent.uid)
+        if (result != null) {
+            try {
+//                val videos = result[0].video
+//                val audios = result[0].audio
 
-        if (dataElement.valueType()?.isFile == true) {
-            val mediaDialogFragment = newInstance(
-                title = intent.title,
-                message = intent.message ?: requireContext().getString(R.string.empty_description),
-                mediaEntities = randomMediaEntities()
-            )
-            mediaDialogFragment.show(childFragmentManager, MEDIA_DIALOG_TAG)
+                val mediaDialogFragment = newInstance(
+                    title = intent.title,
+                    message = intent.message
+                        ?: requireContext().getString(R.string.empty_description),
+                    mediaEntities = randomMediaEntities()
+                )
+                mediaDialogFragment.show(childFragmentManager, MEDIA_DIALOG_TAG)
+            } catch (ex: IndexOutOfBoundsException) {
+                showDescriptionLabelDialog(intent)
+            }
         } else {
-            showDescriptionLabelDialog(intent)
+            Timber.tag("JOB_MEDIA_STORE").d("Null DataElement!")
         }
     }
 
     private fun showDescriptionLabelDialog(
-        intent: RecyclerViewUiEvents.ShowDescriptionLabelDialog
+        intent: RecyclerViewUiEvents.ShowDescriptionLabelDialog,
     ) {
         CustomDialog(
             requireContext(),
@@ -982,7 +991,7 @@ class FormView : Fragment() {
     }
 
     private fun displayConfigurationErrors(
-        configurationError: List<RulesUtilsProviderConfigurationError>
+        configurationError: List<RulesUtilsProviderConfigurationError>,
     ) {
         if (displayConfErrors && configurationError.isNotEmpty()) {
             MaterialAlertDialogBuilder(requireContext(), R.style.DhisMaterialDialog)
@@ -1067,7 +1076,7 @@ class FormView : Fragment() {
         completionListener: ((percentage: Float) -> Unit)?,
         resultDialogUiProvider: EnrollmentResultDialogUiProvider?,
         actionIconsActivate: Boolean,
-        openErrorLocation: Boolean
+        openErrorLocation: Boolean,
     ) {
         this.locationProvider = locationProvider
         this.needToForceUpdate = needToForceUpdate
@@ -1084,7 +1093,7 @@ class FormView : Fragment() {
         onFinishDataEntry: (() -> Unit)?,
         onActivityForResult: (() -> Unit)?,
         onDataIntegrityCheck: ((result: DataIntegrityCheckResult) -> Unit)?,
-        onFieldItemsRendered: ((fieldsEmpty: Boolean) -> Unit)?
+        onFieldItemsRendered: ((fieldsEmpty: Boolean) -> Unit)?,
     ) {
         this.onItemChangeListener = onItemChangeListener
         this.onLoadingListener = onLoadingListener
@@ -1228,15 +1237,15 @@ class FormView : Fragment() {
         var resp: List<DataElement>? = null
         store?.let {
 
-           val res =  it.map {
-               it.dataElements
-           }
-         val response =   res.map {
-              it?.let {
-                  it.filter {
-                  it.dataElement == uid
-              }
-              }
+            val res = it.map {
+                it.dataElements
+            }
+            val response = res.map {
+                it?.let {
+                    it.filter {
+                        it.dataElement == uid
+                    }
+                }
             }
             resp = response.get(0)
         }
