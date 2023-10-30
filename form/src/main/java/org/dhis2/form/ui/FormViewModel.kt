@@ -1,11 +1,11 @@
 package org.dhis2.form.ui
 
 import android.media.MediaPlayer
+import android.os.Environment
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -15,7 +15,6 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import okhttp3.ResponseBody
 import org.dhis2.commons.viewmodel.DispatcherProvider
 import org.dhis2.form.R
@@ -44,7 +43,6 @@ import org.hisp.dhis.android.core.common.ValueType
 import timber.log.Timber
 import java.io.File
 import java.io.FileOutputStream
-import java.io.IOException
 
 class FormViewModel(
     private val repository: FormRepository,
@@ -83,7 +81,10 @@ class FormViewModel(
     val mediaDataStore: StateFlow<MediaStoreConfig?> = _mediaDataStore
 
     private val _mediaFile = MutableStateFlow<ResponseBody?>(null)
-    val mediaFile: StateFlow<ResponseBody?> = _mediaFile
+    val mediaFile: StateFlow<ResponseBody?> = _mediaFile // the video file body
+
+    private val _mediaFilePath = MutableStateFlow<String?>("")
+    val mediaFilePath: StateFlow<String?> = _mediaFilePath // the media path
 
     init {
         viewModelScope.launch {
@@ -682,22 +683,37 @@ class FormViewModel(
         }
     }
 
-    fun getDownloadMediax() {
+    fun getFileExtension(responseBody: ResponseBody): String? {
+        val contentType = responseBody.contentType()
+        if (contentType != null) {
+            val mediaContentType = contentType.toString()
+            println("mediaType: $mediaContentType")
+            val parts = mediaContentType.split(";")
+            val mediaType = parts[0].trim()
+
+            val extensionStart = mediaType.lastIndexOf('/')
+            if (extensionStart != -1 && extensionStart < mediaType.length - 1) {
+                return mediaType.substring(extensionStart + 1)
+            }
+        }
+        return null
+    }
+
+    fun getDownloadMedia(uid: String) {
         viewModelScope.launch {
             println("Running media get Downlaod...")
-            val body = repository.downloadMediaToLocal("rdZdCjQyl7y")
-            //_mediaFile.value = repository.downloadMediaToLocal("rdZdCjQyl7y")
-
-            //println("video_size: ${body.bytes().size}")
+            val body = repository.downloadMediaToLocal(uid)
+            _mediaFile.value = repository.downloadMediaToLocal(uid)
 
             if (body != null) {
-                println("has file data")
-                println("video_Length: ${body.byteStream()}")
+                val fileExtension = getFileExtension(body)
 
-                // Define the file path where you want to save the downloaded image
-                val file = File("Downloads/downloaded_image.mp4")
+                val directory = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "dhis2")
+                directory.mkdirs()
 
-                // Write the response body to the file
+                val file = File(directory, "$uid.${fileExtension}")
+                _mediaFilePath.value = "$directory $uid.${fileExtension}"
+
                 val outputStream = FileOutputStream(file)
                 val buffer = ByteArray(4096)
                 var bytesRead: Int
@@ -709,53 +725,30 @@ class FormViewModel(
 
                 outputStream.close()
                 inputStream.close()
-
-                // The image has been successfully downloaded and saved
             } else {
                 // Handle a null response body
             }
         }
     }
 
-    fun getDownloadMedia() {
-        viewModelScope.launch {
-            println("Running media get Downlaod...")
-            val body = repository.downloadMediaToLocal("rdZdCjQyl7y")
-            //_mediaFile.value = repository.downloadMediaToLocal("rdZdCjQyl7y")
+    fun getLocalMedia(uid: String) {
+        val directory = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "dhis2")
+        val files = directory.listFiles()
 
-            try {
-                println("video_Length: ${body.contentLength()}")
-                //println("video_size: ${body.bytes().size}")
-
-                val tempFile = File.createTempFile("temp_media", null, )
-                val fos = FileOutputStream(tempFile)
-                fos.write(body.bytes())
-                fos.close()
-
-                val mediaPlayer = MediaPlayer()
-                mediaPlayer.setDataSource(tempFile.absolutePath)
-                mediaPlayer.prepare()
-                mediaPlayer.start()
-
-                // You can control playback and add listeners as needed.
-
-                // Release the MediaPlayer when you're done.
-                mediaPlayer.setOnCompletionListener {
-                    mediaPlayer.release()
+        if (files != null) {
+            for (file in files) {
+                if (file.isFile && file.nameWithoutExtension == uid) {
+                    val filePath = file.absolutePath
+                    _mediaFilePath.value = filePath
+                    println("File found at: $filePath")
+                    break
                 }
-            } catch (e: IOException) {
-                e.printStackTrace()
             }
+        } else {
+            println("Directory does not exist or cannot be accessed.")
         }
     }
 
-    fun getDownload(){
-        runBlocking(Dispatchers.IO) {
-            launch {
-                repository.downloadMediaToLocal("rdZdCjQyl7y")
-            }
-        }
-    }
 
     fun checkDataElement(uid: String): List<DataElement>? {
         val store = mediaDataStore.value
