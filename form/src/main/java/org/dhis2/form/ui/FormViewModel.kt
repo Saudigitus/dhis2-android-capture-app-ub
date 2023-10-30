@@ -698,21 +698,23 @@ class FormViewModel(
         }
     }
 
-    fun getLocalMedia(uid: String) {
+    fun getLocalMedia(uid: String): String {
         val directory = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "dhis2")
         val files = directory.listFiles()
-
+        var path = ""
         if (files != null) {
             for (file in files) {
                 if (file.isFile && file.nameWithoutExtension == uid) {
                     val filePath = file.absolutePath
                     _mediaFilePath.value = filePath
+                    path = filePath
                     break
                 }
             }
         } else {
             println("Directory does not exist or cannot be accessed.")
         }
+        return path
     }
 
 

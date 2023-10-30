@@ -480,8 +480,6 @@ class FormRepositoryImpl(
         val service: UBService = d2.retrofit().create(UBService::class.java)
 
         val response = service.downloadFileResource(uid)
-        //Timber.tag("ResponseDownload").d("${response.bytes()}")
-
         return@withContext response
     }
 }
