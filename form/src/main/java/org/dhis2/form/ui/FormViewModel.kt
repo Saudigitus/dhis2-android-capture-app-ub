@@ -650,39 +650,6 @@ class FormViewModel(
         }
     }
 
-    fun getDownloadMediaL() {
-        viewModelScope.launch {
-            println("Running media get Downlaod...")
-            val body = repository.downloadMediaToLocal("rdZdCjQyl7y")
-            //_mediaFile.value = repository.downloadMediaToLocal("rdZdCjQyl7y")
-
-            println("video_Length: ${body.contentLength()}")
-            println("video_size: ${body.bytes().size}")
-
-            if (body != null) {
-                // Define the file path where you want to save the downloaded image
-                val file = File("downloads/downloaded_image.mp4")
-
-                // Write the response body to the file
-                val outputStream = FileOutputStream(file)
-                val buffer = ByteArray(4096)
-                var bytesRead: Int
-
-                val inputStream = body.byteStream()
-                while (inputStream.read(buffer).also { bytesRead = it } != -1) {
-                    outputStream.write(buffer, 0, bytesRead)
-                }
-
-                outputStream.close()
-                inputStream.close()
-
-                // The image has been successfully downloaded and saved
-            } else {
-                // Handle a null response body
-            }
-        }
-    }
-
     fun getFileExtension(responseBody: ResponseBody): String? {
         val contentType = responseBody.contentType()
         if (contentType != null) {
@@ -712,19 +679,19 @@ class FormViewModel(
                 directory.mkdirs()
 
                 val file = File(directory, "$uid.${fileExtension}")
-                _mediaFilePath.value = "$directory $uid.${fileExtension}"
+                    _mediaFilePath.value = "$directory $uid.${fileExtension}"
 
-                val outputStream = FileOutputStream(file)
-                val buffer = ByteArray(4096)
-                var bytesRead: Int
+                    val outputStream = FileOutputStream(file)
+                    val buffer = ByteArray(4096)
+                    var bytesRead: Int
 
-                val inputStream = body.byteStream()
-                while (inputStream.read(buffer).also { bytesRead = it } != -1) {
-                    outputStream.write(buffer, 0, bytesRead)
-                }
+                    val inputStream = body.byteStream()
+                    while (inputStream.read(buffer).also { bytesRead = it } != -1) {
+                        outputStream.write(buffer, 0, bytesRead)
+                    }
 
-                outputStream.close()
-                inputStream.close()
+                    outputStream.close()
+                    inputStream.close()
             } else {
                 // Handle a null response body
             }
@@ -740,7 +707,6 @@ class FormViewModel(
                 if (file.isFile && file.nameWithoutExtension == uid) {
                     val filePath = file.absolutePath
                     _mediaFilePath.value = filePath
-                    println("File found at: $filePath")
                     break
                 }
             }
