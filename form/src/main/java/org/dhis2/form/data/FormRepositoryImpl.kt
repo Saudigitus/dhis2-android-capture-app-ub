@@ -1,7 +1,10 @@
 package org.dhis2.form.data
 
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.withContext
+import okhttp3.ResponseBody
 import org.dhis2.form.data.helper.Constants
 import org.dhis2.form.model.ActionType
 import org.dhis2.form.model.FieldUiModel
@@ -14,10 +17,12 @@ import org.dhis2.form.ui.validation.FieldErrorMessageProvider
 import org.dhis2.ui.dialogs.bottomsheet.FieldWithIssue
 import org.dhis2.ui.dialogs.bottomsheet.IssueType
 import org.dhis2.usescases.uiboost.data.model.media.MediaStoreConfig
+import org.dhis2.usescases.uiboost.network.UBService
 import org.hisp.dhis.android.core.D2
 import org.hisp.dhis.android.core.common.ValueType
 import org.hisp.dhis.android.core.common.ValueType.LONG_TEXT
 import org.hisp.dhis.rules.models.RuleEffect
+import timber.log.Timber
 
 private const val loopThreshold = 5
 
@@ -469,5 +474,14 @@ class FormRepositoryImpl(
                 )?.value()
         )
         return flowOf(dataStore)
+    }
+
+    override suspend fun downloadMediaToLocal(uid: String): ResponseBody = withContext(Dispatchers.IO) {
+        val service: UBService = d2.retrofit().create(UBService::class.java)
+
+        val response = service.downloadFileResource(uid)
+        //Timber.tag("ResponseDownload").d("${response.bytes()}")
+
+        return@withContext response
     }
 }

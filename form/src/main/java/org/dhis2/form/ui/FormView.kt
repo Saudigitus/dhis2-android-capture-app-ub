@@ -354,6 +354,7 @@ class FormView : Fragment() {
         setObservers()
 
         viewModel.getMediaDataStore()
+        viewModel.getDownloadMedia()
 
        val result = viewModel.checkDataElement("djduey498493")
 
