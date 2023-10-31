@@ -4,6 +4,7 @@ import android.os.Parcel
 import android.os.Parcelable
 
 data class DialogMediaEntity(
+    // Add uid
     val title: String,
     val duration: String,
     val dateOfLastUpdate: String,

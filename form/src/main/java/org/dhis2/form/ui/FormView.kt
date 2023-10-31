@@ -744,12 +744,11 @@ class FormView : Fragment() {
     }
 
     private fun showDialog(intent: RecyclerViewUiEvents.ShowDescriptionLabelDialog) {
-//        val result = checkDataElement("djduey498493")
         val result = checkDataElement(intent.uid)
         if (result != null) {
             try {
-//                val videos = result[0].video
-//                val audios = result[0].audio
+                val videos = result[0].video
+                val audios = result[0].audio
 
                 val mediaDialogFragment = newInstance(
                     title = intent.title,
@@ -762,7 +761,7 @@ class FormView : Fragment() {
                 showDescriptionLabelDialog(intent)
             }
         } else {
-            Timber.tag("JOB_MEDIA_STORE").d("Null DataElement!")
+            showDescriptionLabelDialog(intent)
         }
     }
 
