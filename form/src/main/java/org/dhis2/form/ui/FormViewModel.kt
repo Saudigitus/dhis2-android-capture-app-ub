@@ -48,7 +48,7 @@ class FormViewModel(
     private val repository: FormRepository,
     private val dispatcher: DispatcherProvider,
     private val geometryController: GeometryController = GeometryController(GeometryParserImpl()),
-    private val openErrorLocation: Boolean = false
+    private val openErrorLocation: Boolean = false,
 ) : ViewModel() {
 
     val loading = MutableLiveData(true)
@@ -313,10 +313,10 @@ class FormViewModel(
             false
         } else {
             valueType.isNumeric ||
-                valueType.isText && renderType?.isPolygon() != true ||
-                valueType == ValueType.URL ||
-                valueType == ValueType.EMAIL ||
-                valueType == ValueType.PHONE_NUMBER
+                    valueType.isText && renderType?.isPolygon() != true ||
+                    valueType == ValueType.URL ||
+                    valueType == ValueType.EMAIL ||
+                    valueType == ValueType.PHONE_NUMBER
         }
     }
 
@@ -452,7 +452,7 @@ class FormViewModel(
     private fun checkFieldError(
         valueType: ValueType?,
         fieldValue: String?,
-        fieldMask: String?
+        fieldMask: String?,
     ): Throwable? {
         if (fieldValue.isNullOrEmpty()) {
             return null
@@ -483,7 +483,7 @@ class FormViewModel(
         extraData: String? = null,
         error: Throwable? = null,
         actionType: ActionType = ActionType.ON_SAVE,
-        valueType: ValueType? = null
+        valueType: ValueType? = null,
     ) = RowAction(
         id = uid,
         value = value,
@@ -500,7 +500,7 @@ class FormViewModel(
     private fun setCoordinateFieldValue(
         fieldUid: String,
         featureType: String,
-        coordinates: String?
+        coordinates: String?,
     ): RowAction {
         val type = FeatureType.valueOf(featureType)
         val geometryCoordinates = coordinates?.let {
@@ -630,6 +630,7 @@ class FormViewModel(
                     null
                 )
             )
+
             else -> RowAction(
                 id = uiEvent.uid,
                 value = uiEvent.value,
@@ -641,6 +642,7 @@ class FormViewModel(
     companion object {
         const val TAG = "FormViewModel"
     }
+
     fun getMediaDataStore() {
         viewModelScope.launch {
             repository.getMediaDataStore().collectLatest {
@@ -669,37 +671,51 @@ class FormViewModel(
     fun getDownloadMedia(uid: String) {
         viewModelScope.launch {
             println("Running media get Downlaod...")
+            println("uid = $uid")
             val body = repository.downloadMediaToLocal(uid)
-            _mediaFile.value = repository.downloadMediaToLocal(uid)
+//            _mediaFile.value = repository.downloadMediaToLocal(uid)
+            _mediaFile.value = body
 
             if (body != null) {
                 val fileExtension = getFileExtension(body)
 
-                val directory = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "dhis2")
+                val directory = File(
+                    Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
+                    "dhis2"
+                )
                 directory.mkdirs()
 
                 val file = File(directory, "$uid.${fileExtension}")
-                    _mediaFilePath.value = "$directory $uid.${fileExtension}"
+                //Antes
+                _mediaFilePath.value = "$directory $uid.${fileExtension}"
+                //Depois
+                _mediaFilePath.value = "$directory/$uid.${fileExtension}"
 
-                    val outputStream = FileOutputStream(file)
-                    val buffer = ByteArray(4096)
-                    var bytesRead: Int
+                val outputStream = FileOutputStream(file)
+                val buffer = ByteArray(4096)
+                var bytesRead: Int
 
-                    val inputStream = body.byteStream()
-                    while (inputStream.read(buffer).also { bytesRead = it } != -1) {
-                        outputStream.write(buffer, 0, bytesRead)
-                    }
+                val inputStream = body.byteStream()
+                while (inputStream.read(buffer).also { bytesRead = it } != -1) {
+                    outputStream.write(buffer, 0, bytesRead)
+                }
 
-                    outputStream.close()
-                    inputStream.close()
+                outputStream.close()
+                inputStream.close()
+                println("Downlaod finished!")
+                println("Media Path = ${_mediaFilePath.value}")
             } else {
                 // Handle a null response body
+                println("Null response on download media")
             }
         }
     }
 
     fun getLocalMedia(uid: String): String {
-        val directory = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "dhis2")
+        val directory = File(
+            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
+            "dhis2"
+        )
         val files = directory.listFiles()
         var path = ""
         if (files != null) {
@@ -724,10 +740,10 @@ class FormViewModel(
         var resp: List<DataElement>? = null
         store?.let {
 
-            val res =  it.map {
+            val res = it.map {
                 it.dataElements
             }
-            val response =   res.map {
+            val response = res.map {
                 it?.let {
                     it.filter {
                         it.dataElement == uid

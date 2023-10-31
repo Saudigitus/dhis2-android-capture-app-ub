@@ -22,9 +22,6 @@ import android.widget.DatePicker
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.ui.platform.ComposeView
 import androidx.core.content.FileProvider
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
@@ -43,12 +40,13 @@ import java.util.Calendar
 import org.dhis2.commons.ActivityResultObservable
 import org.dhis2.commons.ActivityResultObserver
 import org.dhis2.commons.Constants
-import org.dhis2.commons.bindings.dataElement
 import org.dhis2.commons.bindings.getFileFrom
 import org.dhis2.commons.bindings.getFileFromGallery
 import org.dhis2.commons.bindings.rotateImage
 import org.dhis2.commons.dialogs.AlertBottomDialog
 import org.dhis2.commons.dialogs.CustomDialog
+import org.dhis2.commons.dialogs.DialogMediaEntity
+import org.dhis2.commons.dialogs.DialogMediaType
 import org.dhis2.commons.dialogs.MediaDialogFragment.Companion.MEDIA_DIALOG_TAG
 import org.dhis2.commons.dialogs.MediaDialogFragment.Companion.newInstance
 import org.dhis2.commons.dialogs.calendarpicker.CalendarPicker
@@ -90,7 +88,6 @@ import org.dhis2.maps.views.MapSelectorActivity.Companion.LOCATION_TYPE_EXTRA
 import org.dhis2.ui.ErrorFieldList
 import org.dhis2.ui.dialogs.bottomsheet.BottomSheetDialog
 import org.dhis2.ui.dialogs.signature.SignatureDialog
-import org.hisp.dhis.android.core.D2Manager.getD2
 import org.dhis2.usescases.uiboost.data.model.media.DataElement
 import org.hisp.dhis.android.core.arch.helpers.FileResourceDirectoryHelper
 import org.hisp.dhis.android.core.arch.helpers.GeometryHelper
@@ -746,17 +743,40 @@ class FormView : Fragment() {
     }
 
     private fun showDialog(intent: RecyclerViewUiEvents.ShowDescriptionLabelDialog) {
-        val result = checkDataElement(intent.uid)
+//        val result = checkDataElement(intent.uid)
+        val result = checkDataElement("djduey498493")
         if (result != null) {
             try {
                 val videos = result[0].video
                 val audios = result[0].audio
 
+                val videoName = result[0].video[0].name
+                val videoId = result[0].video[0].id
+//                viewModel.getDownloadMedia(uid = "rdZdCjQyl7y")
+
+                val path = viewModel.getLocalMedia(uid = videoId)
+
+                Timber.d("Video Id: $videoId")
+                Timber.d("Video Name: $videoName")
+                Timber.d("Video Path: ${viewModel.mediaFilePath.value}")
+
+                val mediaEntity = DialogMediaEntity(
+                    title = videoName,
+                    duration = "null",
+                    dateOfLastUpdate = "null",
+                    url = viewModel.mediaFilePath.value!!,
+                    dialogMediaType = DialogMediaType.VIDEO
+                )
+                val mediaEntities = mutableListOf<DialogMediaEntity>()
+                mediaEntities.add(mediaEntity)
+
+
                 val mediaDialogFragment = newInstance(
                     title = intent.title,
                     message = intent.message
                         ?: requireContext().getString(R.string.empty_description),
-                    mediaEntities = randomMediaEntities()
+                    mediaEntities = mediaEntities
+//                    mediaEntities = randomMediaEntities()
                 )
                 mediaDialogFragment.show(childFragmentManager, MEDIA_DIALOG_TAG)
             } catch (ex: IndexOutOfBoundsException) {
