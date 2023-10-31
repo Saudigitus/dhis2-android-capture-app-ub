@@ -1,10 +1,11 @@
 package org.dhis2.form.ui
 
+import android.media.MediaPlayer
+import android.os.Environment
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -14,7 +15,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
+import okhttp3.ResponseBody
 import org.dhis2.commons.viewmodel.DispatcherProvider
 import org.dhis2.form.R
 import org.dhis2.form.data.DataIntegrityCheckResult
@@ -40,6 +41,8 @@ import org.hisp.dhis.android.core.arch.helpers.Result
 import org.hisp.dhis.android.core.common.FeatureType
 import org.hisp.dhis.android.core.common.ValueType
 import timber.log.Timber
+import java.io.File
+import java.io.FileOutputStream
 
 class FormViewModel(
     private val repository: FormRepository,
@@ -76,6 +79,12 @@ class FormViewModel(
 
     private val _mediaDataStore = MutableStateFlow<MediaStoreConfig?>(null)
     val mediaDataStore: StateFlow<MediaStoreConfig?> = _mediaDataStore
+
+    private val _mediaFile = MutableStateFlow<ResponseBody?>(null)
+    val mediaFile: StateFlow<ResponseBody?> = _mediaFile // the video file body
+
+    private val _mediaFilePath = MutableStateFlow<String?>("")
+    val mediaFilePath: StateFlow<String?> = _mediaFilePath // the media path
 
     init {
         viewModelScope.launch {
@@ -640,6 +649,75 @@ class FormViewModel(
             }
         }
     }
+
+    fun getFileExtension(responseBody: ResponseBody): String? {
+        val contentType = responseBody.contentType()
+        if (contentType != null) {
+            val mediaContentType = contentType.toString()
+            println("mediaType: $mediaContentType")
+            val parts = mediaContentType.split(";")
+            val mediaType = parts[0].trim()
+
+            val extensionStart = mediaType.lastIndexOf('/')
+            if (extensionStart != -1 && extensionStart < mediaType.length - 1) {
+                return mediaType.substring(extensionStart + 1)
+            }
+        }
+        return null
+    }
+
+    fun getDownloadMedia(uid: String) {
+        viewModelScope.launch {
+            println("Running media get Downlaod...")
+            val body = repository.downloadMediaToLocal(uid)
+            _mediaFile.value = repository.downloadMediaToLocal(uid)
+
+            if (body != null) {
+                val fileExtension = getFileExtension(body)
+
+                val directory = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "dhis2")
+                directory.mkdirs()
+
+                val file = File(directory, "$uid.${fileExtension}")
+                    _mediaFilePath.value = "$directory $uid.${fileExtension}"
+
+                    val outputStream = FileOutputStream(file)
+                    val buffer = ByteArray(4096)
+                    var bytesRead: Int
+
+                    val inputStream = body.byteStream()
+                    while (inputStream.read(buffer).also { bytesRead = it } != -1) {
+                        outputStream.write(buffer, 0, bytesRead)
+                    }
+
+                    outputStream.close()
+                    inputStream.close()
+            } else {
+                // Handle a null response body
+            }
+        }
+    }
+
+    fun getLocalMedia(uid: String): String {
+        val directory = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "dhis2")
+        val files = directory.listFiles()
+        var path = ""
+        if (files != null) {
+            for (file in files) {
+                if (file.isFile && file.nameWithoutExtension == uid) {
+                    val filePath = file.absolutePath
+                    _mediaFilePath.value = filePath
+                    path = filePath
+                    break
+                }
+            }
+        } else {
+            println("Directory does not exist or cannot be accessed.")
+        }
+        return path
+    }
+
+
     fun checkDataElement(uid: String): List<DataElement>? {
         val store = mediaDataStore.value
 
