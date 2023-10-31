@@ -743,8 +743,10 @@ class FormView : Fragment() {
     }
 
     private fun showDialog(intent: RecyclerViewUiEvents.ShowDescriptionLabelDialog) {
-//        val result = checkDataElement(intent.uid)
-        val result = checkDataElement("djduey498493")
+//        val result = checkDataElement(intent.uid) // No video here!
+        val result = checkDataElement("djduey498493") // Real video here!
+//        val result = checkDataElement("kwdbrmEIdpt")  // No video here!
+//        val result = checkDataElement("rdZdCjQyl7y")  // No video here!
         if (result != null) {
             try {
                 val videos = result[0].video
