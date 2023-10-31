@@ -698,24 +698,31 @@ class FormViewModel(
         }
     }
 
-    fun getLocalMedia(uid: String): String {
-        val directory = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "dhis2")
-        val files = directory.listFiles()
-        var path = ""
-        if (files != null) {
-            for (file in files) {
-                if (file.isFile && file.nameWithoutExtension == uid) {
-                    val filePath = file.absolutePath
-                    _mediaFilePath.value = filePath
-                    path = filePath
-                    break
+    fun getLocalMedia(uid: String): String? {
+        var path: String? = null
+        viewModelScope.launch {
+            val directory = File(
+                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
+                "dhis2"
+            )
+            val files = directory.listFiles()
+            if (files != null) {
+                for (file in files) {
+                    if (file.isFile && file.nameWithoutExtension == uid) {
+                        val filePath = file.absolutePath
+                        _mediaFilePath.value = filePath
+                        path = filePath
+                        break
+                    }
                 }
+            } else {
+                println("Directory does not exist or cannot be accessed.")
             }
-        } else {
-            println("Directory does not exist or cannot be accessed.")
         }
+        Timber.tag("RETURNED_PATH").d(path)
         return path
     }
+
 
 
     fun checkDataElement(uid: String): List<DataElement>? {
