@@ -52,7 +52,6 @@ import org.dhis2.commons.dialogs.MediaDialogFragment.Companion.newInstance
 import org.dhis2.commons.dialogs.calendarpicker.CalendarPicker
 import org.dhis2.commons.dialogs.calendarpicker.OnDatePickerListener
 import org.dhis2.commons.dialogs.imagedetail.ImageDetailBottomDialog
-import org.dhis2.commons.dialogs.randomMediaEntities
 import org.dhis2.commons.extensions.closeKeyboard
 import org.dhis2.commons.extensions.serializable
 import org.dhis2.commons.extensions.truncate
@@ -354,6 +353,9 @@ class FormView : Fragment() {
         viewModel.getMediaDataStore()
         viewModel.getDownloadMedia("rdZdCjQyl7y") // to dpwnload media
         viewModel.getLocalMedia("rdZdCjQyl7y") // to get local media
+
+//        viewModel.getDownloadMedia("kwdbrmEIdpt") // to dpwnload media
+//        viewModel.getLocalMedia("kwdbrmEIdpt") // to get local media
 
         val result = viewModel.checkDataElement("djduey498493")
 
@@ -743,29 +745,26 @@ class FormView : Fragment() {
     }
 
     private fun showDialog(intent: RecyclerViewUiEvents.ShowDescriptionLabelDialog) {
-//        val result = checkDataElement(intent.uid) // No video here!
-        val result = checkDataElement("djduey498493") // Real video here!
-//        val result = checkDataElement("kwdbrmEIdpt")  // No video here!
-//        val result = checkDataElement("rdZdCjQyl7y")  // No video here!
-        if (result != null) {
+//        val result = checkDataElement(intent.uid)
+        val dataElement = checkDataElement("djduey498493")?.get(0)
+        Timber.d("DataElement = ${dataElement.toString()}")
+        if (dataElement != null) {
             try {
-                val videos = result[0].video
-                val audios = result[0].audio
+                val videos = dataElement.video
+//                val audios = dataElement.audio
 
-                val videoName = result[0].video[0].name
-                val videoId = result[0].video[0].id
-//                viewModel.getDownloadMedia(uid = "rdZdCjQyl7y")
-
-                val path = viewModel.getLocalMedia(uid = videoId)
+                val videoId = videos[0].id
+                val videoName = videos[0].name
+                val videoPath = viewModel.mediaFilePath.value // Improve this like above video attributes
 
                 Timber.d("Video Id: $videoId")
                 Timber.d("Video Name: $videoName")
-                Timber.d("Video Path: ${viewModel.mediaFilePath.value}")
+                Timber.d("Video Path: $videoPath")
 
                 val mediaEntity = DialogMediaEntity(
                     title = videoName,
-                    duration = "null",
-                    dateOfLastUpdate = "null",
+                    duration = "01:00",
+                    dateOfLastUpdate = "31-10-2023",
                     url = viewModel.mediaFilePath.value!!,
                     dialogMediaType = DialogMediaType.VIDEO
                 )
@@ -778,7 +777,6 @@ class FormView : Fragment() {
                     message = intent.message
                         ?: requireContext().getString(R.string.empty_description),
                     mediaEntities = mediaEntities
-//                    mediaEntities = randomMediaEntities()
                 )
                 mediaDialogFragment.show(childFragmentManager, MEDIA_DIALOG_TAG)
             } catch (ex: IndexOutOfBoundsException) {
