@@ -13,4 +13,5 @@ internal interface ProgramRepository {
     fun clearCache()
     fun getDataStoreData(): Flow<List<DataStoreEntry>>
     fun getFilteredDataStore(): Flow<DataStoreAppConfig?>
+    suspend fun downloadMediaToLocal(uid: String)
 }

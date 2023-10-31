@@ -1,6 +1,7 @@
 package org.dhis2.form.data
 
 import kotlinx.coroutines.flow.Flow
+import okhttp3.ResponseBody
 import org.dhis2.form.model.FieldUiModel
 import org.dhis2.form.model.RowAction
 import org.dhis2.form.model.StoreResult
@@ -27,5 +28,5 @@ interface FormRepository {
     fun clearFocusItem()
     fun storeFile(id: String, filePath: String?): StoreResult?
     fun getMediaDataStore(): Flow<MediaStoreConfig?>
-
+    suspend fun downloadMediaToLocal(uid: String): ResponseBody
 }
