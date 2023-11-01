@@ -22,6 +22,7 @@ import android.widget.DatePicker
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
+import androidx.compose.runtime.collectAsState
 import androidx.core.content.FileProvider
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
@@ -35,6 +36,11 @@ import com.google.android.material.timepicker.MaterialTimePicker
 import com.google.android.material.timepicker.TimeFormat.CLOCK_12H
 import com.google.android.material.timepicker.TimeFormat.CLOCK_24H
 import com.journeyapps.barcodescanner.ScanOptions
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import java.io.File
 import java.util.Calendar
 import org.dhis2.commons.ActivityResultObservable
@@ -45,13 +51,15 @@ import org.dhis2.commons.bindings.getFileFromGallery
 import org.dhis2.commons.bindings.rotateImage
 import org.dhis2.commons.dialogs.AlertBottomDialog
 import org.dhis2.commons.dialogs.CustomDialog
-import org.dhis2.commons.dialogs.DialogMediaEntity
-import org.dhis2.commons.dialogs.DialogMediaType
-import org.dhis2.commons.dialogs.MediaDialogFragment.Companion.MEDIA_DIALOG_TAG
-import org.dhis2.commons.dialogs.MediaDialogFragment.Companion.newInstance
+import org.dhis2.commons.dialogs.media.DialogMediaEntity
+import org.dhis2.commons.dialogs.media.DialogMediaType
+import org.dhis2.commons.dialogs.media.MediaDialogFragment.Companion.MEDIA_DIALOG_TAG
+import org.dhis2.commons.dialogs.media.MediaDialogFragment.Companion.mediaDialog
 import org.dhis2.commons.dialogs.calendarpicker.CalendarPicker
 import org.dhis2.commons.dialogs.calendarpicker.OnDatePickerListener
 import org.dhis2.commons.dialogs.imagedetail.ImageDetailBottomDialog
+import org.dhis2.commons.dialogs.media.LoadingMediaDialogFragment.Companion.LOADING_MEDIA_DIALOG_TAG
+import org.dhis2.commons.dialogs.media.LoadingMediaDialogFragment.Companion.loadingMediaDialog
 import org.dhis2.commons.extensions.closeKeyboard
 import org.dhis2.commons.extensions.serializable
 import org.dhis2.commons.extensions.truncate
@@ -353,9 +361,6 @@ class FormView : Fragment() {
         viewModel.getMediaDataStore()
         viewModel.getDownloadMedia("rdZdCjQyl7y") // to dpwnload media
         viewModel.getLocalMedia("rdZdCjQyl7y") // to get local media
-
-//        viewModel.getDownloadMedia("kwdbrmEIdpt") // to dpwnload media
-//        viewModel.getLocalMedia("kwdbrmEIdpt") // to get local media
 
         val result = viewModel.checkDataElement("djduey498493")
 
@@ -747,38 +752,68 @@ class FormView : Fragment() {
     private fun showDialog(intent: RecyclerViewUiEvents.ShowDescriptionLabelDialog) {
 //        val result = checkDataElement(intent.uid)
         val dataElement = checkDataElement("djduey498493")?.get(0)
+//        val dataElement = checkDataElement("djduey498493")?.get(0)
         Timber.d("DataElement = ${dataElement.toString()}")
+
         if (dataElement != null) {
             try {
+                // (1) Get video id
                 val videos = dataElement.video
 //                val audios = dataElement.audio
 
                 val videoId = videos[0].id
                 val videoName = videos[0].name
-                val videoPath = viewModel.mediaFilePath.value // Improve this like above video attributes
+                val videoPath =
+                    viewModel.mediaFilePath.value // Improve this like above video attributes
 
-                Timber.d("Video Id: $videoId")
-                Timber.d("Video Name: $videoName")
-                Timber.d("Video Path: $videoPath")
+                // (2) Download video
+                viewModel.getDownloadMedia("rdZdCjQyl7y")
+                val scope = CoroutineScope(Dispatchers.IO)
+                scope.launch {
+                    val loadingDialog = loadingMediaDialog()
+                    viewModel.isLoadingMedia.collect { isLoadingMedia ->
+                        if (isLoadingMedia) {
+                            loadingDialog.show(
+                                childFragmentManager,
+                                LOADING_MEDIA_DIALOG_TAG
+                            )
+                        } else {
+                            loadingDialog.dismiss()
+                            Timber.d("Media loaded!")
+                        }
+                    }
+                }
 
-                val mediaEntity = DialogMediaEntity(
-                    title = videoName,
-                    duration = "01:00",
-                    dateOfLastUpdate = "31-10-2023",
-                    url = viewModel.mediaFilePath.value!!,
-                    dialogMediaType = DialogMediaType.VIDEO
-                )
-                val mediaEntities = mutableListOf<DialogMediaEntity>()
-                mediaEntities.add(mediaEntity)
-
-
-                val mediaDialogFragment = newInstance(
-                    title = intent.title,
-                    message = intent.message
-                        ?: requireContext().getString(R.string.empty_description),
-                    mediaEntities = mediaEntities
-                )
-                mediaDialogFragment.show(childFragmentManager, MEDIA_DIALOG_TAG)
+//                // (3) Get local video
+//                viewModel.getLocalMedia(videos[0].id)
+////                viewModel.getDownloadMedia("rdZdCjQyl7y") // to dpwnload media
+////                viewModel.getLocalMedia("rdZdCjQyl7y") // to get local media
+//
+//                Timber.d("Video Id: $videoId")
+//                Timber.d("Video Name: $videoName")
+//                Timber.d("Video Path: $videoPath")
+//
+//                // (4) Setup media data
+//                val mediaEntity = DialogMediaEntity(
+//                    title = videoName,
+//                    duration = "01:00",
+//                    dateOfLastUpdate = "31-10-2023",
+//                    url = videoPath!!,
+//                    dialogMediaType = DialogMediaType.VIDEO
+//                )
+//
+//                // (5) Setup media lists
+//                val mediaEntities = mutableListOf<DialogMediaEntity>()
+//                mediaEntities.add(mediaEntity)
+//
+//                // (6) Show dialog
+//                val mediaDialogFragment = mediaDialog(
+//                    title = intent.title,
+//                    message = intent.message
+//                        ?: requireContext().getString(R.string.empty_description),
+//                    mediaEntities = mediaEntities
+//                )
+//                mediaDialogFragment.show(childFragmentManager, MEDIA_DIALOG_TAG)
             } catch (ex: IndexOutOfBoundsException) {
                 showDescriptionLabelDialog(intent)
             }

@@ -1,4 +1,4 @@
-package org.dhis2.commons.dialogs
+package org.dhis2.commons.dialogs.media
 
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -48,7 +48,7 @@ class MediaDialogFragment : DialogFragment() {
         private const val MEDIA_DIALOG_MESSAGE = "message"
         private const val MEDIA_DIALOG_MEDIA_ENTITIES = "media_entities"
 
-        fun newInstance(
+        fun mediaDialog(
             title: String,
             message: String,
             mediaEntities: List<DialogMediaEntity>

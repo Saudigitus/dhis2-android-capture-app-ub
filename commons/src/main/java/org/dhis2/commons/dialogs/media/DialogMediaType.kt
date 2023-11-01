@@ -1,4 +1,4 @@
-package org.dhis2.commons.dialogs
+package org.dhis2.commons.dialogs.media
 
 import android.os.Parcel
 import android.os.Parcelable

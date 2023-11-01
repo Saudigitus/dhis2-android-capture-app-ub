@@ -9,6 +9,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flowOn
@@ -84,6 +85,9 @@ class FormViewModel(
 
     private val _mediaFilePath = MutableStateFlow<String?>("")
     val mediaFilePath: StateFlow<String?> = _mediaFilePath // the media path
+
+    private val _isLoadingMedia = MutableStateFlow(false)
+    val isLoadingMedia = _isLoadingMedia.asStateFlow()
 
     init {
         viewModelScope.launch {
@@ -669,6 +673,8 @@ class FormViewModel(
 
     fun getDownloadMedia(uid: String) {
         viewModelScope.launch {
+            _isLoadingMedia.value = true
+            Timber.d("Is loading = ${_isLoadingMedia.value}")
             println("Running media get Downlaod...")
             println("uid = $uid")
 
@@ -706,10 +712,12 @@ class FormViewModel(
                 // Handle a null response body
                 println("Null response on download media")
             }
+            _isLoadingMedia.value = false
+            Timber.d("Is loading = ${_isLoadingMedia.value}")
         }
     }
 
-//    <<<<<<< HEAD
+    //    <<<<<<< HEAD
 //    fun getLocalMedia(uid: String): String {
 //        val directory = File(
 //            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
@@ -730,62 +738,63 @@ class FormViewModel(
 //            println("Directory does not exist or cannot be accessed.")
 //        }
 //        ====== =
-        fun getLocalMedia(uid: String): String? {
-            var path: String? = null
-            viewModelScope.launch {
-                val directory = File(
-                    Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
-                    "dhis2"
-                )
-                val files = directory.listFiles()
-                if (files != null) {
-                    for (file in files) {
-                        if (file.isFile && file.nameWithoutExtension == uid) {
-                            val filePath = file.absolutePath
-                            _mediaFilePath.value = filePath
-                            path = filePath
-                            break
-                        }
+    fun getLocalMedia(uid: String): String? {
+        var path: String? = null
+        viewModelScope.launch {
+            val directory = File(
+                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
+                "dhis2"
+            )
+            val files = directory.listFiles()
+            if (files != null) {
+                for (file in files) {
+                    if (file.isFile && file.nameWithoutExtension == uid) {
+                        val filePath = file.absolutePath
+                        _mediaFilePath.value = filePath
+                        path = filePath
+                        break
                     }
-                } else {
-                    println("Directory does not exist or cannot be accessed.")
                 }
+            } else {
+                println("Directory does not exist or cannot be accessed.")
             }
-            Timber.tag("RETURNED_PATH").d(path)
-//            >>>>>>> develop
-            return path
         }
-//
+        Timber.tag("RETURNED_PATH").d(path)
+//            >>>>>>> develop
+        return path
+    }
+
+    //
 //
 //        <<<<<<< HEAD
 //        ====== =
 //
 //        >>>>>>> develop
-        fun checkDataElement(uid: String): List<DataElement>? {
-            val store = mediaDataStore.value
+    fun checkDataElement(uid: String): List<DataElement>? {
+        val store = mediaDataStore.value
 
-            var resp: List<DataElement>? = null
-            store?.let {
+        var resp: List<DataElement>? = null
+        store?.let {
 
-                val res = it.map {
-                    it.dataElements
-                }
-                val response = res.map {
-                    it?.let {
-                        it.filter {
-                            it.dataElement == uid
-                        }
+            val res = it.map {
+                it.dataElements
+            }
+            val response = res.map {
+                it?.let {
+                    it.filter {
+                        it.dataElement == uid
                     }
                 }
-
-                if (response.get(0)?.isNotEmpty() == true) {
-                    resp = response.get(0)
-                } else {
-                    resp = null
-                }
             }
-            Timber.tag("FORM_VIEW").d("${resp}")
-            return resp
-        }
 
+            if (response.get(0)?.isNotEmpty() == true) {
+                resp = response.get(0)
+            } else {
+                resp = null
+            }
+        }
+        Timber.tag("FORM_VIEW").d("${resp}")
+        return resp
     }
+
+}
