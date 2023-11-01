@@ -23,6 +23,7 @@ import org.hisp.dhis.android.core.common.ValueType
 import org.hisp.dhis.android.core.common.ValueType.LONG_TEXT
 import org.hisp.dhis.rules.models.RuleEffect
 import timber.log.Timber
+import java.io.IOException
 
 private const val loopThreshold = 5
 
@@ -476,10 +477,22 @@ class FormRepositoryImpl(
         return flowOf(dataStore)
     }
 
-    override suspend fun downloadMediaToLocal(uid: String): ResponseBody = withContext(Dispatchers.IO) {
+    override suspend fun downloadMediaToLocal(uid: String): ResponseBody? = withContext(Dispatchers.IO) {
         val service: UBService = d2.retrofit().create(UBService::class.java)
+        
+        try {
+            val response = service.downloadFileResource(uid)
+            if (response.isSuccessful) {
+                return@withContext response.body()!!
+            } else {
+                Timber.tag("MEDIA_REQUEST_CODE_ERROR").d("ERROR CODE: ${response.code()}")
+                return@withContext null
+            }
+        } catch (e: Exception) {
+            e.printStackTrace() // Print the exception for debugging
+            Timber.tag("MEDIA_REQUEST_CODE_ERROR_EX").d("$e")
 
-        val response = service.downloadFileResource(uid)
-        return@withContext response
+            return@withContext null
+        }
     }
 }
