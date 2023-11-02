@@ -25,6 +25,7 @@ import androidx.annotation.RequiresApi
 import androidx.compose.runtime.collectAsState
 import androidx.core.content.FileProvider
 import androidx.databinding.DataBindingUtil
+import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.viewModels
@@ -38,7 +39,9 @@ import com.google.android.material.timepicker.TimeFormat.CLOCK_24H
 import com.journeyapps.barcodescanner.ScanOptions
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import java.io.File
@@ -749,6 +752,20 @@ class FormView : Fragment() {
             .show()
     }
 
+    private fun isDialogFragmentShowing(
+        fragmentManager: FragmentManager,
+        fragmentTag: String,
+    ): Boolean {
+        try {
+            val existingFragment = fragmentManager.findFragmentByTag(fragmentTag)
+            return existingFragment != null && existingFragment is DialogFragment && existingFragment.isVisible
+        } catch (ex: Exception) {
+            ex.printStackTrace()
+            return false
+        }
+    }
+
+    @OptIn(FlowPreview::class)
     private fun showDialog(intent: RecyclerViewUiEvents.ShowDescriptionLabelDialog) {
 //        val result = checkDataElement(intent.uid)
         val dataElement = checkDataElement("djduey498493")?.get(0)
@@ -768,11 +785,14 @@ class FormView : Fragment() {
 
                 // (2) Download video
                 viewModel.getDownloadMedia("rdZdCjQyl7y")
-                val scope = CoroutineScope(Dispatchers.IO)
-                scope.launch {
+                CoroutineScope(Dispatchers.IO).launch {
                     val loadingDialog = loadingMediaDialog()
-                    viewModel.isLoadingMedia.collect { isLoadingMedia ->
-                        if (isLoadingMedia) {
+                    viewModel.isLoadingMedia.debounce(555).collect { isLoadingMedia ->
+                        if (isLoadingMedia && !isDialogFragmentShowing(
+                                fragmentManager = childFragmentManager,
+                                fragmentTag = LOADING_MEDIA_DIALOG_TAG
+                            )
+                        ) {
                             loadingDialog.show(
                                 childFragmentManager,
                                 LOADING_MEDIA_DIALOG_TAG
@@ -780,6 +800,37 @@ class FormView : Fragment() {
                         } else {
                             loadingDialog.dismiss()
                             Timber.d("Media loaded!")
+
+                            viewModel.getLocalMedia("rdZdCjQyl7y")
+
+                            val mediaEntity = DialogMediaEntity(
+                                title = videoName,
+                                duration = "01:00",
+                                dateOfLastUpdate = "31-10-2023",
+                                url = videoPath!!,
+                                dialogMediaType = DialogMediaType.VIDEO
+                            )
+
+                            val mediaEntities = mutableListOf<DialogMediaEntity>()
+                            mediaEntities.add(mediaEntity)
+
+                            val mediaDialogFragment = mediaDialog(
+                                title = intent.title,
+                                message = intent.message
+                                    ?: requireContext().getString(R.string.empty_description),
+                                mediaEntities = mediaEntities
+                            )
+
+                            if (!isDialogFragmentShowing(
+                                    fragmentManager = childFragmentManager,
+                                    fragmentTag = MEDIA_DIALOG_TAG
+                                )
+                            ) {
+                                mediaDialogFragment.show(childFragmentManager, MEDIA_DIALOG_TAG)
+                            } else {
+                                mediaDialogFragment.dismiss()
+                                Timber.d("Media dialog dismissed!")
+                            }
                         }
                     }
                 }
