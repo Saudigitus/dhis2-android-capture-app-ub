@@ -673,7 +673,7 @@ class FormViewModel(
         val contentType = responseBody.contentType()
         if (contentType != null) {
             val mediaContentType = contentType.toString()
-            println("mediaType: $mediaContentType")
+            Timber.d("mediaType: $mediaContentType")
             val parts = mediaContentType.split(";")
             val mediaType = parts[0].trim()
 
@@ -689,30 +689,40 @@ class FormViewModel(
         videos: List<Video> = emptyList(),
         audios: List<Audio> = emptyList(),
     ) {
-        var downloadAllMedia: Deferred<Unit>
-        videos.forEachIndexed { index, video ->
-            CoroutineScope(Dispatchers.IO).launch {
-                if (index == 0) {
-                    _allMediaWasDownloaded.value = false
-                }
-
-                Timber.d("Video Id => ${video.id}")
-
-                downloadAllMedia = async { getDownloadMedia(video.id) }
-                awaitAll(downloadAllMedia)
-
-                if (index == videos.size - 1) {
-                    _allMediaWasDownloaded.value = true
+        viewModelScope.launch {
+            val downloadTasks = videos.map { video ->
+                async(Dispatchers.IO) {
+                    getDownloadMedia(video.id)
                 }
             }
+            downloadTasks.awaitAll()
+            _allMediaWasDownloaded.value = true
+            Timber.d("Download Media Finished!")
         }
+//        var downloadAllMedia: Deferred<Unit>
+//        videos.forEachIndexed { index, video ->
+//            viewModelScope.launch {
+//                if (index == 0) {
+//                    _allMediaWasDownloaded.value = false
+//                }
+//
+//                Timber.d("Video Id => ${video.id}")
+//
+//                downloadAllMedia = async { getDownloadMedia(video.id) }
+//                awaitAll(downloadAllMedia)
+//
+//                if (index == videos.size - 1) {
+//                    _allMediaWasDownloaded.value = true
+//                }
+//            }
+//        }
     }
 
     fun getDownloadMedia(uid: String) {
         try {
             viewModelScope.launch {
-                println("Running media get Downlaod...")
-                println("uid = $uid")
+                Timber.d("Running media get Downlaod...")
+                Timber.d("uid = $uid")
 
                 val body = repository.downloadMediaToLocal(uid)
                 _mediaFile.value = body
@@ -739,11 +749,11 @@ class FormViewModel(
 
                     outputStream.close()
                     inputStream.close()
-                    println("Downlaod finished!")
-                    println("Media Path = ${_mediaFilePath.value}")
+                    Timber.d("Downlaod finished!")
+                    Timber.d("Media Path = ${_mediaFilePath.value}")
                 } else {
                     // Handle a null response body
-                    println("Null response on download media with uid = [$uid]")
+                    Timber.d("Null response on download media with uid = [$uid]")
                 }
             }
         } catch (ex: Exception) {
@@ -770,7 +780,7 @@ class FormViewModel(
                     }
                 }
             } else {
-                println("Directory does not exist or cannot be accessed.")
+                Timber.d("Directory does not exist or cannot be accessed.")
             }
         }
         Timber.tag("RETURNED_PATH").d(path)
@@ -781,23 +791,36 @@ class FormViewModel(
         videos: List<Video> = emptyList(),
         audios: List<Audio> = emptyList(),
     ) {
-        var loadMediaPaths: Deferred<Unit>
-        videos.forEach { video ->
-            CoroutineScope(Dispatchers.IO).launch {
-                loadMediaPaths = async {
-                    getLocalMediaPath(video.id)
-                }
-                awaitAll(loadMediaPaths)
+        viewModelScope.launch {
+            val mediaEntitiesList = mutableListOf<DialogMediaEntity>()
 
+            videos.forEach { video ->
+                val mediaPath = getLocalMediaPath(uid = video.id)
                 val mediaEntity = DialogMediaEntity(
                     title = video.name,
                     duration = "01:00",
                     dateOfLastUpdate = "31-10-2023",
-                    url = mediaFilePath.value!!,
+                    url = mediaPath ?: "", // Todo: review this
                     dialogMediaType = DialogMediaType.VIDEO
                 )
-                mediaEntities.value.add(mediaEntity)
+                mediaEntitiesList.add(mediaEntity)
             }
+
+            audios.forEach { audio ->
+                val mediaPath = getLocalMediaPath(uid = audio.id)
+                val mediaEntity = DialogMediaEntity(
+                    title = audio.name,
+                    duration = "02:00",
+                    dateOfLastUpdate = "01-10-2023",
+                    url = mediaPath ?: "", // Todo: review this
+                    dialogMediaType = DialogMediaType.AUDIO
+                )
+                mediaEntitiesList.add(mediaEntity)
+            }
+
+            mediaEntities.value.addAll(mediaEntitiesList)
+            setMediaLoading(loading = false)
+            Timber.d("All Media Paths Loaded!")
         }
     }
 

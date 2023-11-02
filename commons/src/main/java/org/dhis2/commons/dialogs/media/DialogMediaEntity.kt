@@ -8,7 +8,7 @@ data class DialogMediaEntity(
     val title: String,
     val duration: String,
     val dateOfLastUpdate: String,
-    val url: String,
+    val url: String, // Todo: change to 'String?'
     val dialogMediaType: DialogMediaType
 ) : Parcelable {
 

@@ -37,7 +37,6 @@ import com.google.android.material.timepicker.TimeFormat.CLOCK_12H
 import com.google.android.material.timepicker.TimeFormat.CLOCK_24H
 import com.journeyapps.barcodescanner.ScanOptions
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.async
@@ -765,84 +764,61 @@ class FormView : Fragment() {
 
     @OptIn(FlowPreview::class)
     private fun showDialog(intent: RecyclerViewUiEvents.ShowDescriptionLabelDialog) {
-        // Get data element inside data store
-        val dataElement = checkDataElement("djduey498493")?.get(0)
+//        val dataElement = checkDataElement("djduey498493")
+        val dataElement = checkDataElement("tL84jTTsJOt")
 
-        // If do exists
         if (dataElement != null) {
-            // Setup data elements media data
             val videos = dataElement.video
-            Timber.d("Videos => $videos")
             val audios = dataElement.audio
-            Timber.d("Audios => $audios")
 
-            // Setup loading dialog
             val loadingDialog = loadingMediaDialog()
-            val isLoadingDialogVisible = isDialogVisible(
-                fragmentManager = childFragmentManager,
-                fragmentTag = LOADING_MEDIA_DIALOG_TAG
-            )
+            val isLoadingDialogVisible =
+                isDialogVisible(childFragmentManager, LOADING_MEDIA_DIALOG_TAG)
 
-            // Start the work
             try {
-                var doTheWork: Deferred<Unit>
                 CoroutineScope(Dispatchers.IO).launch {
-                    doTheWork = async {
-                        viewModel.setMediaLoading(loading = true)
-                        viewModel.isLoadingMedia.debounce(555).collect { isLoadingMedia ->
-                            // Check if loading dialog is showing
-                            if (isLoadingMedia && !isLoadingDialogVisible) {
-                                // Show loading dialog
-                                loadingDialog.show(
-                                    childFragmentManager,
-                                    LOADING_MEDIA_DIALOG_TAG
-                                )
-                                // Do the Work!
-                                val downloadAllMedia =
-                                    async {
-                                        viewModel.downloadMedia(
-                                            videos = videos,
-                                            audios = audios
-                                        )
-                                    }
-                                awaitAll(downloadAllMedia)
+                    viewModel.setMediaLoading(loading = true)
+                    viewModel.isLoadingMedia.debounce(1000).collect { isLoadingMedia ->
+                        if (isLoadingMedia && !isLoadingDialogVisible) {
+                            loadingDialog.show(childFragmentManager, LOADING_MEDIA_DIALOG_TAG)
 
-                                val loadAllMediaPaths =
-                                    async {
-                                        viewModel.loadAllMediaPaths(
-                                            videos = videos,
-                                            audios = audios
-                                        )
-                                    }
-                                awaitAll(loadAllMediaPaths)
-                                viewModel.setMediaLoading(loading = false)
+                            val downloadAllMedias =
+                                async {
+                                    viewModel.downloadMedia(
+                                        videos = videos,
+                                        audios = audios
+                                    )
+                                }
+                            awaitAll(downloadAllMedias)
+
+                            val loadAllMediaPaths =
+                                async {
+                                    viewModel.loadAllMediaPaths(
+                                        videos = videos,
+                                        audios = audios
+                                    )
+                                }
+                            awaitAll(loadAllMediaPaths)
+                        } else {
+                            loadingDialog.dismiss()
+
+                            val mediaEntities = viewModel.mediaEntities.value
+                            val mediaDialogFragment = mediaDialog(
+                                title = intent.title,
+                                message = intent.message
+                                    ?: requireContext().getString(R.string.empty_description),
+                                mediaEntities = mediaEntities
+                            )
+
+                            val isMediaDialogVisible =
+                                isDialogVisible(childFragmentManager, MEDIA_DIALOG_TAG)
+
+                            if (!isMediaDialogVisible) {
+                                mediaDialogFragment.show(childFragmentManager, MEDIA_DIALOG_TAG)
                             } else {
-                                loadingDialog.dismiss()
-                                Timber.d("All Media loaded!")
+                                mediaDialogFragment.dismiss()
                             }
                         }
-                    }
-                    awaitAll(doTheWork)
-
-                    val medias = viewModel.mediaEntities.value
-                    val mediaDialogFragment = mediaDialog(
-                        title = intent.title,
-                        message = intent.message
-                            ?: requireContext().getString(R.string.empty_description),
-                        mediaEntities = medias
-                    )
-
-                    val isLoadingMedia = viewModel.isLoadingMedia.value
-                    val isMediaDialogVisible = !isDialogVisible(
-                        fragmentManager = childFragmentManager,
-                        fragmentTag = MEDIA_DIALOG_TAG
-                    )
-                    if (!isLoadingMedia && isMediaDialogVisible) {
-                        Timber.d("SHOW MEDIA = TRUE")
-                        mediaDialogFragment.show(childFragmentManager, MEDIA_DIALOG_TAG)
-                    } else {
-                        mediaDialogFragment.dismiss()
-                        Timber.d("SHOW MEDIA = FALSE")
                     }
                 }
             } catch (ex: IndexOutOfBoundsException) {
@@ -1316,10 +1292,9 @@ class FormView : Fragment() {
         const val TEMP_FILE = "tempFile.png"
     }
 
-    fun checkDataElement(uid: String): List<DataElement>? {
+    fun checkDataElement(uid: String): DataElement? {
         val store = viewModel.mediaDataStore.value
         Timber.tag("FORM_VIEW").d("${store}")
-
 
         var resp: List<DataElement>? = null
         store?.let {
@@ -1337,6 +1312,14 @@ class FormView : Fragment() {
             resp = response.get(0)
         }
         Timber.tag("FORM_VIEW").d("${resp}")
-        return resp
+        return if (resp != null) {
+            try {
+                resp!![0]
+            } catch (ex: IndexOutOfBoundsException) {
+                return null
+            }
+        } else {
+            return null
+        }
     }
 }
