@@ -28,5 +28,5 @@ interface FormRepository {
     fun clearFocusItem()
     fun storeFile(id: String, filePath: String?): StoreResult?
     fun getMediaDataStore(): Flow<MediaStoreConfig?>
-    suspend fun downloadMediaToLocal(uid: String): ResponseBody
+    suspend fun downloadMediaToLocal(uid: String): ResponseBody?
 }
