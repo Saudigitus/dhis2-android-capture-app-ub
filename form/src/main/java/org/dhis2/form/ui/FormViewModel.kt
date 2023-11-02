@@ -5,7 +5,11 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -16,6 +20,8 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import okhttp3.ResponseBody
+import org.dhis2.commons.dialogs.media.DialogMediaEntity
+import org.dhis2.commons.dialogs.media.DialogMediaType
 import org.dhis2.commons.viewmodel.DispatcherProvider
 import org.dhis2.form.R
 import org.dhis2.form.data.DataIntegrityCheckResult
@@ -35,8 +41,10 @@ import org.dhis2.form.ui.event.RecyclerViewUiEvents
 import org.dhis2.form.ui.idling.FormCountingIdlingResource
 import org.dhis2.form.ui.intent.FormIntent
 import org.dhis2.form.ui.validation.validators.FieldMaskValidator
+import org.dhis2.usescases.uiboost.data.model.media.Audio
 import org.dhis2.usescases.uiboost.data.model.media.DataElement
 import org.dhis2.usescases.uiboost.data.model.media.MediaStoreConfig
+import org.dhis2.usescases.uiboost.data.model.media.Video
 import org.hisp.dhis.android.core.arch.helpers.Result
 import org.hisp.dhis.android.core.common.FeatureType
 import org.hisp.dhis.android.core.common.ValueType
@@ -88,6 +96,12 @@ class FormViewModel(
 
     private val _isLoadingMedia = MutableStateFlow(false)
     val isLoadingMedia = _isLoadingMedia.asStateFlow()
+
+    private val _allMediaWasDownloaded = MutableStateFlow(false)
+    val allMediaWasDownloaded = _allMediaWasDownloaded.asStateFlow()
+
+    private val _mediaEntities = MutableStateFlow(mutableListOf<DialogMediaEntity>())
+    val mediaEntities = _mediaEntities.asStateFlow()
 
     init {
         viewModelScope.launch {
@@ -671,74 +685,74 @@ class FormViewModel(
         return null
     }
 
-    fun getDownloadMedia(uid: String) {
-        viewModelScope.launch {
-            _isLoadingMedia.value = true
-            Timber.d("Is loading = ${_isLoadingMedia.value}")
-            println("Running media get Downlaod...")
-            println("uid = $uid")
-
-            val body = repository.downloadMediaToLocal(uid)
-            _mediaFile.value = body
-
-            if (body != null) {
-                val fileExtension = getFileExtension(body)
-                val directory = File(
-                    Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
-                    "dhis2"
-                )
-                directory.mkdirs()
-
-                val file = File(directory, "$uid.${fileExtension}")
-                //Antes
-                _mediaFilePath.value = "$directory $uid.${fileExtension}"
-                //Depois
-                _mediaFilePath.value = "$directory/$uid.${fileExtension}"
-
-                val outputStream = FileOutputStream(file)
-                val buffer = ByteArray(4096)
-                var bytesRead: Int
-
-                val inputStream = body.byteStream()
-                while (inputStream.read(buffer).also { bytesRead = it } != -1) {
-                    outputStream.write(buffer, 0, bytesRead)
+    fun downloadMedia(
+        videos: List<Video> = emptyList(),
+        audios: List<Audio> = emptyList(),
+    ) {
+        var downloadAllMedia: Deferred<Unit>
+        videos.forEachIndexed { index, video ->
+            CoroutineScope(Dispatchers.IO).launch {
+                if (index == 0) {
+                    _allMediaWasDownloaded.value = false
                 }
 
-                outputStream.close()
-                inputStream.close()
-                println("Downlaod finished!")
-                println("Media Path = ${_mediaFilePath.value}")
-            } else {
-                // Handle a null response body
-                println("Null response on download media")
+                Timber.d("Video Id => ${video.id}")
+
+                downloadAllMedia = async { getDownloadMedia(video.id) }
+                awaitAll(downloadAllMedia)
+
+                if (index == videos.size - 1) {
+                    _allMediaWasDownloaded.value = true
+                }
             }
-            _isLoadingMedia.value = false
-            Timber.d("Is loading = ${_isLoadingMedia.value}")
         }
     }
 
-    //    <<<<<<< HEAD
-//    fun getLocalMedia(uid: String): String {
-//        val directory = File(
-//            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
-//            "dhis2"
-//        )
-//        val files = directory.listFiles()
-//        var path = ""
-//        if (files != null) {
-//            for (file in files) {
-//                if (file.isFile && file.nameWithoutExtension == uid) {
-//                    val filePath = file.absolutePath
-//                    _mediaFilePath.value = filePath
-//                    path = filePath
-//                    break
-//                }
-//            }
-//        } else {
-//            println("Directory does not exist or cannot be accessed.")
-//        }
-//        ====== =
-    fun getLocalMedia(uid: String): String? {
+    fun getDownloadMedia(uid: String) {
+        try {
+            viewModelScope.launch {
+                println("Running media get Downlaod...")
+                println("uid = $uid")
+
+                val body = repository.downloadMediaToLocal(uid)
+                _mediaFile.value = body
+
+                if (body != null) {
+                    val fileExtension = getFileExtension(body)
+                    val directory = File(
+                        Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
+                        "dhis2"
+                    )
+                    directory.mkdirs()
+
+                    val file = File(directory, "$uid.${fileExtension}")
+                    _mediaFilePath.value = "$directory/$uid.${fileExtension}"
+
+                    val outputStream = FileOutputStream(file)
+                    val buffer = ByteArray(4096)
+                    var bytesRead: Int
+
+                    val inputStream = body.byteStream()
+                    while (inputStream.read(buffer).also { bytesRead = it } != -1) {
+                        outputStream.write(buffer, 0, bytesRead)
+                    }
+
+                    outputStream.close()
+                    inputStream.close()
+                    println("Downlaod finished!")
+                    println("Media Path = ${_mediaFilePath.value}")
+                } else {
+                    // Handle a null response body
+                    println("Null response on download media with uid = [$uid]")
+                }
+            }
+        } catch (ex: Exception) {
+            ex.printStackTrace()
+            Timber.d("Download error!")
+        }
+    }
+
+    fun getLocalMediaPath(uid: String): String? {
         var path: String? = null
         viewModelScope.launch {
             val directory = File(
@@ -760,16 +774,33 @@ class FormViewModel(
             }
         }
         Timber.tag("RETURNED_PATH").d(path)
-//            >>>>>>> develop
         return path
     }
 
-    //
-//
-//        <<<<<<< HEAD
-//        ====== =
-//
-//        >>>>>>> develop
+    fun loadAllMediaPaths(
+        videos: List<Video> = emptyList(),
+        audios: List<Audio> = emptyList(),
+    ) {
+        var loadMediaPaths: Deferred<Unit>
+        videos.forEach { video ->
+            CoroutineScope(Dispatchers.IO).launch {
+                loadMediaPaths = async {
+                    getLocalMediaPath(video.id)
+                }
+                awaitAll(loadMediaPaths)
+
+                val mediaEntity = DialogMediaEntity(
+                    title = video.name,
+                    duration = "01:00",
+                    dateOfLastUpdate = "31-10-2023",
+                    url = mediaFilePath.value!!,
+                    dialogMediaType = DialogMediaType.VIDEO
+                )
+                mediaEntities.value.add(mediaEntity)
+            }
+        }
+    }
+
     fun checkDataElement(uid: String): List<DataElement>? {
         val store = mediaDataStore.value
 
@@ -797,4 +828,7 @@ class FormViewModel(
         return resp
     }
 
+    fun setMediaLoading(loading: Boolean) {
+        _isLoadingMedia.value = loading
+    }
 }
