@@ -50,7 +50,7 @@ import timber.log.Timber
 import java.io.File
 import java.io.FileOutputStream
 
-private const val DIRECTORY_MEDIA_DHS2 = "dhis2"
+private const val DIRECTORY_DOWNLOAD_DHS2 = "dhis2"
 
 class FormViewModel(
     private val repository: FormRepository,
@@ -717,13 +717,18 @@ class FormViewModel(
 
                 if (body != null) {
                     val fileExtension = getFileExtension(responseBody = body)
-                    val directory = createDownloadDirectory(directoryName = DIRECTORY_MEDIA_DHS2)
+                    val directory = createDownloadDirectory(directoryName = DIRECTORY_DOWNLOAD_DHS2)
                     val file = createFile(
                         directory = directory,
                         uid = uid,
                         fileExtension = fileExtension!!
                     )
-                    _mediaFilePath.value = "$directory/$uid.${fileExtension}"
+
+                    _mediaFilePath.value = createMediaFilePath(
+                        directory = DIRECTORY_DOWNLOAD_DHS2,
+                        uid = uid,
+                        fileExtension = fileExtension
+                    )
 
                     val outputStream = FileOutputStream(file)
                     val buffer = ByteArray(4096)
@@ -748,6 +753,10 @@ class FormViewModel(
         }
     }
 
+    private fun createMediaFilePath(directory: String, uid: String, fileExtension: String): String {
+        return "$directory/$uid.$fileExtension"
+    }
+    
     private fun createDownloadDirectory(directoryName: String): File {
         val directory = File(
             Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
