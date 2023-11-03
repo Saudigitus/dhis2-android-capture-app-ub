@@ -5,6 +5,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -688,32 +689,21 @@ class FormViewModel(
         audios: List<Audio> = emptyList(),
     ) {
         viewModelScope.launch {
-            val downloadTasks = videos.map { video ->
+            val downloadVideos = videos.map { video ->
                 async(Dispatchers.IO) {
                     getDownloadMedia(video.id)
                 }
             }
-            downloadTasks.awaitAll()
+            downloadVideos.awaitAll()
+            val downloadAudios = audios.map { audio ->
+                async(Dispatchers.IO) {
+                    getDownloadMedia(audio.id)
+                }
+            }
+            downloadAudios.awaitAll()
             _allMediaWasDownloaded.value = true
             Timber.d("Download Media Finished!")
         }
-//        var downloadAllMedia: Deferred<Unit>
-//        videos.forEachIndexed { index, video ->
-//            viewModelScope.launch {
-//                if (index == 0) {
-//                    _allMediaWasDownloaded.value = false
-//                }
-//
-//                Timber.d("Video Id => ${video.id}")
-//
-//                downloadAllMedia = async { getDownloadMedia(video.id) }
-//                awaitAll(downloadAllMedia)
-//
-//                if (index == videos.size - 1) {
-//                    _allMediaWasDownloaded.value = true
-//                }
-//            }
-//        }
     }
 
     fun getDownloadMedia(uid: String) {

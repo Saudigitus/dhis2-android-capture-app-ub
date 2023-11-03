@@ -759,11 +759,15 @@ class FormView : Fragment() {
     }
 
     private fun showDialog(intent: RecyclerViewUiEvents.ShowDescriptionLabelDialog) {
-        val dataElement = viewModel.checkDataElement("tL84jTTsJOt")
+//        val dataElement = viewModel.checkDataElement("djduey498493")
+        val dataElement = viewModel.checkDataElement(uid = "tL84jTTsJOt")
         if (dataElement != null) {
-            processMediaData(dataElement, intent)
+            processMediaData(
+                dataElement = dataElement,
+                intent = intent
+            )
         } else {
-            showDescriptionLabelDialog(intent)
+            showDescriptionLabelDialog(intent = intent)
         }
     }
 
@@ -846,78 +850,9 @@ class FormView : Fragment() {
         exception: Exception,
         intent: RecyclerViewUiEvents.ShowDescriptionLabelDialog,
     ) {
-        showDescriptionLabelDialog(intent)
         exception.printStackTrace()
+        showDescriptionLabelDialog(intent = intent)
     }
-
-    @OptIn(FlowPreview::class)
-//    private fun showDialog(intent: RecyclerViewUiEvents.ShowDescriptionLabelDialog) {
-////        val dataElement = checkDataElement("djduey498493")
-//        val dataElement = viewModel.checkDataElement("tL84jTTsJOt")
-//
-//        if (dataElement != null) {
-//            val videos = dataElement.video
-//            val audios = dataElement.audio
-//
-//            val loadingDialog = loadingMediaDialog()
-//            val isLoadingDialogVisible =
-//                isDialogVisible(childFragmentManager, LOADING_MEDIA_DIALOG_TAG)
-//
-//            try {
-//                CoroutineScope(Dispatchers.IO).launch {
-//                    viewModel.setMediaLoading(loading = true)
-//                    viewModel.isLoadingMedia.debounce(100).collect { isLoadingMedia ->
-//                        if (isLoadingMedia && !isLoadingDialogVisible) {
-//                            loadingDialog.show(childFragmentManager, LOADING_MEDIA_DIALOG_TAG)
-//
-//                            val downloadAllMedias =
-//                                async {
-//                                    viewModel.downloadAllMedias(
-//                                        videos = videos,
-//                                        audios = audios
-//                                    )
-//                                }
-//                            awaitAll(downloadAllMedias)
-//
-//                            val loadAllMediaPaths =
-//                                async {
-//                                    viewModel.loadAllMediaPaths(
-//                                        videos = videos,
-//                                        audios = audios
-//                                    )
-//                                }
-//                            awaitAll(loadAllMediaPaths)
-//
-//                        } else {
-//                            loadingDialog.dismiss()
-//
-//                            val mediaEntities = viewModel.mediaEntities.value
-//                            val mediaDialogFragment = mediaDialog(
-//                                title = intent.title,
-//                                message = intent.message
-//                                    ?: requireContext().getString(R.string.empty_description),
-//                                mediaEntities = mediaEntities
-//                            )
-//
-//                            val isMediaDialogVisible =
-//                                isDialogVisible(childFragmentManager, MEDIA_DIALOG_TAG)
-//
-//                            if (!isMediaDialogVisible) {
-//                                mediaDialogFragment.show(childFragmentManager, MEDIA_DIALOG_TAG)
-//                            } else {
-//                                mediaDialogFragment.dismiss()
-//                            }
-//                        }
-//                    }
-//                }
-//            } catch (ex: Exception) {
-//                showDescriptionLabelDialog(intent)
-//                ex.printStackTrace()
-//            }
-//        } else {
-//            showDescriptionLabelDialog(intent)
-//        }
-//    }
 
     private fun showDescriptionLabelDialog(
         intent: RecyclerViewUiEvents.ShowDescriptionLabelDialog,
