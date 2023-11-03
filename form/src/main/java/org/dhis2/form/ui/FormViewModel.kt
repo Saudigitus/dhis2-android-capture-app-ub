@@ -667,7 +667,7 @@ class FormViewModel(
         }
     }
 
-    fun getFileExtension(responseBody: ResponseBody): String? {
+    private fun getFileExtension(responseBody: ResponseBody): String? {
         val contentType = responseBody.contentType()
         if (contentType != null) {
             val mediaContentType = contentType.toString()
@@ -690,13 +690,13 @@ class FormViewModel(
         viewModelScope.launch {
             val downloadVideos = videos.map { video ->
                 async(Dispatchers.IO) {
-                    getDownloadMedia(video.id)
+                    downloadMedia(video.id)
                 }
             }
             downloadVideos.awaitAll()
             val downloadAudios = audios.map { audio ->
                 async(Dispatchers.IO) {
-                    getDownloadMedia(audio.id)
+                    downloadMedia(audio.id)
                 }
             }
             downloadAudios.awaitAll()
@@ -705,7 +705,7 @@ class FormViewModel(
         }
     }
 
-    fun getDownloadMedia(uid: String) {
+    private fun downloadMedia(uid: String) {
         try {
             viewModelScope.launch {
                 Timber.d("Running media get Downlaod...")
