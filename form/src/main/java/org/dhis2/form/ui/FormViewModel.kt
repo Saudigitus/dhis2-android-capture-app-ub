@@ -5,8 +5,6 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -685,7 +683,7 @@ class FormViewModel(
         return null
     }
 
-    fun downloadMedia(
+    fun downloadAllMedias(
         videos: List<Video> = emptyList(),
         audios: List<Audio> = emptyList(),
     ) {
@@ -824,31 +822,26 @@ class FormViewModel(
         }
     }
 
-    fun checkDataElement(uid: String): List<DataElement>? {
-        val store = mediaDataStore.value
+    fun checkDataElement(uid: String): DataElement? {
+        val mediaDataStoreConfig = mediaDataStore.value
+        Timber.d("Media_Store_Config: $mediaDataStoreConfig")
 
-        var resp: List<DataElement>? = null
-        store?.let {
+        var dataElementList: List<DataElement>? = null
+        mediaDataStoreConfig?.let { mediaStoreValue ->
 
-            val res = it.map {
-                it.dataElements
+            val dataElementMaps = mediaStoreValue.map { mediaStoreItem ->
+                mediaStoreItem.dataElements
             }
-            val response = res.map {
-                it?.let {
-                    it.filter {
-                        it.dataElement == uid
+            val filteredDataElements = dataElementMaps.map { dataElements ->
+                dataElements?.let {
+                    dataElements.filter { dataElement ->
+                        dataElement.dataElement == uid
                     }
                 }
             }
-
-            if (response.get(0)?.isNotEmpty() == true) {
-                resp = response.get(0)
-            } else {
-                resp = null
-            }
+            dataElementList = filteredDataElements.getOrNull(0)
         }
-        Timber.tag("FORM_VIEW").d("${resp}")
-        return resp
+        return dataElementList?.getOrNull(0)
     }
 
     fun setMediaLoading(loading: Boolean) {

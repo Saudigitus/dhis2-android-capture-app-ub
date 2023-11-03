@@ -43,6 +43,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import java.io.File
 import java.util.Calendar
 import org.dhis2.commons.ActivityResultObservable
@@ -58,8 +59,10 @@ import org.dhis2.commons.dialogs.media.MediaDialogFragment.Companion.mediaDialog
 import org.dhis2.commons.dialogs.calendarpicker.CalendarPicker
 import org.dhis2.commons.dialogs.calendarpicker.OnDatePickerListener
 import org.dhis2.commons.dialogs.imagedetail.ImageDetailBottomDialog
+import org.dhis2.commons.dialogs.media.LoadingMediaDialogFragment
 import org.dhis2.commons.dialogs.media.LoadingMediaDialogFragment.Companion.LOADING_MEDIA_DIALOG_TAG
 import org.dhis2.commons.dialogs.media.LoadingMediaDialogFragment.Companion.loadingMediaDialog
+import org.dhis2.commons.dialogs.media.MediaDialogFragment
 import org.dhis2.commons.extensions.closeKeyboard
 import org.dhis2.commons.extensions.serializable
 import org.dhis2.commons.extensions.truncate
@@ -95,14 +98,15 @@ import org.dhis2.maps.views.MapSelectorActivity.Companion.LOCATION_TYPE_EXTRA
 import org.dhis2.ui.ErrorFieldList
 import org.dhis2.ui.dialogs.bottomsheet.BottomSheetDialog
 import org.dhis2.ui.dialogs.signature.SignatureDialog
+import org.dhis2.usescases.uiboost.data.model.media.Audio
 import org.dhis2.usescases.uiboost.data.model.media.DataElement
+import org.dhis2.usescases.uiboost.data.model.media.Video
 import org.hisp.dhis.android.core.arch.helpers.FileResourceDirectoryHelper
 import org.hisp.dhis.android.core.arch.helpers.GeometryHelper
 import org.hisp.dhis.android.core.common.FeatureType
 import org.hisp.dhis.android.core.common.ValueType
 import org.hisp.dhis.android.core.common.ValueTypeRenderingType
 import timber.log.Timber
-import java.lang.IndexOutOfBoundsException
 
 class FormView : Fragment() {
     private var onItemChangeListener: ((action: RowAction) -> Unit)? = null
@@ -355,16 +359,8 @@ class FormView : Fragment() {
                 view.closeKeyboard()
             }
         }
-
         setObservers()
-
         viewModel.getMediaDataStore()
-//        viewModel.getDownloadMedia("rdZdCjQyl7y") // to dpwnload media
-//        viewModel.getLocalMediaPath("rdZdCjQyl7y") // to get local media
-
-        val result = viewModel.checkDataElement("djduey498493")
-
-        Timber.tag("MIGUEL_MEDIA_STORE").d("${result!!.get(0)}")
     }
 
     private fun setObservers() {
@@ -762,72 +758,166 @@ class FormView : Fragment() {
         }
     }
 
-    @OptIn(FlowPreview::class)
     private fun showDialog(intent: RecyclerViewUiEvents.ShowDescriptionLabelDialog) {
-//        val dataElement = checkDataElement("djduey498493")
-        val dataElement = checkDataElement("tL84jTTsJOt")
-
+        val dataElement = viewModel.checkDataElement("tL84jTTsJOt")
         if (dataElement != null) {
-            val videos = dataElement.video
-            val audios = dataElement.audio
-
-            val loadingDialog = loadingMediaDialog()
-            val isLoadingDialogVisible =
-                isDialogVisible(childFragmentManager, LOADING_MEDIA_DIALOG_TAG)
-
-            try {
-                CoroutineScope(Dispatchers.IO).launch {
-                    viewModel.setMediaLoading(loading = true)
-                    viewModel.isLoadingMedia.debounce(1000).collect { isLoadingMedia ->
-                        if (isLoadingMedia && !isLoadingDialogVisible) {
-                            loadingDialog.show(childFragmentManager, LOADING_MEDIA_DIALOG_TAG)
-
-                            val downloadAllMedias =
-                                async {
-                                    viewModel.downloadMedia(
-                                        videos = videos,
-                                        audios = audios
-                                    )
-                                }
-                            awaitAll(downloadAllMedias)
-
-                            val loadAllMediaPaths =
-                                async {
-                                    viewModel.loadAllMediaPaths(
-                                        videos = videos,
-                                        audios = audios
-                                    )
-                                }
-                            awaitAll(loadAllMediaPaths)
-                        } else {
-                            loadingDialog.dismiss()
-
-                            val mediaEntities = viewModel.mediaEntities.value
-                            val mediaDialogFragment = mediaDialog(
-                                title = intent.title,
-                                message = intent.message
-                                    ?: requireContext().getString(R.string.empty_description),
-                                mediaEntities = mediaEntities
-                            )
-
-                            val isMediaDialogVisible =
-                                isDialogVisible(childFragmentManager, MEDIA_DIALOG_TAG)
-
-                            if (!isMediaDialogVisible) {
-                                mediaDialogFragment.show(childFragmentManager, MEDIA_DIALOG_TAG)
-                            } else {
-                                mediaDialogFragment.dismiss()
-                            }
-                        }
-                    }
-                }
-            } catch (ex: IndexOutOfBoundsException) {
-                showDescriptionLabelDialog(intent)
-            }
+            processMediaData(dataElement, intent)
         } else {
             showDescriptionLabelDialog(intent)
         }
     }
+
+    @OptIn(FlowPreview::class)
+    private fun processMediaData(
+        dataElement: DataElement,
+        intent: RecyclerViewUiEvents.ShowDescriptionLabelDialog,
+    ) {
+        val videos = dataElement.video
+        val audios = dataElement.audio
+        val loadingDialog = loadingMediaDialog()
+        val isLoadingDialogVisible = isDialogVisible(childFragmentManager, LOADING_MEDIA_DIALOG_TAG)
+
+        try {
+            CoroutineScope(Dispatchers.IO).launch {
+                viewModel.setMediaLoading(loading = true)
+                viewModel.isLoadingMedia.debounce(100).collect { isLoadingMedia ->
+                    if (isLoadingMedia && !isLoadingDialogVisible) {
+                        showLoadingDialog(
+                            loadingDialog = loadingDialog,
+                            videos = videos,
+                            audios = audios
+                        )
+                    } else {
+                        dismissLoadingDialog(
+                            loadingDialog = loadingDialog,
+                            intent = intent
+                        )
+                    }
+                }
+            }
+        } catch (exception: Exception) {
+            handleDialogException(
+                exception = exception,
+                intent = intent
+            )
+        }
+    }
+
+    private fun showLoadingDialog(
+        loadingDialog: LoadingMediaDialogFragment,
+        videos: List<Video>,
+        audios: List<Audio>,
+    ) {
+        loadingDialog.show(childFragmentManager, LOADING_MEDIA_DIALOG_TAG)
+        runBlocking {
+            val downloadAllMedias = async { viewModel.downloadAllMedias(videos, audios) }
+            val loadAllMediaPaths = async { viewModel.loadAllMediaPaths(videos, audios) }
+
+            awaitAll(downloadAllMedias)
+            awaitAll(loadAllMediaPaths)
+        }
+    }
+
+    private fun dismissLoadingDialog(
+        loadingDialog: LoadingMediaDialogFragment,
+        intent: RecyclerViewUiEvents.ShowDescriptionLabelDialog,
+    ) {
+        loadingDialog.dismiss()
+
+        val mediaEntities = viewModel.mediaEntities.value
+        val mediaDialogFragment = mediaDialog(
+            title = intent.title,
+            message = intent.message ?: requireContext().getString(R.string.empty_description),
+            mediaEntities = mediaEntities
+        )
+        handleMediaDialogFragment(mediaDialogFragment = mediaDialogFragment)
+    }
+
+    private fun handleMediaDialogFragment(mediaDialogFragment: MediaDialogFragment) {
+        val isMediaDialogVisible = isDialogVisible(childFragmentManager, MEDIA_DIALOG_TAG)
+        if (!isMediaDialogVisible) {
+            mediaDialogFragment.show(childFragmentManager, MEDIA_DIALOG_TAG)
+        } else {
+            mediaDialogFragment.dismiss()
+        }
+    }
+
+    private fun handleDialogException(
+        exception: Exception,
+        intent: RecyclerViewUiEvents.ShowDescriptionLabelDialog,
+    ) {
+        showDescriptionLabelDialog(intent)
+        exception.printStackTrace()
+    }
+
+    @OptIn(FlowPreview::class)
+//    private fun showDialog(intent: RecyclerViewUiEvents.ShowDescriptionLabelDialog) {
+////        val dataElement = checkDataElement("djduey498493")
+//        val dataElement = viewModel.checkDataElement("tL84jTTsJOt")
+//
+//        if (dataElement != null) {
+//            val videos = dataElement.video
+//            val audios = dataElement.audio
+//
+//            val loadingDialog = loadingMediaDialog()
+//            val isLoadingDialogVisible =
+//                isDialogVisible(childFragmentManager, LOADING_MEDIA_DIALOG_TAG)
+//
+//            try {
+//                CoroutineScope(Dispatchers.IO).launch {
+//                    viewModel.setMediaLoading(loading = true)
+//                    viewModel.isLoadingMedia.debounce(100).collect { isLoadingMedia ->
+//                        if (isLoadingMedia && !isLoadingDialogVisible) {
+//                            loadingDialog.show(childFragmentManager, LOADING_MEDIA_DIALOG_TAG)
+//
+//                            val downloadAllMedias =
+//                                async {
+//                                    viewModel.downloadAllMedias(
+//                                        videos = videos,
+//                                        audios = audios
+//                                    )
+//                                }
+//                            awaitAll(downloadAllMedias)
+//
+//                            val loadAllMediaPaths =
+//                                async {
+//                                    viewModel.loadAllMediaPaths(
+//                                        videos = videos,
+//                                        audios = audios
+//                                    )
+//                                }
+//                            awaitAll(loadAllMediaPaths)
+//
+//                        } else {
+//                            loadingDialog.dismiss()
+//
+//                            val mediaEntities = viewModel.mediaEntities.value
+//                            val mediaDialogFragment = mediaDialog(
+//                                title = intent.title,
+//                                message = intent.message
+//                                    ?: requireContext().getString(R.string.empty_description),
+//                                mediaEntities = mediaEntities
+//                            )
+//
+//                            val isMediaDialogVisible =
+//                                isDialogVisible(childFragmentManager, MEDIA_DIALOG_TAG)
+//
+//                            if (!isMediaDialogVisible) {
+//                                mediaDialogFragment.show(childFragmentManager, MEDIA_DIALOG_TAG)
+//                            } else {
+//                                mediaDialogFragment.dismiss()
+//                            }
+//                        }
+//                    }
+//                }
+//            } catch (ex: Exception) {
+//                showDescriptionLabelDialog(intent)
+//                ex.printStackTrace()
+//            }
+//        } else {
+//            showDescriptionLabelDialog(intent)
+//        }
+//    }
 
     private fun showDescriptionLabelDialog(
         intent: RecyclerViewUiEvents.ShowDescriptionLabelDialog,
@@ -1290,36 +1380,5 @@ class FormView : Fragment() {
     companion object {
         const val RECORDS = "RECORDS"
         const val TEMP_FILE = "tempFile.png"
-    }
-
-    fun checkDataElement(uid: String): DataElement? {
-        val store = viewModel.mediaDataStore.value
-        Timber.tag("FORM_VIEW").d("${store}")
-
-        var resp: List<DataElement>? = null
-        store?.let {
-
-            val res = it.map {
-                it.dataElements
-            }
-            val response = res.map {
-                it?.let {
-                    it.filter {
-                        it.dataElement == uid
-                    }
-                }
-            }
-            resp = response.get(0)
-        }
-        Timber.tag("FORM_VIEW").d("${resp}")
-        return if (resp != null) {
-            try {
-                resp!![0]
-            } catch (ex: IndexOutOfBoundsException) {
-                return null
-            }
-        } else {
-            return null
-        }
     }
 }
