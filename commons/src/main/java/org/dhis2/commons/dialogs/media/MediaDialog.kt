@@ -1,4 +1,4 @@
-package org.dhis2.commons.dialogs
+package org.dhis2.commons.dialogs.media
 
 import android.content.res.Configuration
 import android.os.Build
@@ -138,7 +138,10 @@ fun MediaDialog(
                     LazyColumn(modifier = Modifier.fillMaxWidth()) {
                         items(sortedMediaEntities) { mediaEntity ->
                             when (mediaEntity.dialogMediaType) {
-                                DialogMediaType.VIDEO, DialogMediaType.AUDIO -> {
+                                DialogMediaType.VIDEO,
+                                DialogMediaType.AUDIO,
+                                DialogMediaType.UNKNOWN
+                                -> {
                                     MediaDialogItem(
                                         dialogMediaType = mediaEntity.dialogMediaType,
                                         title = mediaEntity.title,

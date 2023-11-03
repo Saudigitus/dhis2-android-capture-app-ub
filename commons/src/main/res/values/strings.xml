@@ -230,4 +230,5 @@
     <string name="media_dialog_label_duration">Duration</string>
     <string name="media_dialog_label_update">Update</string>
     <string name="media_dialog_label_close">Close</string>
+    <string name="error_message_invalid_file_path">Invalid file path</string>
 </resources>
