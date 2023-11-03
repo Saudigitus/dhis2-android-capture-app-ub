@@ -102,6 +102,7 @@ class ProgramFragment : FragmentGlobalAbstract(), ProgramView {
             setContent {
                 val items by presenter.programs().observeAsState(emptyList())
                 val state by presenter.downloadState().observeAsState()
+
                 ProgramList(
                     downLoadState = state,
                     programs = items,

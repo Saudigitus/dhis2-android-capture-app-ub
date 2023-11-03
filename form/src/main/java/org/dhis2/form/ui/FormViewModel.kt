@@ -35,6 +35,7 @@ import org.dhis2.form.ui.event.RecyclerViewUiEvents
 import org.dhis2.form.ui.idling.FormCountingIdlingResource
 import org.dhis2.form.ui.intent.FormIntent
 import org.dhis2.form.ui.validation.validators.FieldMaskValidator
+import org.dhis2.usescases.uiboost.data.model.media.Attribute
 import org.dhis2.usescases.uiboost.data.model.media.DataElement
 import org.dhis2.usescases.uiboost.data.model.media.MediaStoreConfig
 import org.hisp.dhis.android.core.arch.helpers.Result
@@ -748,7 +749,31 @@ class FormViewModel(
                 resp = null
             }
         }
-        Timber.tag("FORM_VIEW").d("${resp}")
+        return resp
+    }
+    fun checkAttribute(uid: String): List<Attribute>? {
+        val store = mediaDataStore.value
+
+        var resp: List<Attribute>? = null
+        store?.let {
+
+            val res =  it.map {
+                it.attributes
+            }
+            val response =   res.map {
+                it?.let {
+                    it.filter {
+                        it.attribute == uid
+                    }
+                }
+            }
+
+            if (response.get(0)?.isNotEmpty() == true) {
+                resp = response.get(0)
+            } else {
+                resp = null
+            }
+        }
         return resp
     }
 

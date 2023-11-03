@@ -68,7 +68,7 @@ internal class ProgramRepositoryImpl(
         )
     }
 
-    override suspend fun downloadMediaToLocal(uid: String): Unit = withContext(Dispatchers.IO) {
+    override suspend fun downloadMediaToLocal(uid: String): Byte = withContext(Dispatchers.IO) {
         val service: UBService = d2.retrofit().create(UBService::class.java)
 
         val response = service.downloadFileResource(uid)
