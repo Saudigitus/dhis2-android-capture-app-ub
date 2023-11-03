@@ -5,7 +5,6 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -750,7 +749,7 @@ class FormViewModel(
         }
     }
 
-    fun getLocalMediaPath(uid: String): String? {
+    private fun getLocalMediaPath(uid: String): String? {
         var path: String? = null
         viewModelScope.launch {
             val directory = File(
@@ -771,7 +770,6 @@ class FormViewModel(
                 Timber.d("Directory does not exist or cannot be accessed.")
             }
         }
-        Timber.tag("RETURNED_PATH").d(path)
         return path
     }
 
@@ -783,29 +781,33 @@ class FormViewModel(
             val mediaEntitiesList = mutableListOf<DialogMediaEntity>()
 
             videos.forEach { video ->
-                val mediaPath = getLocalMediaPath(uid = video.id)
+                val taskGetLocalMediaPath = async { getLocalMediaPath(uid = video.id) }
+                awaitAll(taskGetLocalMediaPath)
+
                 val mediaEntity = DialogMediaEntity(
                     title = video.name,
                     duration = "01:00",
                     dateOfLastUpdate = "31-10-2023",
-                    url = mediaPath ?: "", // Todo: review this
+                    url = _mediaFilePath.value ?: "no path provided!",
                     dialogMediaType = DialogMediaType.VIDEO
                 )
                 mediaEntitiesList.add(mediaEntity)
             }
 
             audios.forEach { audio ->
-                val mediaPath = getLocalMediaPath(uid = audio.id)
+                val taskGetLocalMediaPath = async { getLocalMediaPath(uid = audio.id) }
+                awaitAll(taskGetLocalMediaPath)
+
                 val mediaEntity = DialogMediaEntity(
                     title = audio.name,
                     duration = "02:00",
                     dateOfLastUpdate = "01-10-2023",
-                    url = mediaPath ?: "", // Todo: review this
+                    url = _mediaFilePath.value ?: "no path provided!",
                     dialogMediaType = DialogMediaType.AUDIO
                 )
                 mediaEntitiesList.add(mediaEntity)
             }
-
+            mediaEntities.value.clear()
             mediaEntities.value.addAll(mediaEntitiesList)
             setMediaLoading(loading = false)
             Timber.d("All Media Paths Loaded!")

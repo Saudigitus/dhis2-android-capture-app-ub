@@ -38,14 +38,10 @@ import com.google.android.material.timepicker.TimeFormat.CLOCK_24H
 import com.journeyapps.barcodescanner.ScanOptions
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import java.io.File
-import java.util.Calendar
 import org.dhis2.commons.ActivityResultObservable
 import org.dhis2.commons.ActivityResultObserver
 import org.dhis2.commons.Constants
@@ -54,8 +50,6 @@ import org.dhis2.commons.bindings.getFileFromGallery
 import org.dhis2.commons.bindings.rotateImage
 import org.dhis2.commons.dialogs.AlertBottomDialog
 import org.dhis2.commons.dialogs.CustomDialog
-import org.dhis2.commons.dialogs.media.MediaDialogFragment.Companion.MEDIA_DIALOG_TAG
-import org.dhis2.commons.dialogs.media.MediaDialogFragment.Companion.mediaDialog
 import org.dhis2.commons.dialogs.calendarpicker.CalendarPicker
 import org.dhis2.commons.dialogs.calendarpicker.OnDatePickerListener
 import org.dhis2.commons.dialogs.imagedetail.ImageDetailBottomDialog
@@ -63,6 +57,8 @@ import org.dhis2.commons.dialogs.media.LoadingMediaDialogFragment
 import org.dhis2.commons.dialogs.media.LoadingMediaDialogFragment.Companion.LOADING_MEDIA_DIALOG_TAG
 import org.dhis2.commons.dialogs.media.LoadingMediaDialogFragment.Companion.loadingMediaDialog
 import org.dhis2.commons.dialogs.media.MediaDialogFragment
+import org.dhis2.commons.dialogs.media.MediaDialogFragment.Companion.MEDIA_DIALOG_TAG
+import org.dhis2.commons.dialogs.media.MediaDialogFragment.Companion.mediaDialog
 import org.dhis2.commons.extensions.closeKeyboard
 import org.dhis2.commons.extensions.serializable
 import org.dhis2.commons.extensions.truncate
@@ -107,6 +103,8 @@ import org.hisp.dhis.android.core.common.FeatureType
 import org.hisp.dhis.android.core.common.ValueType
 import org.hisp.dhis.android.core.common.ValueTypeRenderingType
 import timber.log.Timber
+import java.io.File
+import java.util.Calendar
 
 class FormView : Fragment() {
     private var onItemChangeListener: ((action: RowAction) -> Unit)? = null
@@ -290,6 +288,8 @@ class FormView : Fragment() {
         Manifest.permission.READ_MEDIA_AUDIO,
         Manifest.permission.READ_MEDIA_VIDEO
     )
+
+    private val scopeProcessMediaData = CoroutineScope(Dispatchers.Main)
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -759,8 +759,8 @@ class FormView : Fragment() {
     }
 
     private fun showDialog(intent: RecyclerViewUiEvents.ShowDescriptionLabelDialog) {
-//        val dataElement = viewModel.checkDataElement("djduey498493")
-        val dataElement = viewModel.checkDataElement(uid = "tL84jTTsJOt")
+         val dataElement = viewModel.checkDataElement(uid = intent.uid)
+//        val dataElement = viewModel.checkDataElement(uid = "tL84jTTsJOt")
         if (dataElement != null) {
             processMediaData(
                 dataElement = dataElement,
@@ -771,7 +771,6 @@ class FormView : Fragment() {
         }
     }
 
-    @OptIn(FlowPreview::class)
     private fun processMediaData(
         dataElement: DataElement,
         intent: RecyclerViewUiEvents.ShowDescriptionLabelDialog,
@@ -782,9 +781,10 @@ class FormView : Fragment() {
         val isLoadingDialogVisible = isDialogVisible(childFragmentManager, LOADING_MEDIA_DIALOG_TAG)
 
         try {
-            CoroutineScope(Dispatchers.IO).launch {
+            scopeProcessMediaData.launch {
                 viewModel.setMediaLoading(loading = true)
-                viewModel.isLoadingMedia.debounce(100).collect { isLoadingMedia ->
+                viewModel.isLoadingMedia.collect { isLoadingMedia ->
+
                     if (isLoadingMedia && !isLoadingDialogVisible) {
                         showLoadingDialog(
                             loadingDialog = loadingDialog,
