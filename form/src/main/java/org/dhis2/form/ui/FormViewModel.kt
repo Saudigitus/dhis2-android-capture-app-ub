@@ -50,6 +50,8 @@ import timber.log.Timber
 import java.io.File
 import java.io.FileOutputStream
 
+private const val DIRECTORY_MEDIA_DHS2 = "dhis2"
+
 class FormViewModel(
     private val repository: FormRepository,
     private val dispatcher: DispatcherProvider,
@@ -715,13 +717,12 @@ class FormViewModel(
 
                 if (body != null) {
                     val fileExtension = getFileExtension(responseBody = body)
-                    val directory = File(
-                        Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
-                        "dhis2"
+                    val directory = createDownloadDirectory(directoryName = DIRECTORY_MEDIA_DHS2)
+                    val file = createFile(
+                        directory = directory,
+                        uid = uid,
+                        fileExtension = fileExtension!!
                     )
-                    directory.mkdirs()
-
-                    val file = File(directory, "$uid.${fileExtension}")
                     _mediaFilePath.value = "$directory/$uid.${fileExtension}"
 
                     val outputStream = FileOutputStream(file)
@@ -745,6 +746,19 @@ class FormViewModel(
             ex.printStackTrace()
             Timber.d("Download error on media with uid [$uid]!")
         }
+    }
+
+    private fun createDownloadDirectory(directoryName: String): File {
+        val directory = File(
+            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
+            directoryName
+        )
+        directory.mkdirs()
+        return directory
+    }
+
+    private fun createFile(directory: File, uid: String, fileExtension: String): File {
+        return File(directory, "$uid.$fileExtension")
     }
 
     private fun getLocalMediaPath(uid: String): String? {
