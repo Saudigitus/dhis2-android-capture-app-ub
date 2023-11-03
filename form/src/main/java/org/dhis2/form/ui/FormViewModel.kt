@@ -708,14 +708,13 @@ class FormViewModel(
     private fun downloadMedia(uid: String) {
         try {
             viewModelScope.launch {
-                Timber.d("Running media get Downlaod...")
-                Timber.d("uid = $uid")
+                Timber.d("Start downloading the media with uid [$uid]!")
 
-                val body = repository.downloadMediaToLocal(uid)
+                val body = repository.downloadMediaToLocal(uid = uid)
                 _mediaFile.value = body
 
                 if (body != null) {
-                    val fileExtension = getFileExtension(body)
+                    val fileExtension = getFileExtension(responseBody = body)
                     val directory = File(
                         Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
                         "dhis2"
@@ -736,16 +735,15 @@ class FormViewModel(
 
                     outputStream.close()
                     inputStream.close()
-                    Timber.d("Downlaod finished!")
-                    Timber.d("Media Path = ${_mediaFilePath.value}")
+                    Timber.d("Media with uid [$uid] downloaded!")
+                    Timber.d("Media with uid [$uid] path: [${_mediaFilePath.value}]")
                 } else {
-                    // Handle a null response body
-                    Timber.d("Null response on download media with uid = [$uid]")
+                    Timber.d("Null response on download media with uid: [$uid]")
                 }
             }
         } catch (ex: Exception) {
             ex.printStackTrace()
-            Timber.d("Download error!")
+            Timber.d("Download error on media with uid [$uid]!")
         }
     }
 
