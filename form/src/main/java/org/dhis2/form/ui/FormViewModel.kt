@@ -716,31 +716,15 @@ class FormViewModel(
                 _mediaFile.value = body
 
                 if (body != null) {
-                    val fileExtension = getFileExtension(responseBody = body)
-                    val directory = createDownloadDirectory(directoryName = DIRECTORY_DOWNLOAD_DHS2)
-                    val file = createFile(
-                        directory = directory,
-                        uid = uid,
-                        fileExtension = fileExtension!!
-                    )
+                    val fileExtension = getFileExtension(body)
+                    val directory = createDownloadDirectory(DIRECTORY_DOWNLOAD_DHS2)
+                    val file = createFile(directory, uid, fileExtension!!)
 
-                    _mediaFilePath.value = createMediaFilePath(
-                        directory = DIRECTORY_DOWNLOAD_DHS2,
-                        uid = uid,
-                        fileExtension = fileExtension
-                    )
+                    _mediaFilePath.value =
+                        createMediaFilePath(DIRECTORY_DOWNLOAD_DHS2, uid, fileExtension)
 
-                    val outputStream = FileOutputStream(file)
-                    val buffer = ByteArray(4096)
-                    var bytesRead: Int
+                    saveMediaToFile(body, file)
 
-                    val inputStream = body.byteStream()
-                    while (inputStream.read(buffer).also { bytesRead = it } != -1) {
-                        outputStream.write(buffer, 0, bytesRead)
-                    }
-
-                    outputStream.close()
-                    inputStream.close()
                     Timber.d("Media with uid [$uid] downloaded!")
                     Timber.d("Media with uid [$uid] path: [${_mediaFilePath.value}]")
                 } else {
@@ -748,15 +732,29 @@ class FormViewModel(
                 }
             }
         } catch (ex: Exception) {
-            ex.printStackTrace()
             Timber.d("Download error on media with uid [$uid]!")
+            ex.printStackTrace()
         }
+    }
+
+    private fun saveMediaToFile(body: ResponseBody, file: File) {
+        val outputStream = FileOutputStream(file)
+        val buffer = ByteArray(4096)
+        var bytesRead: Int
+
+        val inputStream = body.byteStream()
+        while (inputStream.read(buffer).also { bytesRead = it } != -1) {
+            outputStream.write(buffer, 0, bytesRead)
+        }
+
+        outputStream.close()
+        inputStream.close()
     }
 
     private fun createMediaFilePath(directory: String, uid: String, fileExtension: String): String {
         return "$directory/$uid.$fileExtension"
     }
-    
+
     private fun createDownloadDirectory(directoryName: String): File {
         val directory = File(
             Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
