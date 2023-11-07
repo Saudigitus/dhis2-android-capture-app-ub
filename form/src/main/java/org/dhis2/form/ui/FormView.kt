@@ -59,6 +59,7 @@ import org.dhis2.commons.dialogs.media.LoadingMediaDialogFragment.Companion.load
 import org.dhis2.commons.dialogs.media.MediaDialogFragment
 import org.dhis2.commons.dialogs.media.MediaDialogFragment.Companion.MEDIA_DIALOG_TAG
 import org.dhis2.commons.dialogs.media.MediaDialogFragment.Companion.mediaDialog
+import org.dhis2.commons.extensions.checkConnection
 import org.dhis2.commons.extensions.closeKeyboard
 import org.dhis2.commons.extensions.serializable
 import org.dhis2.commons.extensions.truncate
@@ -759,15 +760,19 @@ class FormView : Fragment() {
     }
 
     private fun showDialog(intent: RecyclerViewUiEvents.ShowDescriptionLabelDialog) {
-         val dataElement = viewModel.checkDataElement(uid = intent.uid)
-//        val dataElement = viewModel.checkDataElement(uid = "tL84jTTsJOt")
-        if (dataElement != null) {
-            processMediaData(
-                dataElement = dataElement,
-                intent = intent
-            )
+        val context = requireContext()
+        if (context.checkConnection()) {
+            val dataElement = viewModel.checkDataElement(uid = intent.uid)
+            if (dataElement != null) {
+                processMediaData(
+                    dataElement = dataElement,
+                    intent = intent
+                )
+            } else {
+                showDescriptionLabelDialog(intent = intent)
+            }
         } else {
-            showDescriptionLabelDialog(intent = intent)
+            Toast.makeText(context, "Connection is not available!", Toast.LENGTH_LONG).show()
         }
     }
 

@@ -707,29 +707,27 @@ class FormViewModel(
         }
     }
 
-    private fun downloadMedia(uid: String) {
+    private suspend fun downloadMedia(uid: String) {
         try {
-            viewModelScope.launch {
-                Timber.d("Start downloading the media with uid [$uid]!")
+            Timber.d("Start downloading the media with uid [$uid]!")
 
-                val body = repository.downloadMediaToLocal(uid = uid)
-                _mediaFile.value = body
+            val body = repository.downloadMediaToLocal(uid = uid)
+            _mediaFile.value = body
 
-                if (body != null) {
-                    val fileExtension = getFileExtension(body)
-                    val directory = createDownloadDirectory(DIRECTORY_DOWNLOAD_DHS2)
-                    val file = createFile(directory, uid, fileExtension!!)
+            if (body != null) {
+                val fileExtension = getFileExtension(body)
+                val directory = createDownloadDirectory(DIRECTORY_DOWNLOAD_DHS2)
+                val file = createFile(directory, uid, fileExtension!!)
 
-                    _mediaFilePath.value =
-                        createMediaFilePath(DIRECTORY_DOWNLOAD_DHS2, uid, fileExtension)
+                _mediaFilePath.value =
+                    createMediaFilePath(DIRECTORY_DOWNLOAD_DHS2, uid, fileExtension)
 
-                    saveMediaToFile(body, file)
+                saveMediaToFile(body, file)
 
-                    Timber.d("Media with uid [$uid] downloaded!")
-                    Timber.d("Media with uid [$uid] path: [${_mediaFilePath.value}]")
-                } else {
-                    Timber.d("Null response on download media with uid: [$uid]")
-                }
+                Timber.d("Media with uid [$uid] downloaded!")
+                Timber.d("Media with uid [$uid] path: [${_mediaFilePath.value}]")
+            } else {
+                Timber.d("Null response on download media with uid: [$uid]")
             }
         } catch (ex: Exception) {
             Timber.d("Download error on media with uid [$uid]!")
