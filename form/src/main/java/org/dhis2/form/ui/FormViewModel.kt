@@ -795,5 +795,4 @@ class FormViewModel(
         }
         return details
     }
-
 }
