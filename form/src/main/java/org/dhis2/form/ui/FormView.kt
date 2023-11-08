@@ -761,6 +761,7 @@ class FormView : Fragment() {
 
     private fun showDialog(intent: RecyclerViewUiEvents.ShowDescriptionLabelDialog) {
         val context = requireContext()
+
         if (context.checkConnection()) {
             val dataElement = viewModel.checkDataElement(uid = intent.uid)
             if (dataElement != null) {
@@ -796,6 +797,16 @@ class FormView : Fragment() {
                             videos = videos,
                             audios = audios
                         )
+
+                        runBlocking {
+                            val downloadAllMedias =
+                                async { viewModel.loadMedias(videos, audios) }
+                            val loadAllMediaPaths =
+                                async { viewModel.loadAllMediaPaths(videos, audios) }
+
+                            awaitAll(downloadAllMedias)
+                            awaitAll(loadAllMediaPaths)
+                        }
                     } else {
                         dismissLoadingDialog(
                             loadingDialog = loadingDialog,
@@ -818,13 +829,6 @@ class FormView : Fragment() {
         audios: List<Audio>,
     ) {
         loadingDialog.show(childFragmentManager, LOADING_MEDIA_DIALOG_TAG)
-        runBlocking {
-            val downloadAllMedias = async { viewModel.downloadAllMedias(videos, audios) }
-            val loadAllMediaPaths = async { viewModel.loadAllMediaPaths(videos, audios) }
-
-            awaitAll(downloadAllMedias)
-            awaitAll(loadAllMediaPaths)
-        }
     }
 
     private fun dismissLoadingDialog(

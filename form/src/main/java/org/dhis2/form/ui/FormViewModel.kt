@@ -685,20 +685,50 @@ class FormViewModel(
         return null
     }
 
-    fun downloadAllMedias(
+    private fun loadMediaPath(uid: String) {
+        viewModelScope.launch {
+            val taskGetLocalMediaPath = async {
+                getLocalMediaPath(uid)
+            }
+            awaitAll(taskGetLocalMediaPath)
+            return@launch
+        }
+    }
+
+    fun loadMedias(
         videos: List<Video> = emptyList(),
         audios: List<Audio> = emptyList(),
     ) {
         viewModelScope.launch {
-            val downloadVideos = videos.map { video ->
+            val taskLoadVideos = videos.map { video ->
                 async(Dispatchers.IO) {
-                    downloadMedia(video.id)
+                    loadMediaPath(video.id)
+                    val mediaFilePath = _mediaFilePath.value
+                    Timber.d("video file path => [$mediaFilePath]")
+
+                    if (mediaFilePath!!.isNotBlank() && mediaFilePath.isNotEmpty()) {
+                        Timber.d("MEDIA FILE EXIST!")
+                    } else {
+                        Timber.d("MEDIA FILE DOES NOT EXIST!")
+                        Timber.d("DOWNLOAD MEDIA FILE!")
+                        downloadMedia(video.id)
+                    }
                 }
             }
-            downloadVideos.awaitAll()
+            taskLoadVideos.awaitAll()
             val downloadAudios = audios.map { audio ->
                 async(Dispatchers.IO) {
-                    downloadMedia(audio.id)
+                    loadMediaPath(audio.id)
+                    val mediaFilePath = _mediaFilePath.value
+                    Timber.d("audio file path => $mediaFilePath")
+
+                    if (mediaFilePath!!.isNotBlank() && mediaFilePath.isNotEmpty()) {
+                        Timber.d("MEDIA FILE EXIST!")
+                    } else {
+                        Timber.d("MEDIA FILE DOES NOT EXIST!")
+                        Timber.d("DOWNLOAD MEDIA FILE!")
+                        downloadMedia(audio.id)
+                    }
                 }
             }
             downloadAudios.awaitAll()
@@ -787,6 +817,7 @@ class FormViewModel(
                 Timber.d("Directory does not exist or cannot be accessed.")
             }
         }
+        Timber.d("Loaded path: [$path]")
         return path
     }
 
