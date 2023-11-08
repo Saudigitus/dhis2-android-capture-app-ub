@@ -23,6 +23,7 @@ import org.dhis2.form.data.FormRepository
 import org.dhis2.form.data.GeometryController
 import org.dhis2.form.data.GeometryParserImpl
 import org.dhis2.form.data.RulesUtilsProviderConfigurationError
+import org.dhis2.form.data.media.MediaDetails
 import org.dhis2.form.model.ActionType
 import org.dhis2.form.model.FieldUiModel
 import org.dhis2.form.model.InfoUiModel
@@ -750,6 +751,49 @@ class FormViewModel(
         }
         Timber.tag("FORM_VIEW").d("${resp}")
         return resp
+    }
+
+    /**
+     * Method to get server media details from web and store to DB
+     * Return MediaDetails MediaDetails or Null
+     */
+    fun getMediaDetails(uid: String): MediaDetails? {
+        var details: MediaDetails? = null
+        viewModelScope.launch {
+            details = repository.getMediaDetails(uid)
+            Timber.tag("MEDIA_DETAILS").d("${details.toString()}")
+            if(details != null) {
+                Timber.tag("HAS_MEDIA_THAN_STORE").d("${details.toString()}")
+                repository.storeLocalMediaDetails(details!!)
+            }
+        }
+        return details
+    }
+
+    /**
+     * Method to get all media details from local DB
+     * Return MediaDetails List<MediaDetails?>
+     */
+    fun getAllLocalMediaDetails(mediaDetails: MediaDetails): List<MediaDetails?> {
+        var details: List<MediaDetails?> = emptyList()
+        viewModelScope.launch {
+            details = repository.getAllLocalMediaDetails()
+            Timber.tag("ALL_MEDIA_DETAILS").d("$details")
+        }
+        return details
+    }
+
+    /**
+     * Method to get the media details by it Id from DB
+     * Return MediaDetails or Null
+     */
+    fun getLocalMediaDetails(uid: String): MediaDetails? {
+        var details: MediaDetails? = null
+        viewModelScope.launch {
+            details = repository.getLocalMediaDetails(uid)
+            Timber.tag("ONE_MEDIA_DETAILS").d("${details.toString()}")
+        }
+        return details
     }
 
 }

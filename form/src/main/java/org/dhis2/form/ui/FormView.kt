@@ -24,7 +24,9 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.FileProvider
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.DialogFragment
@@ -33,12 +35,14 @@ import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.room.Room
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.timepicker.MaterialTimePicker
 import com.google.android.material.timepicker.TimeFormat.CLOCK_12H
 import com.google.android.material.timepicker.TimeFormat.CLOCK_24H
 import com.journeyapps.barcodescanner.ScanOptions
+//import dagger.hilt.android.AndroidEntryPoint
 import java.io.File
 import java.util.Calendar
 import org.dhis2.commons.ActivityResultObservable
@@ -71,6 +75,8 @@ import org.dhis2.form.data.scan.ScanContract
 import org.dhis2.form.data.toMessage
 import org.dhis2.form.databinding.ViewFormBinding
 import org.dhis2.form.di.Injector
+import org.dhis2.form.local.AppDatabase
+import org.dhis2.form.local.MediaDetailsDAO
 import org.dhis2.form.model.FieldUiModel
 import org.dhis2.form.model.FormRepositoryRecords
 import org.dhis2.form.model.InfoUiModel
@@ -113,6 +119,8 @@ class FormView : Fragment() {
     private var resultDialogUiProvider: EnrollmentResultDialogUiProvider? = null
     private var actionIconsActivate: Boolean = true
     private var openErrorLocation: Boolean = false
+
+    //private val mediaViewModel: MediaViewModel by viewModels() // Declare Hild mediaViewModel
 
     private val qrScanContent = registerForActivityResult(ScanContract()) { result ->
         result.contents?.let { qrData ->
@@ -255,8 +263,17 @@ class FormView : Fragment() {
             context = requireContext(),
             repositoryRecords = arguments?.serializable(RECORDS)
                 ?: throw RepositoryRecordsException(),
-            openErrorLocation = openErrorLocation
+            openErrorLocation = openErrorLocation,
+            appDatabase = initializeAppDatabase(requireContext())
         )
+    }
+
+    fun initializeAppDatabase(context: Context): AppDatabase {
+        return Room.databaseBuilder(
+            context,
+            AppDatabase::class.java,
+            AppDatabase.DB_NAME
+        ).build()
     }
 
     private lateinit var binding: ViewFormBinding
@@ -356,6 +373,8 @@ class FormView : Fragment() {
         viewModel.getMediaDataStore()
         viewModel.getDownloadMedia("rdZdCjQyl7y") // to dpwnload media
         viewModel.getLocalMedia("rdZdCjQyl7y") // to get local media
+        viewModel.getMediaDetails("rdZdCjQyl7y") // to test get SERVER media Details and store
+        viewModel.getLocalMediaDetails("rdZdCjQyl7y") // to test get LOCAL media Details
 
        val result = viewModel.checkDataElement("djduey498493")
 

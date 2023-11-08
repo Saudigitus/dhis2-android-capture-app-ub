@@ -22,6 +22,7 @@ import org.dhis2.form.data.SearchRepository
 import org.dhis2.form.data.metadata.FileResourceConfiguration
 import org.dhis2.form.data.metadata.OptionSetConfiguration
 import org.dhis2.form.data.metadata.OrgUnitConfiguration
+import org.dhis2.form.local.AppDatabase
 import org.dhis2.form.model.EnrollmentRecords
 import org.dhis2.form.model.EventRecords
 import org.dhis2.form.model.FormRepositoryRecords
@@ -49,12 +50,14 @@ object Injector {
     fun provideFormViewModelFactory(
         context: Context,
         repositoryRecords: FormRepositoryRecords,
-        openErrorLocation: Boolean
+        openErrorLocation: Boolean,
+        appDatabase: AppDatabase,
     ): FormViewModelFactory {
         return FormViewModelFactory(
             provideFormRepository(
                 context,
-                repositoryRecords
+                repositoryRecords,
+                appDatabase
             ),
             provideDispatchers(),
             openErrorLocation
@@ -75,9 +78,11 @@ object Injector {
 
     private fun provideFormRepository(
         context: Context,
-        repositoryRecords: FormRepositoryRecords
+        repositoryRecords: FormRepositoryRecords,
+        appDatabase: AppDatabase,
     ): FormRepository {
         return FormRepositoryImpl(
+            appDatabase.mediaDAO(),
             formValueStore = provideFormValueStore(
                 context = context,
                 recordUid = repositoryRecords.recordUid,
@@ -96,7 +101,8 @@ object Injector {
             ),
             rulesUtilsProvider = provideRulesUtilsProvider(),
             legendValueProvider = provideLegendValueProvider(context),
-            d2 = D2Manager.getD2()
+            d2 = D2Manager.getD2(),
+
         )
     }
 
