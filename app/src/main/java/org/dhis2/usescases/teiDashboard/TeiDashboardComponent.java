@@ -9,6 +9,8 @@ import org.dhis2.usescases.teiDashboard.dashboardfragments.relationships.Relatio
 import org.dhis2.usescases.teiDashboard.dashboardfragments.relationships.RelationshipModule;
 import org.dhis2.usescases.teiDashboard.dashboardfragments.teidata.TEIDataComponent;
 import org.dhis2.usescases.teiDashboard.dashboardfragments.teidata.TEIDataModule;
+import org.dhis2.usescases.teiDashboard.teiProgramList.TeiProgramListActivity;
+import org.dhis2.usescases.teiDashboard.teiProgramList.TeiProgramListModule;
 
 import androidx.annotation.NonNull;
 import dagger.Subcomponent;
@@ -18,6 +20,7 @@ import dagger.Subcomponent;
  */
 @PerActivity
 @Subcomponent(modules = TeiDashboardModule.class)
+//@Subcomponent(modules = {TeiDashboardModule.class, TeiProgramListModule.class})
 public interface TeiDashboardComponent {
 
     @NonNull
@@ -30,4 +33,6 @@ public interface TeiDashboardComponent {
     TEIDataComponent plus(TEIDataModule teiDataModule);
 
     void inject(TeiDashboardMobileActivity mobileActivity);
+
+    void inject(TeiProgramListActivity activity);
 }
