@@ -50,11 +50,15 @@ import org.dhis2.databinding.ActivityDashboardMobileBinding;
 import org.dhis2.ui.ThemeManager;
 import org.dhis2.usescases.enrollment.EnrollmentActivity;
 import org.dhis2.usescases.general.ActivityGlobalAbstract;
+import org.dhis2.usescases.main.program.ProgramViewModel;
 import org.dhis2.usescases.qrCodes.QrActivity;
 import org.dhis2.usescases.teiDashboard.adapters.DashboardPagerAdapter;
 import org.dhis2.usescases.teiDashboard.dashboardfragments.relationships.MapButtonObservable;
 import org.dhis2.usescases.teiDashboard.dashboardfragments.teidata.TEIDataFragment;
+import org.dhis2.usescases.teiDashboard.teiProgramList.EnrollmentViewModel;
 import org.dhis2.usescases.teiDashboard.teiProgramList.TeiProgramListActivity;
+import org.dhis2.usescases.teiDashboard.teiProgramList.TeiProgramListAdapter;
+import org.dhis2.usescases.teiDashboard.teiProgramList.TeiProgramListContract;
 import org.dhis2.utils.HelpManager;
 import org.dhis2.utils.OrientationUtilsKt;
 import org.dhis2.utils.customviews.navigationbar.NavigationPageConfigurator;
@@ -63,12 +67,14 @@ import org.dhis2.utils.granularsync.SyncStatusDialogNavigatorKt;
 import org.hisp.dhis.android.core.enrollment.EnrollmentStatus;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 import javax.inject.Inject;
 
 import kotlin.Unit;
 import kotlin.jvm.functions.Function1;
 
-public class TeiDashboardMobileActivity extends ActivityGlobalAbstract implements TeiDashboardContracts.View, MapButtonObservable {
+public class TeiDashboardMobileActivity extends ActivityGlobalAbstract implements TeiDashboardContracts.View, MapButtonObservable, TeiProgramListContract.View  {
 
     public static final int OVERVIEW_POS = 0;
 
@@ -94,6 +100,13 @@ public class TeiDashboardMobileActivity extends ActivityGlobalAbstract implement
     protected String teiUid;
     protected String programUid;
     protected String enrollmentUid;
+
+    // program List
+    @Inject
+    TeiProgramListContract.Presenter presenterProgram;
+
+    @Inject
+    TeiProgramListAdapter adapterProgram;
 
     ActivityDashboardMobileBinding binding;
     protected DashboardPagerAdapter adapter;
@@ -147,6 +160,7 @@ public class TeiDashboardMobileActivity extends ActivityGlobalAbstract implement
         binding = DataBindingUtil.setContentView(this, R.layout.activity_dashboard_mobile);
         showLoadingProgress(true);
         binding.setPresenter(presenter);
+        binding.setPresenterProgram(presenterProgram);
 
         filterManager.setUnsupportedFilters(Filters.ENROLLMENT_DATE, Filters.ENROLLMENT_STATUS);
         binding.setTotalFilters(filterManager.getTotalFilters());
@@ -698,5 +712,78 @@ public class TeiDashboardMobileActivity extends ActivityGlobalAbstract implement
         Intent intent = new Intent(getContext(), QrActivity.class);
         intent.putExtra(TEI_UID, teiUid);
         startActivity(intent);
+    }
+
+    @Override
+    public void setActiveEnrollments(List<EnrollmentViewModel> enrollments) {
+        if (binding.enrollmentRecycler.getAdapter() == null) {
+            binding.enrollmentRecycler.setAdapter(adapterProgram);
+        }
+        adapterProgram.setActiveEnrollments(enrollments);
+    }
+
+    @Override
+    public void setOtherEnrollments(List<EnrollmentViewModel> enrollments) {
+        if (binding.enrollmentRecycler.getAdapter() == null) {
+            binding.enrollmentRecycler.setAdapter(adapterProgram);
+        }
+        adapterProgram.setOtherEnrollments(enrollments);
+    }
+
+    @Override
+    public void setPrograms(List<ProgramViewModel> programs) {
+        if (binding.enrollmentRecycler.getAdapter() == null) {
+            binding.enrollmentRecycler.setAdapter(adapterProgram);
+        }
+        adapterProgram.setPrograms(programs);
+    }
+
+    @Override
+    public void goToEnrollmentScreen(String enrollmentUid, String programUid) {
+        themeManager.setProgramTheme(programUid);
+        updateToolbar(programUid);
+        Intent data = new Intent();
+        data.putExtra("GO_TO_ENROLLMENT", enrollmentUid);
+        data.putExtra("GO_TO_ENROLLMENT_PROGRAM", programUid);
+        setResult(RESULT_OK, data);
+
+        finish();
+    }
+
+    @Override
+    public void changeCurrentProgram(String program, String uid) {
+        if (program != null) {
+            themeManager.setProgramTheme(program);
+            updateToolbar(program);
+        }
+        Intent data = new Intent();
+        data.putExtra("CHANGE_PROGRAM", program);
+        data.putExtra("CHANGE_PROGRAM_ENROLLMENT", enrollmentUid);
+        setResult(RESULT_OK, data);
+
+        finish();
+    }
+
+    @Override
+    public void displayBreakGlassError(String trackedEntityTypeName) {
+        displayMessage(getString(R.string.break_glass_error_v2, trackedEntityTypeName));
+    }
+
+    @Override
+    public void displayAccessError() {
+        displayMessage(getString(R.string.search_access_error));
+    }
+
+    private void updateToolbar(String programUid) {
+        themeManager.getThemePrimaryColor(
+                programUid,
+                programColor -> {
+                    binding.toolbar.setBackgroundColor(programColor);
+                    return Unit.INSTANCE;
+                },
+                themeColorRes -> {
+                    binding.toolbar.setBackgroundColor(ContextCompat.getColor(this, themeColorRes));
+                    return Unit.INSTANCE;
+                });
     }
 }
