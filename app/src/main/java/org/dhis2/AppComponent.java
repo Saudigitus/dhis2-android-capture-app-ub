@@ -18,6 +18,8 @@ import org.dhis2.usescases.login.LoginComponent;
 import org.dhis2.usescases.login.LoginModule;
 import org.dhis2.usescases.splash.SplashComponent;
 import org.dhis2.usescases.splash.SplashModule;
+import org.dhis2.usescases.teiDashboard.TeiDashboardModule;
+import org.dhis2.usescases.teiDashboard.teiProgramList.TeiProgramListModule;
 import org.dhis2.utils.Validator;
 import org.dhis2.utils.analytics.AnalyticsModule;
 import org.dhis2.commons.matomo.MatomoAnalyticsController;
