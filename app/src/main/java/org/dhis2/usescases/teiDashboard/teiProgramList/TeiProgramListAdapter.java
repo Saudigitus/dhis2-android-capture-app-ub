@@ -116,19 +116,19 @@ public class TeiProgramListAdapter extends RecyclerView.Adapter<TeiProgramListEn
         return listItems != null ? listItems.size() : 0;
     }
 
-    void setActiveEnrollments(List<EnrollmentViewModel> enrollments) {
+    public void setActiveEnrollments(List<EnrollmentViewModel> enrollments) {
         this.activeEnrollments.clear();
         this.activeEnrollments.addAll(enrollments);
         orderList();
     }
 
-    void setOtherEnrollments(List<EnrollmentViewModel> enrollments) {
+    public void setOtherEnrollments(List<EnrollmentViewModel> enrollments) {
         this.inactiveEnrollments.clear();
         this.inactiveEnrollments.addAll(enrollments);
         orderList();
     }
 
-    void setPrograms(List<ProgramViewModel> programs) {
+    public void setPrograms(List<ProgramViewModel> programs) {
         this.programs.clear();
         this.programs.addAll(programs);
         orderList();
