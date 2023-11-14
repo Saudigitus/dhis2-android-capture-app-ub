@@ -10,6 +10,8 @@ import org.dhis2.form.data.RulesRepository;
 import org.dhis2.data.forms.dataentry.EnrollmentRuleEngineRepository;
 import org.dhis2.data.forms.dataentry.RuleEngineRepository;
 import org.dhis2.commons.schedulers.SchedulerProvider;
+import org.dhis2.usescases.teiDashboard.teiProgramList.TeiProgramListContract;
+import org.dhis2.usescases.teiDashboard.teiProgramList.TeiProgramListPresenter;
 import org.dhis2.utils.analytics.AnalyticsHelper;
 import org.dhis2.commons.matomo.MatomoAnalyticsController;
 import org.dhis2.utils.customviews.navigationbar.NavigationPageConfigurator;
@@ -32,8 +34,11 @@ public class TeiDashboardModule {
     private final TeiDashboardContracts.View view;
     private final String enrollmentUid;
     private final boolean isPortrait;
+    private final TeiProgramListContract.View view2;
 
-    public TeiDashboardModule(TeiDashboardContracts.View view, String teiUid, String programUid, String enrollmentUid, boolean isPortrait) {
+
+    public TeiDashboardModule(TeiDashboardContracts.View view,TeiProgramListContract.View view2, String teiUid, String programUid, String enrollmentUid, boolean isPortrait) {
+        this.view2 = view2;
         this.view = view;
         this.teiUid = teiUid;
         this.programUid = programUid;
@@ -55,6 +60,7 @@ public class TeiDashboardModule {
                                                      PreferenceProvider preferenceProvider,
                                                      FilterManager filterManager,
                                                      MatomoAnalyticsController matomoAnalyticsController) {
+
         return new TeiDashboardPresenter(view,
                 teiUid,
                 programUid,
@@ -65,6 +71,15 @@ public class TeiDashboardModule {
                 preferenceProvider,
                 filterManager,
                 matomoAnalyticsController);
+    }
+    @Provides
+    @PerActivity
+    TeiProgramListContract.Presenter providesPresenter(TeiProgramListContract.Interactor interactor,
+                                                       PreferenceProvider preferenceProvider,
+                                                       AnalyticsHelper analyticsHelper,
+                                                       D2 d2) {
+        return new TeiProgramListPresenter(view2, interactor, teiUid, preferenceProvider, analyticsHelper,
+                d2.enrollmentModule().enrollmentService());
     }
 
     @Provides
