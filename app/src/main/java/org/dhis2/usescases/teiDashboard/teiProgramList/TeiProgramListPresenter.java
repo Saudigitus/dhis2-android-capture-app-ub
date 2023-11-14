@@ -19,12 +19,12 @@ public class TeiProgramListPresenter implements TeiProgramListContract.Presenter
     private final TeiProgramListContract.Interactor interactor;
     private String teiUid;
 
-    TeiProgramListPresenter(TeiProgramListContract.View view,
-                            TeiProgramListContract.Interactor interactor,
-                            String trackedEntityId,
-                            PreferenceProvider preferenceProvider,
-                            AnalyticsHelper analyticsHelper,
-                            EnrollmentService enrollmentService) {
+    public TeiProgramListPresenter(TeiProgramListContract.View view,
+                                   TeiProgramListContract.Interactor interactor,
+                                   String trackedEntityId,
+                                   PreferenceProvider preferenceProvider,
+                                   AnalyticsHelper analyticsHelper,
+                                   EnrollmentService enrollmentService) {
         this.view = view;
         this.interactor = interactor;
         this.teiUid = trackedEntityId;
