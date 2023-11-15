@@ -132,4 +132,7 @@
     <string name="media_dialog_label_duration">Duração</string>
     <string name="media_dialog_label_update">Atualização</string>
     <string name="media_dialog_label_close">Fechar</string>
+
+    <!-- Loading Dialog -->
+    <string name="loading_media_dialog_title">Carregando… Por favor espere…</string>
 </resources>

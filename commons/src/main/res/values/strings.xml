@@ -231,4 +231,6 @@
     <string name="media_dialog_label_update">Update</string>
     <string name="media_dialog_label_close">Close</string>
     <string name="error_message_invalid_file_path">Invalid file path</string>
+
+    <string name="loading_media_dialog_title">Loading… Please wait…</string>
 </resources>

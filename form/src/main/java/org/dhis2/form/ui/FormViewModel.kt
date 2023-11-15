@@ -5,9 +5,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -137,8 +135,7 @@ class FormViewModel(
                 }
 
                 ValueStoreResult.UID_IS_NOT_DE_OR_ATTR -> {
-                    Timber.tag(TAG)
-                        .d("${result.first.id} is not a data element or attribute")
+                    Timber.tag(TAG).d("${result.first.id} is not a data element or attribute")
                     processCalculatedItems()
                 }
 
@@ -664,7 +661,7 @@ class FormViewModel(
         viewModelScope.launch {
             repository.getMediaDataStore().collectLatest {
                 _mediaDataStore.value = it
-                Timber.tag("MEDIA_DATA_STORE").d("${it}")
+                Timber.d("DAUB-33: $it")
             }
         }
     }
@@ -673,7 +670,7 @@ class FormViewModel(
         val contentType = responseBody.contentType()
         if (contentType != null) {
             val mediaContentType = contentType.toString()
-            Timber.d("mediaType: $mediaContentType")
+            Timber.d("DAUB-33: mediaType: $mediaContentType")
             val parts = mediaContentType.split(";")
             val mediaType = parts[0].trim()
 
@@ -685,61 +682,59 @@ class FormViewModel(
         return null
     }
 
-    private fun loadMediaPath(uid: String) {
-        viewModelScope.launch {
-            val taskGetLocalMediaPath = async {
-                getLocalMediaPath(uid)
-            }
-            awaitAll(taskGetLocalMediaPath)
-            return@launch
-        }
+    private fun loadLocalMediaPath(uid: String): String? {
+        return getLocalMediaPath2(uid)
     }
 
-    fun loadMedias(
+    suspend fun loadMedias(
         videos: List<Video> = emptyList(),
         audios: List<Audio> = emptyList(),
     ) {
-        viewModelScope.launch {
-            val taskLoadVideos = videos.map { video ->
-                async(Dispatchers.IO) {
-                    loadMediaPath(video.id)
-                    val mediaFilePath = _mediaFilePath.value
-                    Timber.d("video file path => [$mediaFilePath]")
+        videos.map { video ->
+            Timber.d("DAUB-33: map videos")
 
-                    if (mediaFilePath!!.isNotBlank() && mediaFilePath.isNotEmpty()) {
-                        Timber.d("MEDIA FILE EXIST!")
-                    } else {
-                        Timber.d("MEDIA FILE DOES NOT EXIST!")
-                        Timber.d("DOWNLOAD MEDIA FILE!")
-                        downloadMedia(video.id)
-                    }
-                }
-            }
-            taskLoadVideos.awaitAll()
-            val downloadAudios = audios.map { audio ->
-                async(Dispatchers.IO) {
-                    loadMediaPath(audio.id)
-                    val mediaFilePath = _mediaFilePath.value
-                    Timber.d("audio file path => $mediaFilePath")
+            val mediaFilePath = loadLocalMediaPath(video.id)
 
-                    if (mediaFilePath!!.isNotBlank() && mediaFilePath.isNotEmpty()) {
-                        Timber.d("MEDIA FILE EXIST!")
-                    } else {
-                        Timber.d("MEDIA FILE DOES NOT EXIST!")
-                        Timber.d("DOWNLOAD MEDIA FILE!")
-                        downloadMedia(audio.id)
-                    }
-                }
+            Timber.d("DAUB-33: video file path => [$mediaFilePath]")
+
+            val mediaAlreadyDownloaded =
+                !mediaFilePath.isNullOrBlank() && mediaFilePath.isNotEmpty()
+
+            if (mediaAlreadyDownloaded) {
+                Timber.d("DAUB-33: Local media exist: [true]")
+            } else {
+                Timber.d("DAUB-33: Local media exist: [false]")
+                Timber.d("DAUB-33: Download media file: [true]")
+                downloadMedia(video.id)
             }
-            downloadAudios.awaitAll()
-            _allMediaWasDownloaded.value = true
-            Timber.d("Download Media Finished!")
         }
+
+        audios.map { audio ->
+            Timber.d("DAUB-33: map audios")
+
+            val mediaFilePath = loadLocalMediaPath(audio.id)
+
+            val mediaAlreadyDownloaded =
+                !mediaFilePath.isNullOrBlank() && mediaFilePath.isNotEmpty()
+
+            Timber.d("DAUB-33: audio file path => $mediaFilePath")
+
+            if (mediaAlreadyDownloaded) {
+                Timber.d("DAUB-33: Local media exist: [true]")
+            } else {
+                Timber.d("DAUB-33: Local media exist: [false]")
+                Timber.d("DAUB-33: Download media file: [true]")
+                downloadMedia(audio.id)
+            }
+        }
+
+        _allMediaWasDownloaded.value = true
+        loadAllMediaPaths(videos = videos, audios = audios)
     }
 
     private suspend fun downloadMedia(uid: String) {
         try {
-            Timber.d("Start downloading the media with uid [$uid]!")
+            Timber.d("DAUB-33: Start downloading the media with uid [$uid]!")
 
             val body = repository.downloadMediaToLocal(uid = uid)
             _mediaFile.value = body
@@ -749,18 +744,17 @@ class FormViewModel(
                 val directory = createDownloadDirectory(DIRECTORY_DOWNLOAD_DHS2)
                 val file = createFile(directory, uid, fileExtension!!)
 
-                _mediaFilePath.value =
-                    createMediaFilePath(DIRECTORY_DOWNLOAD_DHS2, uid, fileExtension)
+                val mediaPath = createMediaFilePath(DIRECTORY_DOWNLOAD_DHS2, uid, fileExtension)
 
                 saveMediaToFile(body, file)
 
-                Timber.d("Media with uid [$uid] downloaded!")
-                Timber.d("Media with uid [$uid] path: [${_mediaFilePath.value}]")
+                Timber.d("DAUB-33: Media with uid [$uid] downloaded!")
+                Timber.d("DAUB-33: Media with uid [$uid] path: [${mediaPath}]")
             } else {
-                Timber.d("Null response on download media with uid: [$uid]")
+                Timber.d("DAUB-33: Null response on download media with uid: [$uid]")
             }
         } catch (ex: Exception) {
-            Timber.d("Download error on media with uid [$uid]!")
+            Timber.d("DAUB-33: Download error on media with uid [$uid]!")
             ex.printStackTrace()
         }
     }
@@ -796,75 +790,100 @@ class FormViewModel(
         return File(directory, "$uid.$fileExtension")
     }
 
+    @Deprecated("")
     private fun getLocalMediaPath(uid: String): String? {
         var path: String? = null
-        viewModelScope.launch {
-            val directory = File(
-                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
-                "dhis2"
-            )
-            val files = directory.listFiles()
-            if (files != null) {
-                for (file in files) {
-                    if (file.isFile && file.nameWithoutExtension == uid) {
-                        val filePath = file.absolutePath
-                        _mediaFilePath.value = filePath
-                        path = filePath
-                        break
-                    }
+
+        val directory = File(
+            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
+            "dhis2"
+        )
+        val files = directory.listFiles()
+        if (files != null) {
+            for (file in files) {
+                if (file.isFile && file.nameWithoutExtension == uid) {
+                    val filePath = file.absolutePath
+                    _mediaFilePath.value = filePath
+                    path = filePath
+                    break
                 }
-            } else {
-                Timber.d("Directory does not exist or cannot be accessed.")
             }
+        } else {
+            Timber.d("DAUB-33: Directory does not exist or cannot be accessed.")
         }
-        Timber.d("Loaded path: [$path]")
+
+        Timber.d("DAUB-33: Loaded path: [$path]")
         return path
     }
 
-    fun loadAllMediaPaths(
+    private fun getLocalMediaPath2(uid: String): String? {
+        var path: String? = null
+
+        val directory = File(
+            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
+            "dhis2"
+        )
+        val files = directory.listFiles()
+        if (files != null) {
+            for (file in files) {
+                if (file.isFile && file.nameWithoutExtension == uid) {
+                    path = file.absolutePath
+                    break
+                }
+            }
+        } else {
+            Timber.d("DAUB-33: Directory does not exist or cannot be accessed.")
+        }
+
+        Timber.d("DAUB-33: Loaded local media path: [$path]")
+        return path
+    }
+
+    private fun loadAllMediaPaths(
         videos: List<Video> = emptyList(),
         audios: List<Audio> = emptyList(),
     ) {
-        viewModelScope.launch {
-            val mediaEntitiesList = mutableListOf<DialogMediaEntity>()
+        val mediaEntitiesList = mutableListOf<DialogMediaEntity>()
 
-            videos.forEach { video ->
-                val taskGetLocalMediaPath = async { getLocalMediaPath(uid = video.id) }
-                awaitAll(taskGetLocalMediaPath)
+        videos.forEach { video ->
 
-                val mediaEntity = DialogMediaEntity(
-                    title = video.name,
-                    duration = "01:00",
-                    dateOfLastUpdate = "31-10-2023",
-                    url = _mediaFilePath.value ?: "no path provided!",
-                    dialogMediaType = DialogMediaType.VIDEO
-                )
-                mediaEntitiesList.add(mediaEntity)
-            }
+            val mediaLocalPath = getLocalMediaPath2(uid = video.id)
 
-            audios.forEach { audio ->
-                val taskGetLocalMediaPath = async { getLocalMediaPath(uid = audio.id) }
-                awaitAll(taskGetLocalMediaPath)
-
-                val mediaEntity = DialogMediaEntity(
-                    title = audio.name,
-                    duration = "02:00",
-                    dateOfLastUpdate = "01-10-2023",
-                    url = _mediaFilePath.value ?: "no path provided!",
-                    dialogMediaType = DialogMediaType.AUDIO
-                )
-                mediaEntitiesList.add(mediaEntity)
-            }
-            mediaEntities.value.clear()
-            mediaEntities.value.addAll(mediaEntitiesList)
-            setMediaLoading(loading = false)
-            Timber.d("All Media Paths Loaded!")
+            val mediaEntity = DialogMediaEntity(
+                title = video.name,
+                duration = "01:00",
+                dateOfLastUpdate = "31-10-2023",
+                url = mediaLocalPath ?: "no path provided!",
+                dialogMediaType = DialogMediaType.VIDEO
+            )
+            mediaEntitiesList.add(mediaEntity)
         }
+
+        audios.forEach { audio ->
+
+            Timber.d("DAUB-33: Launch new scope: loadAllMediaPaths() | audios")
+
+            val mediaLocalPath = getLocalMediaPath2(uid = audio.id)
+
+            val mediaEntity = DialogMediaEntity(
+                title = audio.name,
+                duration = "02:00",
+                dateOfLastUpdate = "01-10-2023",
+                url = mediaLocalPath ?: "no path provided!",
+                dialogMediaType = DialogMediaType.AUDIO
+            )
+            mediaEntitiesList.add(mediaEntity)
+        }
+
+        mediaEntities.value.clear()
+        mediaEntities.value.addAll(mediaEntitiesList)
+        setMediaLoading(loading = false)
+        Timber.d("DAUB-33: All Media Paths Loaded!")
     }
 
     fun checkDataElement(uid: String): DataElement? {
         val mediaDataStoreConfig = mediaDataStore.value
-        Timber.d("Media_Store_Config: $mediaDataStoreConfig")
+        Timber.d("DAUB-33: Media_Store_Config: $mediaDataStoreConfig")
 
         var dataElementList: List<DataElement>? = null
         mediaDataStoreConfig?.let { mediaStoreValue ->

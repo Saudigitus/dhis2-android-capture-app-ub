@@ -16,10 +16,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.fragment.app.DialogFragment
+import org.dhis2.commons.R
 
 class LoadingMediaDialogFragment : DialogFragment() {
 
@@ -43,6 +46,14 @@ class LoadingMediaDialogFragment : DialogFragment() {
     }
 }
 
+@Preview
+@Composable
+fun PreviewLoadingMediaDialog() {
+    LoadingMediaDialog {
+
+    }
+}
+
 @Composable
 fun LoadingMediaDialog(onDismiss: () -> Unit) {
     Dialog(onDismissRequest = { onDismiss() }) {
@@ -57,7 +68,7 @@ fun LoadingMediaDialog(onDismiss: () -> Unit) {
                     .padding(12.dp)
             ) {
                 Text(
-                    text = "Loading.. Please wait..",
+                    text = stringResource(id = R.string.loading_media_dialog_title),
                     Modifier
                         .padding(8.dp), textAlign = TextAlign.Center
                 )

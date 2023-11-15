@@ -38,10 +38,7 @@ import com.google.android.material.timepicker.TimeFormat.CLOCK_24H
 import com.journeyapps.barcodescanner.ScanOptions
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import org.dhis2.commons.ActivityResultObservable
 import org.dhis2.commons.ActivityResultObserver
 import org.dhis2.commons.Constants
@@ -95,9 +92,7 @@ import org.dhis2.maps.views.MapSelectorActivity.Companion.LOCATION_TYPE_EXTRA
 import org.dhis2.ui.ErrorFieldList
 import org.dhis2.ui.dialogs.bottomsheet.BottomSheetDialog
 import org.dhis2.ui.dialogs.signature.SignatureDialog
-import org.dhis2.usescases.uiboost.data.model.media.Audio
 import org.dhis2.usescases.uiboost.data.model.media.DataElement
-import org.dhis2.usescases.uiboost.data.model.media.Video
 import org.hisp.dhis.android.core.arch.helpers.FileResourceDirectoryHelper
 import org.hisp.dhis.android.core.arch.helpers.GeometryHelper
 import org.hisp.dhis.android.core.common.FeatureType
@@ -290,6 +285,7 @@ class FormView : Fragment() {
         Manifest.permission.READ_MEDIA_VIDEO
     )
 
+    private var isCoroutineRunning = false
     private val scopeProcessMediaData = CoroutineScope(Dispatchers.Main)
 
     override fun onCreateView(
@@ -787,31 +783,41 @@ class FormView : Fragment() {
         val isLoadingDialogVisible = isDialogVisible(childFragmentManager, LOADING_MEDIA_DIALOG_TAG)
 
         try {
-            scopeProcessMediaData.launch {
-                viewModel.setMediaLoading(loading = true)
-                viewModel.isLoadingMedia.collect { isLoadingMedia ->
+            if (!isCoroutineRunning) {
+                scopeProcessMediaData.launch {
+                    Timber.d("DAUB-33: Launch new scope: processMediaData()")
+                    isCoroutineRunning = true
 
-                    if (isLoadingMedia && !isLoadingDialogVisible) {
-                        showLoadingDialog(
-                            loadingDialog = loadingDialog,
-                            videos = videos,
-                            audios = audios
-                        )
+                    Timber.d("DAUB-33: Is Coroutine Running: [$isCoroutineRunning]!")
 
-                        runBlocking {
-                            val downloadAllMedias =
-                                async { viewModel.loadMedias(videos, audios) }
-                            val loadAllMediaPaths =
-                                async { viewModel.loadAllMediaPaths(videos, audios) }
+                    viewModel.setMediaLoading(loading = true)
+                    viewModel.isLoadingMedia.collect { isLoadingMedia ->
 
-                            awaitAll(downloadAllMedias)
-                            awaitAll(loadAllMediaPaths)
+                        Timber.d("DAUB-33: (collect) Is Loading Media: [$isLoadingMedia]")
+                        Timber.d("DAUB-33: Is Loading  Dialog Visible: [$isLoadingDialogVisible]")
+
+                        val canLoadMedias =
+                            isLoadingMedia && !isLoadingDialogVisible
+                        Timber.d("Can load medias: [$canLoadMedias]")
+
+                        if (canLoadMedias) {
+
+                            showLoadingDialog(
+                                loadingDialog = loadingDialog,
+                                show = true
+                            )
+                            viewModel.loadMedias(videos = videos, audios = audios)
+                            isCoroutineRunning = false
+                            Timber.d("DAUB-33: Is Coroutine Running: [$isCoroutineRunning]!")
+                        } else {
+                            showLoadingDialog(
+                                loadingDialog = loadingDialog,
+                                show = false
+                            )
+                            showMediaDialog(intent = intent)
+                            isCoroutineRunning = false
+                            Timber.d("DAUB-33: Is Coroutine Running: [$isCoroutineRunning]!")
                         }
-                    } else {
-                        dismissLoadingDialog(
-                            loadingDialog = loadingDialog,
-                            intent = intent
-                        )
                     }
                 }
             }
@@ -825,18 +831,23 @@ class FormView : Fragment() {
 
     private fun showLoadingDialog(
         loadingDialog: LoadingMediaDialogFragment,
-        videos: List<Video>,
-        audios: List<Audio>,
+        show: Boolean,
     ) {
-        loadingDialog.show(childFragmentManager, LOADING_MEDIA_DIALOG_TAG)
+        Timber.d("DAUB-33: Show loading dialog = [$show]")
+        if (show) {
+            loadingDialog.show(childFragmentManager, LOADING_MEDIA_DIALOG_TAG)
+        } else {
+            try {
+                loadingDialog.dismiss()
+            } catch (ex: IllegalStateException) {
+                Timber.e(ex)
+            }
+        }
     }
 
-    private fun dismissLoadingDialog(
-        loadingDialog: LoadingMediaDialogFragment,
+    private fun showMediaDialog(
         intent: RecyclerViewUiEvents.ShowDescriptionLabelDialog,
     ) {
-        loadingDialog.dismiss()
-
         val mediaEntities = viewModel.mediaEntities.value
         val mediaDialogFragment = mediaDialog(
             title = intent.title,
@@ -851,7 +862,11 @@ class FormView : Fragment() {
         if (!isMediaDialogVisible) {
             mediaDialogFragment.show(childFragmentManager, MEDIA_DIALOG_TAG)
         } else {
-            mediaDialogFragment.dismiss()
+            try {
+                mediaDialogFragment.dismiss()
+            } catch (ex: java.lang.IllegalStateException) {
+                Timber.e(ex)
+            }
         }
     }
 
