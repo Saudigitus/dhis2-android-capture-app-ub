@@ -785,38 +785,21 @@ class FormView : Fragment() {
         try {
             if (!isCoroutineRunning) {
                 scopeProcessMediaData.launch {
-                    Timber.d("DAUB-33: Launch new scope: processMediaData()")
+
                     isCoroutineRunning = true
-
-                    Timber.d("DAUB-33: Is Coroutine Running: [$isCoroutineRunning]!")
-
                     viewModel.setMediaLoading(loading = true)
+
                     viewModel.isLoadingMedia.collect { isLoadingMedia ->
 
-                        Timber.d("DAUB-33: (collect) Is Loading Media: [$isLoadingMedia]")
-                        Timber.d("DAUB-33: Is Loading  Dialog Visible: [$isLoadingDialogVisible]")
-
-                        val canLoadMedias =
-                            isLoadingMedia && !isLoadingDialogVisible
-                        Timber.d("Can load medias: [$canLoadMedias]")
-
+                        val canLoadMedias = isLoadingMedia && !isLoadingDialogVisible
                         if (canLoadMedias) {
-
-                            showLoadingDialog(
-                                loadingDialog = loadingDialog,
-                                show = true
-                            )
+                            showLoadingDialog(loadingDialog = loadingDialog, show = true)
                             viewModel.loadMedias(videos = videos, audios = audios)
                             isCoroutineRunning = false
-                            Timber.d("DAUB-33: Is Coroutine Running: [$isCoroutineRunning]!")
                         } else {
-                            showLoadingDialog(
-                                loadingDialog = loadingDialog,
-                                show = false
-                            )
+                            showLoadingDialog(loadingDialog = loadingDialog, show = false)
                             showMediaDialog(intent = intent)
                             isCoroutineRunning = false
-                            Timber.d("DAUB-33: Is Coroutine Running: [$isCoroutineRunning]!")
                         }
                     }
                 }
@@ -833,7 +816,6 @@ class FormView : Fragment() {
         loadingDialog: LoadingMediaDialogFragment,
         show: Boolean,
     ) {
-        Timber.d("DAUB-33: Show loading dialog = [$show]")
         if (show) {
             loadingDialog.show(childFragmentManager, LOADING_MEDIA_DIALOG_TAG)
         } else {
