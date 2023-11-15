@@ -661,7 +661,7 @@ class FormViewModel(
         viewModelScope.launch {
             repository.getMediaDataStore().collectLatest {
                 _mediaDataStore.value = it
-                Timber.d("DAUB-33: $it")
+                Timber.d("$it")
             }
         }
     }
@@ -670,7 +670,7 @@ class FormViewModel(
         val contentType = responseBody.contentType()
         if (contentType != null) {
             val mediaContentType = contentType.toString()
-            Timber.d("DAUB-33: mediaType: $mediaContentType")
+            Timber.d("mediaType: $mediaContentType")
             val parts = mediaContentType.split(";")
             val mediaType = parts[0].trim()
 
@@ -691,39 +691,33 @@ class FormViewModel(
         audios: List<Audio> = emptyList(),
     ) {
         videos.map { video ->
-            Timber.d("DAUB-33: map videos")
 
             val mediaFilePath = loadLocalMediaPath(video.id)
-
-            Timber.d("DAUB-33: video file path => [$mediaFilePath]")
 
             val mediaAlreadyDownloaded =
                 !mediaFilePath.isNullOrBlank() && mediaFilePath.isNotEmpty()
 
             if (mediaAlreadyDownloaded) {
-                Timber.d("DAUB-33: Local media exist: [true]")
+                Timber.d("Local media exist: [true]")
             } else {
-                Timber.d("DAUB-33: Local media exist: [false]")
-                Timber.d("DAUB-33: Download media file: [true]")
+                Timber.d("Local media exist: [false]")
+                Timber.d("Download media file: [true]")
                 downloadMedia(video.id)
             }
         }
 
         audios.map { audio ->
-            Timber.d("DAUB-33: map audios")
 
             val mediaFilePath = loadLocalMediaPath(audio.id)
 
             val mediaAlreadyDownloaded =
                 !mediaFilePath.isNullOrBlank() && mediaFilePath.isNotEmpty()
 
-            Timber.d("DAUB-33: audio file path => $mediaFilePath")
-
             if (mediaAlreadyDownloaded) {
-                Timber.d("DAUB-33: Local media exist: [true]")
+                Timber.d("Local media exist: [true]")
             } else {
-                Timber.d("DAUB-33: Local media exist: [false]")
-                Timber.d("DAUB-33: Download media file: [true]")
+                Timber.d("Local media exist: [false]")
+                Timber.d("Download media file: [true]")
                 downloadMedia(audio.id)
             }
         }
@@ -734,7 +728,7 @@ class FormViewModel(
 
     private suspend fun downloadMedia(uid: String) {
         try {
-            Timber.d("DAUB-33: Start downloading the media with uid [$uid]!")
+            Timber.d("Start downloading the media with uid [$uid]!")
 
             val body = repository.downloadMediaToLocal(uid = uid)
             _mediaFile.value = body
@@ -748,13 +742,13 @@ class FormViewModel(
 
                 saveMediaToFile(body, file)
 
-                Timber.d("DAUB-33: Media with uid [$uid] downloaded!")
-                Timber.d("DAUB-33: Media with uid [$uid] path: [${mediaPath}]")
+                Timber.d("Media with uid [$uid] downloaded!")
+                Timber.d("Media path: [${mediaPath}]")
             } else {
-                Timber.d("DAUB-33: Null response on download media with uid: [$uid]")
+                Timber.d("Null response on download media with uid: [$uid]")
             }
         } catch (ex: Exception) {
-            Timber.d("DAUB-33: Download error on media with uid [$uid]!")
+            Timber.d("Download error on media with uid [$uid]!")
             ex.printStackTrace()
         }
     }
@@ -809,10 +803,10 @@ class FormViewModel(
                 }
             }
         } else {
-            Timber.d("DAUB-33: Directory does not exist or cannot be accessed.")
+            Timber.d("Directory does not exist or cannot be accessed.")
         }
 
-        Timber.d("DAUB-33: Loaded path: [$path]")
+        Timber.d("Loaded path: [$path]")
         return path
     }
 
@@ -832,10 +826,8 @@ class FormViewModel(
                 }
             }
         } else {
-            Timber.d("DAUB-33: Directory does not exist or cannot be accessed.")
+            Timber.d("Directory does not exist or cannot be accessed.")
         }
-
-        Timber.d("DAUB-33: Loaded local media path: [$path]")
         return path
     }
 
@@ -861,8 +853,6 @@ class FormViewModel(
 
         audios.forEach { audio ->
 
-            Timber.d("DAUB-33: Launch new scope: loadAllMediaPaths() | audios")
-
             val mediaLocalPath = getLocalMediaPath2(uid = audio.id)
 
             val mediaEntity = DialogMediaEntity(
@@ -878,12 +868,10 @@ class FormViewModel(
         mediaEntities.value.clear()
         mediaEntities.value.addAll(mediaEntitiesList)
         setMediaLoading(loading = false)
-        Timber.d("DAUB-33: All Media Paths Loaded!")
     }
 
     fun checkDataElement(uid: String): DataElement? {
         val mediaDataStoreConfig = mediaDataStore.value
-        Timber.d("DAUB-33: Media_Store_Config: $mediaDataStoreConfig")
 
         var dataElementList: List<DataElement>? = null
         mediaDataStoreConfig?.let { mediaStoreValue ->
