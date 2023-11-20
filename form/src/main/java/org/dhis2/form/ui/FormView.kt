@@ -22,9 +22,8 @@ import android.widget.DatePicker
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.FileProvider
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.DialogFragment
@@ -124,6 +123,10 @@ class FormView : Fragment() {
             intentHandler(intent)
         }
     }
+    // Get the context associated with the fragment
+    val fragmentContext: Context = requireContext()
+
+
 
     private val mapContent =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
@@ -352,6 +355,16 @@ class FormView : Fragment() {
         }
 
         setObservers()
+        //check storage Permissions
+        if (viewModel.checkAndRequestPermissions(
+                fragmentContext,
+                android.Manifest.permission.READ_EXTERNAL_STORAGE,
+                android.Manifest.permission.WRITE_EXTERNAL_STORAGE
+            )
+        ) {
+            // Permissions are already granted, proceed with your code
+            Timber.tag("FILE_PERMISSION_TAG").d("PERMISSION ALREADY GRANTED")
+        }
 
         viewModel.getMediaDataStore()
         viewModel.getDownloadMedia("rdZdCjQyl7y") // to dpwnload media

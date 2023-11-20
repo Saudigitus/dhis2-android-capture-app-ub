@@ -1,7 +1,12 @@
 package org.dhis2.form.ui
 
-import android.media.MediaPlayer
+import android.content.Context
+import android.content.pm.PackageManager
 import android.os.Environment
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
+import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -50,12 +55,14 @@ class FormViewModel(
     private val geometryController: GeometryController = GeometryController(GeometryParserImpl()),
     private val openErrorLocation: Boolean = false
 ) : ViewModel() {
+    val REQUEST_CODE_PERMISSIONS = 123 // You can use any unique request code
 
     val loading = MutableLiveData(true)
     val showToast = MutableLiveData<Int>()
     val focused = MutableLiveData<Boolean>()
     val showInfo = MutableLiveData<InfoUiModel>()
     val confError = MutableLiveData<List<RulesUtilsProviderConfigurationError>>()
+
 
     private val _items = MutableLiveData<List<FieldUiModel>>()
     val items: LiveData<List<FieldUiModel>> = _items
@@ -701,22 +708,26 @@ class FormViewModel(
     fun getLocalMedia(uid: String): String? {
         var path: String? = null
         viewModelScope.launch {
-            val directory = File(
-                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
-                "dhis2"
-            )
-            val files = directory.listFiles()
-            if (files != null) {
-                for (file in files) {
-                    if (file.isFile && file.nameWithoutExtension == uid) {
-                        val filePath = file.absolutePath
-                        _mediaFilePath.value = filePath
-                        path = filePath
-                        break
+            try {
+
+            } catch (e: Exception){
+                val directory = File(
+                    Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
+                    "dhis2"
+                )
+                val files = directory.listFiles()
+                if (files != null) {
+                    for (file in files) {
+                        if (file.isFile && file.nameWithoutExtension == uid) {
+                            val filePath = file.absolutePath
+                            _mediaFilePath.value = filePath
+                            path = filePath
+                            break
+                        }
                     }
+                } else {
+                    println("Directory does not exist or cannot be accessed.")
                 }
-            } else {
-                println("Directory does not exist or cannot be accessed.")
             }
         }
         Timber.tag("RETURNED_PATH").d(path)
@@ -750,6 +761,40 @@ class FormViewModel(
         }
         Timber.tag("FORM_VIEW").d("${resp}")
         return resp
+    }
+
+
+    fun checkAndRequestPermissions(context: Context, vararg permissions: String): Boolean {
+        val missingPermissions = mutableListOf<String>()
+
+        for (permission in permissions) {
+            if (ContextCompat.checkSelfPermission(context, permission) !=
+                PackageManager.PERMISSION_GRANTED
+            ) {
+                missingPermissions.add(permission)
+            }
+        }
+
+        if (missingPermissions.isEmpty()) {
+            return true
+        } else {
+            if (context is FragmentActivity) {
+                val requestPermissionLauncher =
+                    context.registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
+                        if (permissions.all { it.value }) {
+                            // Permissions are granted, proceed with your code
+                        } else {
+                            // Handle the case where not all permissions are granted
+                        }
+                    }
+
+                requestPermissionLauncher.launch(missingPermissions.toTypedArray())
+                return false
+            } else {
+                // Handle the case where the context is not a FragmentActivity
+                return false
+            }
+        }
     }
 
 }
