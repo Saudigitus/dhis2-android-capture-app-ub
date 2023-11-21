@@ -6,6 +6,8 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.withContext
 import okhttp3.ResponseBody
 import org.dhis2.form.data.helper.Constants
+import org.dhis2.form.data.media.MediaDetails
+import org.dhis2.form.local.MediaDetailsDAO
 import org.dhis2.form.model.ActionType
 import org.dhis2.form.model.FieldUiModel
 import org.dhis2.form.model.RowAction
@@ -23,11 +25,11 @@ import org.hisp.dhis.android.core.common.ValueType
 import org.hisp.dhis.android.core.common.ValueType.LONG_TEXT
 import org.hisp.dhis.rules.models.RuleEffect
 import timber.log.Timber
-import java.io.IOException
 
 private const val loopThreshold = 5
 
 class FormRepositoryImpl(
+    private val mediaDetailsDAO: MediaDetailsDAO,
     private val formValueStore: FormValueStore?,
     private val fieldErrorMessageProvider: FieldErrorMessageProvider,
     private val displayNameProvider: DisplayNameProvider,
@@ -494,5 +496,35 @@ class FormRepositoryImpl(
 
             return@withContext null
         }
+    }
+
+    override suspend fun getMediaDetails(uid: String): MediaDetails? = withContext(Dispatchers.IO) {
+        val service: UBService = d2.retrofit().create(UBService::class.java)
+        try {
+            val response = service.getMediaDetails(uid)
+            if (response.isSuccessful) {
+                return@withContext response.body()!!
+            } else {
+                return@withContext null
+            }
+        } catch (e: Exception) {
+            e.printStackTrace() // Print the exception for debugging
+            Timber.tag("MEDIA_REQUEST_CODE_ERROR_EX").d("$e")
+            return@withContext null
+        }
+    }
+
+    override suspend fun storeLocalMediaDetails(mediaDetails: MediaDetails)  = withContext(
+        Dispatchers.IO)  {
+        val resp = mediaDetailsDAO.create(mediaDetails)
+        println("STORE_RESP: $resp")
+    }
+
+    override suspend fun getAllLocalMediaDetails(): List<MediaDetails?>  = withContext(Dispatchers.IO)  {
+        return@withContext mediaDetailsDAO.getAll()
+    }
+
+    override suspend fun getLocalMediaDetails(uid: String): MediaDetails?  = withContext(Dispatchers.IO) {
+        return@withContext mediaDetailsDAO.getDetailsById(uid)
     }
 }

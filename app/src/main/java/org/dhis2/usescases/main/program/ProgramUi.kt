@@ -82,7 +82,6 @@ import org.dhis2.ui.MetadataIconData
 import org.dhis2.usescases.uiboost.data.model.DataStoreAppConfig
 import org.dhis2.usescases.uiboost.data.model.Program
 import org.hisp.dhis.android.core.common.State
-import timber.log.Timber
 
 @Preview(showBackground = true)
 @Composable
@@ -216,9 +215,11 @@ private fun getFilteredPrograms(
             if ((flat.program == program.uid) &&
                 flat.hidden == "false"
             ) {
-                list.add(program.copy(
-                    reference = flat.icon
-                ))
+                list.add(
+                    program.copy(
+                        reference = flat.icon
+                    )
+                )
             }
         }
     }
@@ -484,9 +485,11 @@ fun ListLayout(
                         if ((flat.program == program.uid) &&
                             flat.hidden == "false"
                         ) {
-                            list.add(program.copy(
-                                reference = flat.icon
-                            ))
+                            list.add(
+                                program.copy(
+                                    reference = flat.icon
+                                )
+                            )
                         }
                     }
                 }
@@ -551,7 +554,7 @@ fun ProgramItemCard(
                         metadataIconData = programViewModel.metadataIconData
                     )
                 } else {
-                    when(programViewModel.reference) {
+                    when (programViewModel.reference) {
                         "utente" -> {
                             Image(
                                 painter = painterResource(id = R.drawable.utente2),
@@ -728,7 +731,7 @@ fun ProgramItem(
                     metadataIconData = programViewModel.metadataIconData
                 )
             } else {
-                when(programViewModel.reference) {
+                when (programViewModel.reference) {
                     "stock" -> {
                         Image(
                             painter = painterResource(id = R.drawable.utente),
@@ -908,7 +911,6 @@ fun ProgramItemCustom(
         }
     }
 }
-
 
 @Composable
 fun StateIcon(state: State, onClick: () -> Unit) {

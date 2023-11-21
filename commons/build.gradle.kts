@@ -74,6 +74,7 @@ dependencies {
         exclude("junit", "junit")
     }
 
+    kapt(libs.room.compiler)
     kapt(libs.metadata.jvm)
     api(libs.google.autoValue)
     kapt(libs.google.autoValue)
@@ -90,6 +91,7 @@ dependencies {
     api(libs.androidx.compose.preview)
     api(libs.androidx.compose.ui)
     api(libs.androidx.compose.livedata)
+    api(libs.room.db)
 
     api(libs.google.material)
     api(libs.google.gson)

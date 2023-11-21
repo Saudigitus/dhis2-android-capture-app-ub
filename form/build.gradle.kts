@@ -2,6 +2,7 @@ plugins {
     id("com.android.library")
     kotlin("android")
     kotlin("kapt")
+    id("dagger.hilt.android.plugin")
 }
 apply(from = "${project.rootDir}/jacoco/jacoco.gradle.kts")
 
@@ -58,12 +59,20 @@ android {
 
 dependencies {
     implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.jar"))))
+    implementation(libs.androidx.room.common)
+    implementation(libs.androidx.room.ktx)
+
+    kapt(libs.room.compiler)
 
     implementation(project(":commons"))
     implementation(project(":dhis2_android_maps"))
+    kapt(libs.dagger.hilt.compiler)
+    kapt(libs.dagger.hilt.android.compiler)
     implementation(libs.kotlin.serialization.json)
+    implementation(libs.dagger.hilt.android)
     testImplementation(libs.bundles.form.test)
     androidTestImplementation(libs.bundles.form.androidTest)
+    implementation(libs.room.db)
 }
 kapt {
     correctErrorTypes = true

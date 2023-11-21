@@ -124,8 +124,8 @@ data class SectionUiModelImpl(
     override fun onDescriptionClick() {
         callback?.recyclerViewUiEvents(
             RecyclerViewUiEvents.ShowDescriptionLabelDialog(
-                label,
-                description
+                title = label,
+                message = description
             )
         )
     }
