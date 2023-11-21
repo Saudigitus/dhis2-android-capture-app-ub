@@ -1,5 +1,6 @@
 package org.dhis2.form.ui
 
+import android.media.MediaMetadataRetriever
 import android.os.Environment
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -7,7 +8,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -92,17 +92,8 @@ class FormViewModel(
     private val _mediaDataStore = MutableStateFlow<MediaStoreConfig?>(null)
     val mediaDataStore: StateFlow<MediaStoreConfig?> = _mediaDataStore
 
-    private val _mediaFile = MutableStateFlow<ResponseBody?>(null)
-    val mediaFile: StateFlow<ResponseBody?> = _mediaFile // the video file body
-
-    private val _mediaFilePath = MutableStateFlow<String?>("")
-    val mediaFilePath: StateFlow<String?> = _mediaFilePath // the media path
-
     private val _isLoadingMedia = MutableStateFlow(false)
     val isLoadingMedia = _isLoadingMedia.asStateFlow()
-
-    private val _allMediaWasDownloaded = MutableStateFlow(false)
-    val allMediaWasDownloaded = _allMediaWasDownloaded.asStateFlow()
 
     private val _mediaEntities = MutableStateFlow(mutableListOf<DialogMediaEntity>())
     val mediaEntities = _mediaEntities.asStateFlow()
@@ -727,8 +718,6 @@ class FormViewModel(
                 downloadMedia(audio.id)
             }
         }
-
-        _allMediaWasDownloaded.value = true
         loadAllMediaPaths(videos = videos, audios = audios)
     }
 
@@ -737,7 +726,6 @@ class FormViewModel(
             Timber.d("Start downloading the media with uid [$uid]!")
 
             val body = repository.downloadMediaToLocal(uid = uid)
-            _mediaFile.value = body
 
             if (body != null) {
                 val fileExtension = getFileExtension(body)
@@ -790,32 +778,6 @@ class FormViewModel(
         return File(directory, "$uid.$fileExtension")
     }
 
-    @Deprecated("")
-    private fun getLocalMediaPath(uid: String): String? {
-        var path: String? = null
-
-        val directory = File(
-            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
-            "dhis2"
-        )
-        val files = directory.listFiles()
-        if (files != null) {
-            for (file in files) {
-                if (file.isFile && file.nameWithoutExtension == uid) {
-                    val filePath = file.absolutePath
-                    _mediaFilePath.value = filePath
-                    path = filePath
-                    break
-                }
-            }
-        } else {
-            Timber.d("Directory does not exist or cannot be accessed.")
-        }
-
-        Timber.d("Loaded path: [$path]")
-        return path
-    }
-
     private fun getLocalMediaPath2(uid: String): String? {
         var path: String? = null
 
@@ -846,6 +808,7 @@ class FormViewModel(
         videos.forEach { video ->
 
             val mediaLocalPath = getLocalMediaPath2(uid = video.id)
+            val duration = getMediaDuration(mediaLocalPath = mediaLocalPath)
 
             var lastUpdated: String? = "null"
             runBlocking {
@@ -858,7 +821,7 @@ class FormViewModel(
 
             val mediaEntity = DialogMediaEntity(
                 title = video.name,
-                duration = "null",
+                duration = duration,
                 dateOfLastUpdate = formatDate(date = lastUpdated),
                 url = mediaLocalPath ?: "No path provided!",
                 dialogMediaType = DialogMediaType.VIDEO
@@ -869,6 +832,7 @@ class FormViewModel(
         audios.forEach { audio ->
 
             val mediaLocalPath = getLocalMediaPath2(uid = audio.id)
+            val duration = getMediaDuration(mediaLocalPath = mediaLocalPath)
 
             var lastUpdated: String? = "null"
             runBlocking {
@@ -881,7 +845,7 @@ class FormViewModel(
 
             val mediaEntity = DialogMediaEntity(
                 title = audio.name,
-                duration = "null",
+                duration = duration,
                 dateOfLastUpdate = formatDate(date = lastUpdated),
                 url = mediaLocalPath ?: "No path provided!",
                 dialogMediaType = DialogMediaType.AUDIO
@@ -902,6 +866,24 @@ class FormViewModel(
         // Format the date to the desired output format (day-month-year)
         val outputFormat = SimpleDateFormat("dd-MM-yyyy", Locale.getDefault())
         return outputFormat.format(parsedDate!!)
+    }
+
+    private fun getMediaDuration(mediaLocalPath: String?): String {
+        return if (mediaLocalPath.isNullOrEmpty() || mediaLocalPath.isBlank()) {
+            "null"
+        } else {
+            val retriever = MediaMetadataRetriever()
+            retriever.setDataSource(mediaLocalPath)
+            val duration =
+                retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLong()
+                    ?: 0L
+            retriever.release()
+
+            val minutes = duration % (60 * 60 * 1000) / (60 * 1000)
+            val seconds = duration % (60 * 1000) / 1000
+
+            String.format("%02d:%02d", minutes, seconds)
+        }
     }
 
     fun checkDataElement(uid: String): DataElement? {
