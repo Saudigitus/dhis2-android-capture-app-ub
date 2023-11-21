@@ -30,6 +30,7 @@ interface FormRepository {
     fun storeFile(id: String, filePath: String?): StoreResult?
     fun getMediaDataStore(): Flow<MediaStoreConfig?>
     suspend fun downloadMediaToLocal(uid: String): ResponseBody?
+
     suspend fun getMediaDetails(uid: String): MediaDetails?
     suspend fun storeLocalMediaDetails(mediaDetails: MediaDetails)
     suspend fun getAllLocalMediaDetails(): List<MediaDetails?>

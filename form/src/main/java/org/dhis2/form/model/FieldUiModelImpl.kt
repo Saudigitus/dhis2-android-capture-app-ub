@@ -63,8 +63,9 @@ data class FieldUiModelImpl(
     override fun onDescriptionClick() {
         callback?.recyclerViewUiEvents(
             RecyclerViewUiEvents.ShowDescriptionLabelDialog(
-                label,
-                description
+                uid = uid,
+                title = label,
+                message = description
             )
         )
     }

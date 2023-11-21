@@ -1,5 +1,6 @@
 package org.dhis2.form.ui
 
+//import dagger.hilt.android.AndroidEntryPoint
 import android.Manifest
 import android.app.Activity.RESULT_OK
 import android.content.ActivityNotFoundException
@@ -22,11 +23,6 @@ import android.widget.DatePicker
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.remember
-import androidx.compose.ui.platform.ComposeView
-import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.FileProvider
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.DialogFragment
@@ -35,16 +31,15 @@ import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import androidx.room.Room
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.timepicker.MaterialTimePicker
 import com.google.android.material.timepicker.TimeFormat.CLOCK_12H
 import com.google.android.material.timepicker.TimeFormat.CLOCK_24H
 import com.journeyapps.barcodescanner.ScanOptions
-//import dagger.hilt.android.AndroidEntryPoint
-import java.io.File
-import java.util.Calendar
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.dhis2.commons.ActivityResultObservable
 import org.dhis2.commons.ActivityResultObserver
 import org.dhis2.commons.Constants
@@ -53,13 +48,16 @@ import org.dhis2.commons.bindings.getFileFromGallery
 import org.dhis2.commons.bindings.rotateImage
 import org.dhis2.commons.dialogs.AlertBottomDialog
 import org.dhis2.commons.dialogs.CustomDialog
-import org.dhis2.commons.dialogs.MediaDialog
 import org.dhis2.commons.dialogs.calendarpicker.CalendarPicker
 import org.dhis2.commons.dialogs.calendarpicker.OnDatePickerListener
 import org.dhis2.commons.dialogs.imagedetail.ImageDetailBottomDialog
-import org.dhis2.commons.dialogs.randomMediaEntities
-import org.dhis2.commons.dialogs.randomSubTitle
-import org.dhis2.commons.dialogs.randomTitle
+import org.dhis2.commons.dialogs.media.LoadingMediaDialogFragment
+import org.dhis2.commons.dialogs.media.LoadingMediaDialogFragment.Companion.LOADING_MEDIA_DIALOG_TAG
+import org.dhis2.commons.dialogs.media.LoadingMediaDialogFragment.Companion.loadingMediaDialog
+import org.dhis2.commons.dialogs.media.MediaDialogFragment
+import org.dhis2.commons.dialogs.media.MediaDialogFragment.Companion.MEDIA_DIALOG_TAG
+import org.dhis2.commons.dialogs.media.MediaDialogFragment.Companion.mediaDialog
+import org.dhis2.commons.extensions.checkConnection
 import org.dhis2.commons.extensions.closeKeyboard
 import org.dhis2.commons.extensions.serializable
 import org.dhis2.commons.extensions.truncate
@@ -76,7 +74,6 @@ import org.dhis2.form.data.toMessage
 import org.dhis2.form.databinding.ViewFormBinding
 import org.dhis2.form.di.Injector
 import org.dhis2.form.local.AppDatabase
-import org.dhis2.form.local.MediaDetailsDAO
 import org.dhis2.form.model.FieldUiModel
 import org.dhis2.form.model.FormRepositoryRecords
 import org.dhis2.form.model.InfoUiModel
@@ -104,6 +101,8 @@ import org.hisp.dhis.android.core.common.FeatureType
 import org.hisp.dhis.android.core.common.ValueType
 import org.hisp.dhis.android.core.common.ValueTypeRenderingType
 import timber.log.Timber
+import java.io.File
+import java.util.Calendar
 
 class FormView : Fragment() {
     private var onItemChangeListener: ((action: RowAction) -> Unit)? = null
@@ -159,7 +158,7 @@ class FormView : Fragment() {
                     override fun onActivityResult(
                         requestCode: Int,
                         resultCode: Int,
-                        data: Intent?
+                        data: Intent?,
                     ) {
                         if (resultCode != RESULT_OK) {
                             showAddImageOptions()
@@ -169,7 +168,7 @@ class FormView : Fragment() {
                     override fun onRequestPermissionsResult(
                         requestCode: Int,
                         permissions: Array<String?>,
-                        grantResults: IntArray
+                        grantResults: IntArray,
                     ) {
                         if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                             showAddImageOptions()
@@ -299,10 +298,13 @@ class FormView : Fragment() {
         Manifest.permission.READ_MEDIA_VIDEO
     )
 
+    private var isCoroutineRunning = false
+    private val scopeProcessMediaData = CoroutineScope(Dispatchers.Main)
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
-        savedInstanceState: Bundle?
+        savedInstanceState: Bundle?,
     ): View {
         val contextWrapper = ContextThemeWrapper(context, R.style.searchFormInputText)
         binding = DataBindingUtil.inflate(inflater, R.layout.view_form, container, false)
@@ -367,9 +369,7 @@ class FormView : Fragment() {
                 view.closeKeyboard()
             }
         }
-
         setObservers()
-
         viewModel.getMediaDataStore()
         viewModel.getDownloadMedia("rdZdCjQyl7y") // to dpwnload media
         viewModel.getLocalMedia("rdZdCjQyl7y") // to get local media
@@ -551,7 +551,7 @@ class FormView : Fragment() {
             )
 
             is RecyclerViewUiEvents.OpenTimePicker -> showTimePicker(uiEvent)
-            is RecyclerViewUiEvents.ShowDescriptionLabelDialog -> showDescriptionLabelDialog()
+            is RecyclerViewUiEvents.ShowDescriptionLabelDialog -> showDialog(uiEvent)
             is RecyclerViewUiEvents.RequestCurrentLocation -> requestCurrentLocation(uiEvent)
             is RecyclerViewUiEvents.RequestLocationByMap -> requestLocationByMap(uiEvent)
             is RecyclerViewUiEvents.DisplayQRCode -> displayQRImage(uiEvent)
@@ -650,9 +650,9 @@ class FormView : Fragment() {
             binding.recyclerView.layoutManager as LinearLayoutManager
         val lastVisiblePosition = layoutManager.findLastVisibleItemPosition()
         return lastVisiblePosition != -1 && (
-            lastVisiblePosition == adapter.itemCount - 1 ||
-                adapter.getItemViewType(lastVisiblePosition) == R.layout.form_section
-            )
+                lastVisiblePosition == adapter.itemCount - 1 ||
+                        adapter.getItemViewType(lastVisiblePosition) == R.layout.form_section
+                )
     }
 
     private fun handleKeyBoardOnFocusChange(items: List<FieldUiModel>) {
@@ -733,7 +733,7 @@ class FormView : Fragment() {
     }
 
     private fun showYearMonthDayAgeCalendar(
-        intent: RecyclerViewUiEvents.OpenYearMonthDayAgeCalendar
+        intent: RecyclerViewUiEvents.OpenYearMonthDayAgeCalendar,
     ) {
         alertDialogView =
             LayoutInflater.from(requireContext()).inflate(R.layout.dialog_age, null)
@@ -763,30 +763,136 @@ class FormView : Fragment() {
             .show()
     }
 
-    private fun showDescriptionLabelDialog() {
-        ComposeDialogFragment()
-            .show(childFragmentManager, "ComposeDialog")
+    private fun isDialogVisible(
+        fragmentManager: FragmentManager,
+        fragmentTag: String,
+    ): Boolean {
+        try {
+            val existingFragment = fragmentManager.findFragmentByTag(fragmentTag)
+            return existingFragment != null && existingFragment is DialogFragment && existingFragment.isVisible
+        } catch (ex: Exception) {
+            ex.printStackTrace()
+            return false
+        }
     }
 
-    class ComposeDialogFragment : DialogFragment() {
-        override fun onCreateView(
-            inflater: LayoutInflater,
-            container: ViewGroup?,
-            savedInstanceState: Bundle?
-        ): View {
-            return ComposeView(requireContext()).apply {
-                setContent {
-                    MediaDialog(
-                        title = randomTitle(),
-                        subTitle = randomSubTitle(),
-                        mediaEntities = randomMediaEntities(),
-                        onDismiss = {
-                            dismiss()
+    private fun showDialog(intent: RecyclerViewUiEvents.ShowDescriptionLabelDialog) {
+        val context = requireContext()
+
+        if (context.checkConnection()) {
+            val dataElement = viewModel.checkDataElement(uid = intent.uid)
+            if (dataElement != null) {
+                processMediaData(
+                    dataElement = dataElement,
+                    intent = intent
+                )
+            } else {
+                showDescriptionLabelDialog(intent = intent)
+            }
+        } else {
+            Toast.makeText(context, "Connection is not available!", Toast.LENGTH_LONG).show()
+        }
+    }
+
+    private fun processMediaData(
+        dataElement: DataElement,
+        intent: RecyclerViewUiEvents.ShowDescriptionLabelDialog,
+    ) {
+        val videos = dataElement.video
+        val audios = dataElement.audio
+        val loadingDialog = loadingMediaDialog()
+        val isLoadingDialogVisible = isDialogVisible(childFragmentManager, LOADING_MEDIA_DIALOG_TAG)
+
+        try {
+            if (!isCoroutineRunning) {
+                scopeProcessMediaData.launch {
+
+                    isCoroutineRunning = true
+                    viewModel.setMediaLoading(loading = true)
+
+                    viewModel.isLoadingMedia.collect { isLoadingMedia ->
+
+                        val canLoadMedias = isLoadingMedia && !isLoadingDialogVisible
+                        if (canLoadMedias) {
+                            showLoadingDialog(loadingDialog = loadingDialog, show = true)
+                            viewModel.loadMedias(videos = videos, audios = audios)
+                            isCoroutineRunning = false
+                        } else {
+                            showLoadingDialog(loadingDialog = loadingDialog, show = false)
+                            showMediaDialog(intent = intent)
+                            isCoroutineRunning = false
                         }
-                    )
+                    }
                 }
             }
+        } catch (exception: Exception) {
+            handleDialogException(
+                exception = exception,
+                intent = intent
+            )
         }
+    }
+
+    private fun showLoadingDialog(
+        loadingDialog: LoadingMediaDialogFragment,
+        show: Boolean,
+    ) {
+        if (show) {
+            loadingDialog.show(childFragmentManager, LOADING_MEDIA_DIALOG_TAG)
+        } else {
+            try {
+                loadingDialog.dismiss()
+            } catch (ex: IllegalStateException) {
+                Timber.e(ex)
+            }
+        }
+    }
+
+    private fun showMediaDialog(
+        intent: RecyclerViewUiEvents.ShowDescriptionLabelDialog,
+    ) {
+        val mediaEntities = viewModel.mediaEntities.value
+        val mediaDialogFragment = mediaDialog(
+            title = intent.title,
+            message = intent.message ?: requireContext().getString(R.string.empty_description),
+            mediaEntities = mediaEntities
+        )
+        handleMediaDialogFragment(mediaDialogFragment = mediaDialogFragment)
+    }
+
+    private fun handleMediaDialogFragment(mediaDialogFragment: MediaDialogFragment) {
+        val isMediaDialogVisible = isDialogVisible(childFragmentManager, MEDIA_DIALOG_TAG)
+        if (!isMediaDialogVisible) {
+            mediaDialogFragment.show(childFragmentManager, MEDIA_DIALOG_TAG)
+        } else {
+            try {
+                mediaDialogFragment.dismiss()
+            } catch (ex: java.lang.IllegalStateException) {
+                Timber.e(ex)
+            }
+        }
+    }
+
+    private fun handleDialogException(
+        exception: Exception,
+        intent: RecyclerViewUiEvents.ShowDescriptionLabelDialog,
+    ) {
+        exception.printStackTrace()
+        showDescriptionLabelDialog(intent = intent)
+    }
+
+    private fun showDescriptionLabelDialog(
+        intent: RecyclerViewUiEvents.ShowDescriptionLabelDialog,
+    ) {
+        CustomDialog(
+            requireContext(),
+            intent.title,
+            intent.message ?: requireContext().getString(R.string.empty_description),
+            requireContext().getString(R.string.action_close),
+            null,
+            Constants.DESCRIPTION_DIALOG,
+            null
+        ).show()
     }
 
     private fun requestCurrentLocation(event: RecyclerViewUiEvents.RequestCurrentLocation) {
@@ -1000,7 +1106,7 @@ class FormView : Fragment() {
     }
 
     private fun displayConfigurationErrors(
-        configurationError: List<RulesUtilsProviderConfigurationError>
+        configurationError: List<RulesUtilsProviderConfigurationError>,
     ) {
         if (displayConfErrors && configurationError.isNotEmpty()) {
             MaterialAlertDialogBuilder(requireContext(), R.style.DhisMaterialDialog)
@@ -1085,7 +1191,7 @@ class FormView : Fragment() {
         completionListener: ((percentage: Float) -> Unit)?,
         resultDialogUiProvider: EnrollmentResultDialogUiProvider?,
         actionIconsActivate: Boolean,
-        openErrorLocation: Boolean
+        openErrorLocation: Boolean,
     ) {
         this.locationProvider = locationProvider
         this.needToForceUpdate = needToForceUpdate
@@ -1102,7 +1208,7 @@ class FormView : Fragment() {
         onFinishDataEntry: (() -> Unit)?,
         onActivityForResult: (() -> Unit)?,
         onDataIntegrityCheck: ((result: DataIntegrityCheckResult) -> Unit)?,
-        onFieldItemsRendered: ((fieldsEmpty: Boolean) -> Unit)?
+        onFieldItemsRendered: ((fieldsEmpty: Boolean) -> Unit)?,
     ) {
         this.onItemChangeListener = onItemChangeListener
         this.onLoadingListener = onLoadingListener
@@ -1236,29 +1342,5 @@ class FormView : Fragment() {
     companion object {
         const val RECORDS = "RECORDS"
         const val TEMP_FILE = "tempFile.png"
-    }
-
-    fun checkDataElement(uid: String): List<DataElement>? {
-        val store = viewModel.mediaDataStore.value
-        Timber.tag("FORM_VIEW").d("${store}")
-
-
-        var resp: List<DataElement>? = null
-        store?.let {
-
-           val res =  it.map {
-               it.dataElements
-           }
-         val response =   res.map {
-              it?.let {
-                  it.filter {
-                  it.dataElement == uid
-              }
-              }
-            }
-            resp = response.get(0)
-        }
-        Timber.tag("FORM_VIEW").d("${resp}")
-        return resp
     }
 }

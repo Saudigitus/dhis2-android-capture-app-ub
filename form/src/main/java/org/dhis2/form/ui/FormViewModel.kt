@@ -1,6 +1,5 @@
 package org.dhis2.form.ui
 
-import android.media.MediaPlayer
 import android.os.Environment
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -10,12 +9,15 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import okhttp3.ResponseBody
+import org.dhis2.commons.dialogs.media.DialogMediaEntity
+import org.dhis2.commons.dialogs.media.DialogMediaType
 import org.dhis2.commons.viewmodel.DispatcherProvider
 import org.dhis2.form.R
 import org.dhis2.form.data.DataIntegrityCheckResult
@@ -36,8 +38,10 @@ import org.dhis2.form.ui.event.RecyclerViewUiEvents
 import org.dhis2.form.ui.idling.FormCountingIdlingResource
 import org.dhis2.form.ui.intent.FormIntent
 import org.dhis2.form.ui.validation.validators.FieldMaskValidator
+import org.dhis2.usescases.uiboost.data.model.media.Audio
 import org.dhis2.usescases.uiboost.data.model.media.DataElement
 import org.dhis2.usescases.uiboost.data.model.media.MediaStoreConfig
+import org.dhis2.usescases.uiboost.data.model.media.Video
 import org.hisp.dhis.android.core.arch.helpers.Result
 import org.hisp.dhis.android.core.common.FeatureType
 import org.hisp.dhis.android.core.common.ValueType
@@ -45,11 +49,13 @@ import timber.log.Timber
 import java.io.File
 import java.io.FileOutputStream
 
+private const val DIRECTORY_DOWNLOAD_DHS2 = "dhis2"
+
 class FormViewModel(
     private val repository: FormRepository,
     private val dispatcher: DispatcherProvider,
     private val geometryController: GeometryController = GeometryController(GeometryParserImpl()),
-    private val openErrorLocation: Boolean = false
+    private val openErrorLocation: Boolean = false,
 ) : ViewModel() {
 
     val loading = MutableLiveData(true)
@@ -87,6 +93,15 @@ class FormViewModel(
     private val _mediaFilePath = MutableStateFlow<String?>("")
     val mediaFilePath: StateFlow<String?> = _mediaFilePath // the media path
 
+    private val _isLoadingMedia = MutableStateFlow(false)
+    val isLoadingMedia = _isLoadingMedia.asStateFlow()
+
+    private val _allMediaWasDownloaded = MutableStateFlow(false)
+    val allMediaWasDownloaded = _allMediaWasDownloaded.asStateFlow()
+
+    private val _mediaEntities = MutableStateFlow(mutableListOf<DialogMediaEntity>())
+    val mediaEntities = _mediaEntities.asStateFlow()
+
     init {
         viewModelScope.launch {
             _pendingIntents
@@ -121,8 +136,7 @@ class FormViewModel(
                 }
 
                 ValueStoreResult.UID_IS_NOT_DE_OR_ATTR -> {
-                    Timber.tag(TAG)
-                        .d("${result.first.id} is not a data element or attribute")
+                    Timber.tag(TAG).d("${result.first.id} is not a data element or attribute")
                     processCalculatedItems()
                 }
 
@@ -314,10 +328,10 @@ class FormViewModel(
             false
         } else {
             valueType.isNumeric ||
-                valueType.isText && renderType?.isPolygon() != true ||
-                valueType == ValueType.URL ||
-                valueType == ValueType.EMAIL ||
-                valueType == ValueType.PHONE_NUMBER
+                    valueType.isText && renderType?.isPolygon() != true ||
+                    valueType == ValueType.URL ||
+                    valueType == ValueType.EMAIL ||
+                    valueType == ValueType.PHONE_NUMBER
         }
     }
 
@@ -453,7 +467,7 @@ class FormViewModel(
     private fun checkFieldError(
         valueType: ValueType?,
         fieldValue: String?,
-        fieldMask: String?
+        fieldMask: String?,
     ): Throwable? {
         if (fieldValue.isNullOrEmpty()) {
             return null
@@ -484,7 +498,7 @@ class FormViewModel(
         extraData: String? = null,
         error: Throwable? = null,
         actionType: ActionType = ActionType.ON_SAVE,
-        valueType: ValueType? = null
+        valueType: ValueType? = null,
     ) = RowAction(
         id = uid,
         value = value,
@@ -501,7 +515,7 @@ class FormViewModel(
     private fun setCoordinateFieldValue(
         fieldUid: String,
         featureType: String,
-        coordinates: String?
+        coordinates: String?,
     ): RowAction {
         val type = FeatureType.valueOf(featureType)
         val geometryCoordinates = coordinates?.let {
@@ -631,6 +645,7 @@ class FormViewModel(
                     null
                 )
             )
+
             else -> RowAction(
                 id = uiEvent.uid,
                 value = uiEvent.value,
@@ -642,20 +657,21 @@ class FormViewModel(
     companion object {
         const val TAG = "FormViewModel"
     }
+
     fun getMediaDataStore() {
         viewModelScope.launch {
             repository.getMediaDataStore().collectLatest {
                 _mediaDataStore.value = it
-                Timber.tag("MEDIA_DATA_STORE").d("${it}")
+                Timber.d("$it")
             }
         }
     }
 
-    fun getFileExtension(responseBody: ResponseBody): String? {
+    private fun getFileExtension(responseBody: ResponseBody): String? {
         val contentType = responseBody.contentType()
         if (contentType != null) {
             val mediaContentType = contentType.toString()
-            println("mediaType: $mediaContentType")
+            Timber.d("mediaType: $mediaContentType")
             val parts = mediaContentType.split(";")
             val mediaType = parts[0].trim()
 
@@ -667,90 +683,213 @@ class FormViewModel(
         return null
     }
 
-    fun getDownloadMedia(uid: String) {
-        viewModelScope.launch {
-            println("Running media get Downlaod...")
-            val body = repository.downloadMediaToLocal(uid)
-            _mediaFile.value = repository.downloadMediaToLocal(uid)
+    private fun loadLocalMediaPath(uid: String): String? {
+        return getLocalMediaPath2(uid)
+    }
+
+    suspend fun loadMedias(
+        videos: List<Video> = emptyList(),
+        audios: List<Audio> = emptyList(),
+    ) {
+        videos.map { video ->
+
+            val mediaFilePath = loadLocalMediaPath(video.id)
+
+            val mediaAlreadyDownloaded =
+                !mediaFilePath.isNullOrBlank() && mediaFilePath.isNotEmpty()
+
+            if (mediaAlreadyDownloaded) {
+                Timber.d("Local media exist: [true]")
+            } else {
+                Timber.d("Local media exist: [false]")
+                Timber.d("Download media file: [true]")
+                downloadMedia(video.id)
+            }
+        }
+
+        audios.map { audio ->
+
+            val mediaFilePath = loadLocalMediaPath(audio.id)
+
+            val mediaAlreadyDownloaded =
+                !mediaFilePath.isNullOrBlank() && mediaFilePath.isNotEmpty()
+
+            if (mediaAlreadyDownloaded) {
+                Timber.d("Local media exist: [true]")
+            } else {
+                Timber.d("Local media exist: [false]")
+                Timber.d("Download media file: [true]")
+                downloadMedia(audio.id)
+            }
+        }
+
+        _allMediaWasDownloaded.value = true
+        loadAllMediaPaths(videos = videos, audios = audios)
+    }
+
+    private suspend fun downloadMedia(uid: String) {
+        try {
+            Timber.d("Start downloading the media with uid [$uid]!")
+
+            val body = repository.downloadMediaToLocal(uid = uid)
+            _mediaFile.value = body
 
             if (body != null) {
                 val fileExtension = getFileExtension(body)
+                val directory = createDownloadDirectory(DIRECTORY_DOWNLOAD_DHS2)
+                val file = createFile(directory, uid, fileExtension!!)
 
-                val directory = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "dhis2")
-                directory.mkdirs()
+                val mediaPath = createMediaFilePath(DIRECTORY_DOWNLOAD_DHS2, uid, fileExtension)
 
-                val file = File(directory, "$uid.${fileExtension}")
-                    _mediaFilePath.value = "$directory $uid.${fileExtension}"
+                saveMediaToFile(body, file)
 
-                    val outputStream = FileOutputStream(file)
-                    val buffer = ByteArray(4096)
-                    var bytesRead: Int
-
-                    val inputStream = body.byteStream()
-                    while (inputStream.read(buffer).also { bytesRead = it } != -1) {
-                        outputStream.write(buffer, 0, bytesRead)
-                    }
-
-                    outputStream.close()
-                    inputStream.close()
+                Timber.d("Media with uid [$uid] downloaded!")
+                Timber.d("Media path: [${mediaPath}]")
             } else {
-                // Handle a null response body
+                Timber.d("Null response on download media with uid: [$uid]")
             }
+        } catch (ex: Exception) {
+            Timber.d("Download error on media with uid [$uid]!")
+            ex.printStackTrace()
         }
     }
 
-    fun getLocalMedia(uid: String): String? {
-        var path: String? = null
-        viewModelScope.launch {
-            val directory = File(
-                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
-                "dhis2"
-            )
-            val files = directory.listFiles()
-            if (files != null) {
-                for (file in files) {
-                    if (file.isFile && file.nameWithoutExtension == uid) {
-                        val filePath = file.absolutePath
-                        _mediaFilePath.value = filePath
-                        path = filePath
-                        break
-                    }
-                }
-            } else {
-                println("Directory does not exist or cannot be accessed.")
-            }
+    private fun saveMediaToFile(body: ResponseBody, file: File) {
+        val outputStream = FileOutputStream(file)
+        val buffer = ByteArray(4096)
+        var bytesRead: Int
+
+        val inputStream = body.byteStream()
+        while (inputStream.read(buffer).also { bytesRead = it } != -1) {
+            outputStream.write(buffer, 0, bytesRead)
         }
-        Timber.tag("RETURNED_PATH").d(path)
+
+        outputStream.close()
+        inputStream.close()
+    }
+
+    private fun createMediaFilePath(directory: String, uid: String, fileExtension: String): String {
+        return "$directory/$uid.$fileExtension"
+    }
+
+    private fun createDownloadDirectory(directoryName: String): File {
+        val directory = File(
+            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
+            directoryName
+        )
+        directory.mkdirs()
+        return directory
+    }
+
+    private fun createFile(directory: File, uid: String, fileExtension: String): File {
+        return File(directory, "$uid.$fileExtension")
+    }
+
+    @Deprecated("")
+    private fun getLocalMediaPath(uid: String): String? {
+        var path: String? = null
+
+        val directory = File(
+            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
+            "dhis2"
+        )
+        val files = directory.listFiles()
+        if (files != null) {
+            for (file in files) {
+                if (file.isFile && file.nameWithoutExtension == uid) {
+                    val filePath = file.absolutePath
+                    _mediaFilePath.value = filePath
+                    path = filePath
+                    break
+                }
+            }
+        } else {
+            Timber.d("Directory does not exist or cannot be accessed.")
+        }
+
+        Timber.d("Loaded path: [$path]")
         return path
     }
 
+    private fun getLocalMediaPath2(uid: String): String? {
+        var path: String? = null
 
-
-    fun checkDataElement(uid: String): List<DataElement>? {
-        val store = mediaDataStore.value
-
-        var resp: List<DataElement>? = null
-        store?.let {
-
-            val res =  it.map {
-                it.dataElements
+        val directory = File(
+            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
+            "dhis2"
+        )
+        val files = directory.listFiles()
+        if (files != null) {
+            for (file in files) {
+                if (file.isFile && file.nameWithoutExtension == uid) {
+                    path = file.absolutePath
+                    break
+                }
             }
-            val response =   res.map {
-                it?.let {
-                    it.filter {
-                        it.dataElement == uid
+        } else {
+            Timber.d("Directory does not exist or cannot be accessed.")
+        }
+        return path
+    }
+
+    private fun loadAllMediaPaths(
+        videos: List<Video> = emptyList(),
+        audios: List<Audio> = emptyList(),
+    ) {
+        val mediaEntitiesList = mutableListOf<DialogMediaEntity>()
+
+        videos.forEach { video ->
+
+            val mediaLocalPath = getLocalMediaPath2(uid = video.id)
+
+            val mediaEntity = DialogMediaEntity(
+                title = video.name,
+                duration = "01:00",
+                dateOfLastUpdate = "31-10-2023",
+                url = mediaLocalPath ?: "no path provided!",
+                dialogMediaType = DialogMediaType.VIDEO
+            )
+            mediaEntitiesList.add(mediaEntity)
+        }
+
+        audios.forEach { audio ->
+
+            val mediaLocalPath = getLocalMediaPath2(uid = audio.id)
+
+            val mediaEntity = DialogMediaEntity(
+                title = audio.name,
+                duration = "02:00",
+                dateOfLastUpdate = "01-10-2023",
+                url = mediaLocalPath ?: "no path provided!",
+                dialogMediaType = DialogMediaType.AUDIO
+            )
+            mediaEntitiesList.add(mediaEntity)
+        }
+
+        mediaEntities.value.clear()
+        mediaEntities.value.addAll(mediaEntitiesList)
+        setMediaLoading(loading = false)
+    }
+
+    fun checkDataElement(uid: String): DataElement? {
+        val mediaDataStoreConfig = mediaDataStore.value
+
+        var dataElementList: List<DataElement>? = null
+        mediaDataStoreConfig?.let { mediaStoreValue ->
+
+            val dataElementMaps = mediaStoreValue.map { mediaStoreItem ->
+                mediaStoreItem.dataElements
+            }
+            val filteredDataElements = dataElementMaps.map { dataElements ->
+                dataElements?.let {
+                    dataElements.filter { dataElement ->
+                        dataElement.dataElement == uid
                     }
                 }
             }
-
-            if (response.get(0)?.isNotEmpty() == true) {
-                resp = response.get(0)
-            } else {
-                resp = null
-            }
+            dataElementList = filteredDataElements.getOrNull(0)
         }
-        Timber.tag("FORM_VIEW").d("${resp}")
-        return resp
+        return dataElementList?.getOrNull(0)
     }
 
     /**
@@ -762,7 +901,7 @@ class FormViewModel(
         viewModelScope.launch {
             details = repository.getMediaDetails(uid)
             Timber.tag("MEDIA_DETAILS").d("${details.toString()}")
-            if(details != null) {
+            if (details != null) {
                 Timber.tag("HAS_MEDIA_THAN_STORE").d("${details.toString()}")
                 repository.storeLocalMediaDetails(details!!)
             }
@@ -794,5 +933,9 @@ class FormViewModel(
             Timber.tag("ONE_MEDIA_DETAILS").d("${details.toString()}")
         }
         return details
+    }
+
+    fun setMediaLoading(loading: Boolean) {
+        _isLoadingMedia.value = loading
     }
 }

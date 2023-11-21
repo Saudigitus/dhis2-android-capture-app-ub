@@ -2,7 +2,6 @@ package org.dhis2.usescases.uiboost.network
 
 import okhttp3.ResponseBody
 import org.dhis2.form.data.media.MediaDetails
-import org.dhis2.form.network.MessageResponse
 import retrofit2.Response
 import retrofit2.http.GET
 import retrofit2.http.Path
