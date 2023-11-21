@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import okhttp3.ResponseBody
 import org.dhis2.commons.dialogs.media.DialogMediaEntity
 import org.dhis2.commons.dialogs.media.DialogMediaType
@@ -836,7 +837,7 @@ class FormViewModel(
         return path
     }
 
-    private suspend fun loadAllMediaPaths(
+    private fun loadAllMediaPaths(
         videos: List<Video> = emptyList(),
         audios: List<Audio> = emptyList(),
     ) {
@@ -846,12 +847,11 @@ class FormViewModel(
 
             val mediaLocalPath = getLocalMediaPath2(uid = video.id)
 
-            var lastUpdated: String? = ""
-            coroutineScope {
+            var lastUpdated: String? = "null"
+            runBlocking {
                 val task = async {
-                    val details: MediaDetails? = repository.getMediaDetails(uid = video.id)
+                    val details = repository.getMediaDetails(uid = video.id)
                     lastUpdated = details?.lastUpdated
-                    Timber.d("Details: ${details.toString()}")
                 }
                 awaitAll(task)
             }
@@ -860,7 +860,7 @@ class FormViewModel(
                 title = video.name,
                 duration = "null",
                 dateOfLastUpdate = formatDate(date = lastUpdated),
-                url = mediaLocalPath ?: "no path provided!",
+                url = mediaLocalPath ?: "No path provided!",
                 dialogMediaType = DialogMediaType.VIDEO
             )
             mediaEntitiesList.add(mediaEntity)
@@ -870,12 +870,11 @@ class FormViewModel(
 
             val mediaLocalPath = getLocalMediaPath2(uid = audio.id)
 
-            var lastUpdated: String? = ""
-            coroutineScope {
+            var lastUpdated: String? = "null"
+            runBlocking {
                 val task = async {
                     val details: MediaDetails? = repository.getMediaDetails(uid = audio.id)
                     lastUpdated = details?.lastUpdated
-                    Timber.d("Details: ${details.toString()}")
                 }
                 awaitAll(task)
             }
@@ -884,7 +883,7 @@ class FormViewModel(
                 title = audio.name,
                 duration = "null",
                 dateOfLastUpdate = formatDate(date = lastUpdated),
-                url = mediaLocalPath ?: "no path provided!",
+                url = mediaLocalPath ?: "No path provided!",
                 dialogMediaType = DialogMediaType.AUDIO
             )
             mediaEntitiesList.add(mediaEntity)
