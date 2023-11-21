@@ -31,6 +31,7 @@ import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.room.Room
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.timepicker.MaterialTimePicker
@@ -371,14 +372,8 @@ class FormView : Fragment() {
         }
         setObservers()
         viewModel.getMediaDataStore()
-        viewModel.getDownloadMedia("rdZdCjQyl7y") // to dpwnload media
-        viewModel.getLocalMedia("rdZdCjQyl7y") // to get local media
         viewModel.getMediaDetails("rdZdCjQyl7y") // to test get SERVER media Details and store
         viewModel.getLocalMediaDetails("rdZdCjQyl7y") // to test get LOCAL media Details
-
-       val result = viewModel.checkDataElement("djduey498493")
-
-        Timber.tag("MIGUEL_MEDIA_STORE").d("${result!!.get(0)}")
     }
 
     private fun setObservers() {

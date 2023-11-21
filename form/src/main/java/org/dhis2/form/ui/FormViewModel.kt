@@ -6,6 +6,8 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -48,6 +50,8 @@ import org.hisp.dhis.android.core.common.ValueType
 import timber.log.Timber
 import java.io.File
 import java.io.FileOutputStream
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 private const val DIRECTORY_DOWNLOAD_DHS2 = "dhis2"
 
@@ -832,7 +836,7 @@ class FormViewModel(
         return path
     }
 
-    private fun loadAllMediaPaths(
+    private suspend fun loadAllMediaPaths(
         videos: List<Video> = emptyList(),
         audios: List<Audio> = emptyList(),
     ) {
@@ -842,10 +846,20 @@ class FormViewModel(
 
             val mediaLocalPath = getLocalMediaPath2(uid = video.id)
 
+            var lastUpdated: String? = ""
+            coroutineScope {
+                val task = async {
+                    val details: MediaDetails? = repository.getMediaDetails(uid = video.id)
+                    lastUpdated = details?.lastUpdated
+                    Timber.d("Details: ${details.toString()}")
+                }
+                awaitAll(task)
+            }
+
             val mediaEntity = DialogMediaEntity(
                 title = video.name,
-                duration = "01:00",
-                dateOfLastUpdate = "31-10-2023",
+                duration = "null",
+                dateOfLastUpdate = formatDate(date = lastUpdated),
                 url = mediaLocalPath ?: "no path provided!",
                 dialogMediaType = DialogMediaType.VIDEO
             )
@@ -856,10 +870,20 @@ class FormViewModel(
 
             val mediaLocalPath = getLocalMediaPath2(uid = audio.id)
 
+            var lastUpdated: String? = ""
+            coroutineScope {
+                val task = async {
+                    val details: MediaDetails? = repository.getMediaDetails(uid = audio.id)
+                    lastUpdated = details?.lastUpdated
+                    Timber.d("Details: ${details.toString()}")
+                }
+                awaitAll(task)
+            }
+
             val mediaEntity = DialogMediaEntity(
                 title = audio.name,
-                duration = "02:00",
-                dateOfLastUpdate = "01-10-2023",
+                duration = "null",
+                dateOfLastUpdate = formatDate(date = lastUpdated),
                 url = mediaLocalPath ?: "no path provided!",
                 dialogMediaType = DialogMediaType.AUDIO
             )
@@ -869,6 +893,16 @@ class FormViewModel(
         mediaEntities.value.clear()
         mediaEntities.value.addAll(mediaEntitiesList)
         setMediaLoading(loading = false)
+    }
+
+    private fun formatDate(date: String?): String {
+        // Parse the input date string
+        val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS", Locale.getDefault())
+        val parsedDate = dateFormat.parse(date)
+
+        // Format the date to the desired output format (day-month-year)
+        val outputFormat = SimpleDateFormat("dd-MM-yyyy", Locale.getDefault())
+        return outputFormat.format(parsedDate!!)
     }
 
     fun checkDataElement(uid: String): DataElement? {
