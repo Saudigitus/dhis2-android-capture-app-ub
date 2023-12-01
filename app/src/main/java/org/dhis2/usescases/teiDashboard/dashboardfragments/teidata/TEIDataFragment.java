@@ -2,6 +2,7 @@ package org.dhis2.usescases.teiDashboard.dashboardfragments.teidata;
 
 import static android.app.Activity.RESULT_OK;
 import static com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions.withCrossFade;
+import static org.antlr.v4.runtime.misc.MurmurHash.finish;
 import static org.dhis2.commons.Constants.ENROLLMENT_UID;
 import static org.dhis2.commons.Constants.EVENT_CREATION_TYPE;
 import static org.dhis2.commons.Constants.EVENT_PERIOD_TYPE;
@@ -9,6 +10,7 @@ import static org.dhis2.commons.Constants.EVENT_REPEATABLE;
 import static org.dhis2.commons.Constants.EVENT_SCHEDULE_INTERVAL;
 import static org.dhis2.commons.Constants.ORG_UNIT;
 import static org.dhis2.commons.Constants.PROGRAM_UID;
+import static org.dhis2.commons.Constants.TEI_UID;
 import static org.dhis2.commons.Constants.TRACKED_ENTITY_INSTANCE;
 import static org.dhis2.utils.analytics.AnalyticsConstants.CREATE_EVENT_TEI;
 import static org.dhis2.utils.analytics.AnalyticsConstants.TYPE_EVENT_TEI;
@@ -17,6 +19,7 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -29,6 +32,8 @@ import androidx.databinding.ObservableBoolean;
 import androidx.fragment.app.FragmentManager;
 import androidx.lifecycle.ViewModelProviders;
 import androidx.recyclerview.widget.DividerItemDecoration;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.resource.bitmap.CircleCrop;
@@ -56,9 +61,11 @@ import org.dhis2.usescases.programStageSelection.ProgramStageSelectionActivity;
 import org.dhis2.usescases.teiDashboard.DashboardProgramModel;
 import org.dhis2.usescases.teiDashboard.DashboardViewModel;
 import org.dhis2.usescases.teiDashboard.TeiDashboardMobileActivity;
+import org.dhis2.usescases.teiDashboard.adapters.ProgramDashboardAdapter;
 import org.dhis2.usescases.teiDashboard.dashboardfragments.teidata.teievents.CategoryDialogInteractions;
 import org.dhis2.usescases.teiDashboard.dashboardfragments.teidata.teievents.EventAdapter;
 import org.dhis2.usescases.teiDashboard.dashboardfragments.teidata.teievents.EventCatComboOptionSelector;
+import org.dhis2.usescases.teiDashboard.data.ProgramWithEnrollment;
 import org.dhis2.usescases.teiDashboard.ui.DetailsButtonKt;
 import org.dhis2.utils.DateUtils;
 import org.dhis2.utils.category.CategoryDialog;
@@ -86,7 +93,7 @@ import kotlin.Unit;
 import kotlin.jvm.functions.Function1;
 import timber.log.Timber;
 
-public class TEIDataFragment extends FragmentGlobalAbstract implements TEIDataContracts.View {
+public class TEIDataFragment extends FragmentGlobalAbstract implements TEIDataContracts.View, ProgramDashboardAdapter.OnItemClickListener {
 
     private static final int REQ_DETAILS = 1001;
     private static final int REQ_EVENT = 2001;
@@ -124,12 +131,17 @@ public class TEIDataFragment extends FragmentGlobalAbstract implements TEIDataCo
     private TeiDashboardMobileActivity activity;
     private PopupMenu popupMenu;
 
-    public static TEIDataFragment newInstance(String programUid, String teiUid, String enrollmentUid) {
+    private ProgramDashboardAdapter programDashboardAdapter;
+
+    private RecyclerView recyclerView;
+
+    public static TEIDataFragment newInstance(String programUid, String teiUid, String enrollmentUid, List<ProgramWithEnrollment> programs) {
         TEIDataFragment fragment = new TEIDataFragment();
         Bundle args = new Bundle();
         args.putString("PROGRAM_UID", programUid);
         args.putString("TEI_UID", teiUid);
         args.putString("ENROLLMENT_UID", enrollmentUid);
+        args.putParcelableArrayList("PROGRAMS", (ArrayList<? extends Parcelable>) programs);
         fragment.setArguments(args);
         return fragment;
     }
@@ -173,6 +185,13 @@ public class TEIDataFragment extends FragmentGlobalAbstract implements TEIDataCo
         } catch (Exception e) {
             Timber.e(e);
         }
+
+
+        binding.recyclerDashboardProgram.setLayoutManager(new LinearLayoutManager(getActivity()));
+
+
+        programDashboardAdapter = new ProgramDashboardAdapter(getArguments().getParcelableArrayList("PROGRAMS"), this);
+        binding.recyclerDashboardProgram.setAdapter(programDashboardAdapter);
 
         return binding.getRoot();
     }
@@ -676,5 +695,15 @@ public class TEIDataFragment extends FragmentGlobalAbstract implements TEIDataCo
                 getChildFragmentManager(),
                 CategoryDialog.Companion.getTAG()
         );
+    }
+
+    @Override
+    public void onItemClick(int position) {
+        Bundle bundle = new Bundle();
+        bundle.putString(PROGRAM_UID, getArguments().getString("PROGRAM_UID"));
+        bundle.putString(TEI_UID, getArguments().getString("TEI_UID"));
+        bundle.putString(ENROLLMENT_UID, getArguments().getString("ENROLLMENT_UID"));
+        startActivity(TeiDashboardMobileActivity.class, bundle, true, false, null);
+        getActivity().finish();
     }
 }

@@ -24,18 +24,23 @@ import android.os.Looper;
 import android.text.TextUtils;
 import android.util.TypedValue;
 import android.view.MenuItem;
+import android.view.Surface;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.compose.material.MaterialTheme;
 import androidx.core.content.ContextCompat;
 import androidx.core.view.ViewCompat;
 import androidx.databinding.DataBindingUtil;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModelProviders;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager2.widget.ViewPager2;
 
 import org.dhis2.App;
@@ -50,25 +55,31 @@ import org.dhis2.databinding.ActivityDashboardMobileBinding;
 import org.dhis2.ui.ThemeManager;
 import org.dhis2.usescases.enrollment.EnrollmentActivity;
 import org.dhis2.usescases.general.ActivityGlobalAbstract;
+import org.dhis2.usescases.main.program.ProgramViewModel;
 import org.dhis2.usescases.qrCodes.QrActivity;
 import org.dhis2.usescases.teiDashboard.adapters.DashboardPagerAdapter;
+import org.dhis2.usescases.teiDashboard.adapters.ProgramDashboardAdapter;
 import org.dhis2.usescases.teiDashboard.dashboardfragments.relationships.MapButtonObservable;
 import org.dhis2.usescases.teiDashboard.dashboardfragments.teidata.TEIDataFragment;
+import org.dhis2.usescases.teiDashboard.data.ProgramWithEnrollment;
 import org.dhis2.usescases.teiDashboard.teiProgramList.TeiProgramListActivity;
 import org.dhis2.utils.HelpManager;
 import org.dhis2.utils.OrientationUtilsKt;
 import org.dhis2.utils.customviews.navigationbar.NavigationPageConfigurator;
 import org.dhis2.utils.granularsync.SyncStatusDialog;
 import org.dhis2.utils.granularsync.SyncStatusDialogNavigatorKt;
+import org.hisp.dhis.android.core.enrollment.Enrollment;
 import org.hisp.dhis.android.core.enrollment.EnrollmentStatus;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 import javax.inject.Inject;
 
 import kotlin.Unit;
 import kotlin.jvm.functions.Function1;
 
-public class TeiDashboardMobileActivity extends ActivityGlobalAbstract implements TeiDashboardContracts.View, MapButtonObservable {
+public class TeiDashboardMobileActivity extends ActivityGlobalAbstract implements TeiDashboardContracts.View, MapButtonObservable, ProgramDashboardAdapter.OnItemClickListener {
 
     public static final int OVERVIEW_POS = 0;
 
@@ -94,6 +105,7 @@ public class TeiDashboardMobileActivity extends ActivityGlobalAbstract implement
     protected String teiUid;
     protected String programUid;
     protected String enrollmentUid;
+    protected String enrollmentOuUid;
 
     ActivityDashboardMobileBinding binding;
     protected DashboardPagerAdapter adapter;
@@ -105,9 +117,14 @@ public class TeiDashboardMobileActivity extends ActivityGlobalAbstract implement
     private MutableLiveData<Boolean> filtersShowing;
     private MutableLiveData<String> currentEnrollment;
     private MutableLiveData<Boolean> relationshipMap;
+    private MutableLiveData<List<ProgramWithEnrollment>> mData;
     private float elevation = 0f;
     private static final String TEI_SYNC = "SYNC_TEI";
     private boolean restartingActivity = false;
+
+    private ProgramDashboardAdapter programDashboardAdapter;
+
+    private RecyclerView recyclerView;
 
     public static Intent intent(Context context,
                                 String teiUid,
@@ -125,6 +142,7 @@ public class TeiDashboardMobileActivity extends ActivityGlobalAbstract implement
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
+
 
         if (savedInstanceState != null && savedInstanceState.containsKey(Constants.TRACKED_ENTITY_INSTANCE)) {
             teiUid = savedInstanceState.getString(Constants.TRACKED_ENTITY_INSTANCE);
@@ -147,6 +165,9 @@ public class TeiDashboardMobileActivity extends ActivityGlobalAbstract implement
         binding = DataBindingUtil.setContentView(this, R.layout.activity_dashboard_mobile);
         showLoadingProgress(true);
         binding.setPresenter(presenter);
+
+        Enrollment enrollment = presenter.getEnrollmentOU(programUid, teiUid);
+        enrollmentOuUid = enrollment.organisationUnit();
 
         filterManager.setUnsupportedFilters(Filters.ENROLLMENT_DATE, Filters.ENROLLMENT_STATUS);
         binding.setTotalFilters(filterManager.getTotalFilters());
@@ -222,10 +243,19 @@ public class TeiDashboardMobileActivity extends ActivityGlobalAbstract implement
             openSyncDialog();
         });
 
-        if(SyncStatusDialogNavigatorKt.shouldLaunchSyncDialog(getIntent())){
+        if (SyncStatusDialogNavigatorKt.shouldLaunchSyncDialog(getIntent())) {
             openSyncDialog();
         }
+
+
+        recyclerView = findViewById(R.id.recycler_dashboard_program);
+        recyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
+
+
+        programDashboardAdapter = new ProgramDashboardAdapter(presenter.programsDashboard(enrollmentOuUid, teiUid), this);
+        recyclerView.setAdapter(programDashboardAdapter);
     }
+
 
     @Override
     protected void onResume() {
@@ -264,11 +294,11 @@ public class TeiDashboardMobileActivity extends ActivityGlobalAbstract implement
     }
 
     private void openSyncDialog() {
-       new SyncStatusDialog.Builder()
+        new SyncStatusDialog.Builder()
                 .withContext(this, null)
-               .withSyncContext(
-                       new SyncContext.Enrollment(enrollmentUid)
-               )
+                .withSyncContext(
+                        new SyncContext.Enrollment(enrollmentUid)
+                )
                 .onDismissListener(hasChanged -> {
                     if (hasChanged && !restartingActivity) {
                         restartingActivity = true;
@@ -285,7 +315,8 @@ public class TeiDashboardMobileActivity extends ActivityGlobalAbstract implement
                 teiUid,
                 enrollmentUid,
                 pageConfigurator.displayAnalytics(),
-                pageConfigurator.displayRelationships()
+                pageConfigurator.displayRelationships(),
+                presenter.programsDashboard(enrollmentOuUid, teiUid)
         );
 
         if (OrientationUtilsKt.isPortrait(this)) {
@@ -379,7 +410,7 @@ public class TeiDashboardMobileActivity extends ActivityGlobalAbstract implement
                 setViewpagerAdapter();
             }
             getSupportFragmentManager().beginTransaction()
-                    .replace(R.id.tei_main_view, TEIDataFragment.newInstance(programUid, teiUid, enrollmentUid))
+                    .replace(R.id.tei_main_view, TEIDataFragment.newInstance(programUid, teiUid, enrollmentUid, presenter.programsDashboard(enrollmentOuUid, teiUid)))
                     .commitAllowingStateLoss();
         } else {
             if (binding.teiPager.getAdapter() == null) {
@@ -442,7 +473,7 @@ public class TeiDashboardMobileActivity extends ActivityGlobalAbstract implement
 
         if (OrientationUtilsKt.isLandscape(this)) {
             getSupportFragmentManager().beginTransaction()
-                    .replace(R.id.tei_main_view, TEIDataFragment.newInstance(programUid, teiUid, enrollmentUid))
+                    .replace(R.id.tei_main_view, TEIDataFragment.newInstance(programUid, teiUid, enrollmentUid, presenter.programsDashboard(enrollmentOuUid, teiUid)))
                     .commitAllowingStateLoss();
 
             binding.filterCounter.setVisibility(View.GONE);
@@ -698,5 +729,15 @@ public class TeiDashboardMobileActivity extends ActivityGlobalAbstract implement
         Intent intent = new Intent(getContext(), QrActivity.class);
         intent.putExtra(TEI_UID, teiUid);
         startActivity(intent);
+    }
+
+    @Override
+    public void onItemClick(int position) {
+        Bundle bundle = new Bundle();
+        bundle.putString(PROGRAM_UID, programUid);
+        bundle.putString(TEI_UID, teiUid);
+        bundle.putString(ENROLLMENT_UID, enrollmentUid);
+        startActivity(TeiDashboardMobileActivity.class, bundle, true, false, null);
+        finish();
     }
 }

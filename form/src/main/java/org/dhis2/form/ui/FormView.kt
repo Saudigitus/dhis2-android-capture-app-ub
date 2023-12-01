@@ -354,8 +354,8 @@ class FormView : Fragment() {
         setObservers()
 
         viewModel.getMediaDataStore()
-        viewModel.getDownloadMedia("rdZdCjQyl7y") // to dpwnload media
-        viewModel.getLocalMedia("rdZdCjQyl7y") // to get local media
+//        viewModel.getDownloadMedia("rdZdCjQyl7y") // to dpwnload media
+//        viewModel.getLocalMedia("rdZdCjQyl7y") // to get local media
 
        val result = viewModel.checkDataElement("djduey498493")
 

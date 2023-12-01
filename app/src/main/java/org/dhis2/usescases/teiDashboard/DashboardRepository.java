@@ -5,6 +5,7 @@ import androidx.annotation.Nullable;
 
 import org.dhis2.commons.data.tuples.Pair;
 import org.dhis2.commons.data.tuples.Trio;
+import org.dhis2.usescases.teiDashboard.data.ProgramWithEnrollment;
 import org.hisp.dhis.android.core.category.CategoryCombo;
 import org.hisp.dhis.android.core.category.CategoryOptionCombo;
 import org.hisp.dhis.android.core.enrollment.Enrollment;
@@ -90,4 +91,9 @@ public interface DashboardRepository {
     boolean programHasAnalytics();
 
     String getTETypeName();
+
+    List<ProgramWithEnrollment> getProgramDashboard(String ou, String trackerId);
+    Enrollment getEnrollmentOU(String programUd, String trackerId);
+
+    List<Program> testEnrollment();
 }

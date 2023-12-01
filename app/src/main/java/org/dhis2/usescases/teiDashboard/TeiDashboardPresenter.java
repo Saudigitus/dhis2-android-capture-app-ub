@@ -5,16 +5,19 @@ import com.google.gson.reflect.TypeToken;
 import org.dhis2.commons.prefs.Preference;
 import org.dhis2.commons.prefs.PreferenceProvider;
 import org.dhis2.commons.schedulers.SchedulerProvider;
+import org.dhis2.usescases.teiDashboard.data.ProgramWithEnrollment;
 import org.dhis2.utils.AuthorityException;
 import org.dhis2.commons.Constants;
 import org.dhis2.utils.analytics.AnalyticsHelper;
 import org.dhis2.commons.filters.FilterManager;
 import org.dhis2.commons.matomo.MatomoAnalyticsController;
 import org.hisp.dhis.android.core.common.Unit;
+import org.hisp.dhis.android.core.enrollment.Enrollment;
 import org.hisp.dhis.android.core.enrollment.EnrollmentStatus;
 import org.hisp.dhis.android.core.program.Program;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import io.reactivex.Observable;
@@ -149,6 +152,11 @@ public class TeiDashboardPresenter implements TeiDashboardContracts.Presenter {
     @Override
     public void trackDashboardNotes() {
         matomoAnalyticsController.trackEvent(DASHBOARD, OPEN_NOTES, CLICK);
+    }
+
+    @Override
+    public List<ProgramWithEnrollment> programsDashboard(String ou, String trackerId) {
+        return dashboardRepository.getProgramDashboard(ou, trackerId);
     }
 
     @Override
@@ -309,5 +317,14 @@ public class TeiDashboardPresenter implements TeiDashboardContracts.Presenter {
                 Preference.GROUPING,
                 typeToken,
                 new HashMap<>());
+    }
+
+    @Override
+    public Enrollment getEnrollmentOU(String programUid, String teiUid) {
+
+      return dashboardRepository.getEnrollmentOU(programUid, teiUid);
+    }
+
+    public void test() {
     }
 }
