@@ -49,12 +49,14 @@ class ProgramDashboardAdapter(
     override fun onBindViewHolder(holder: MyViewHolder, position: Int) {
 
         holder.name.text = mData.get(position).displayName
-        holder.type.text = mData.get(position).programType
+//        holder.type.text = mData.get(position).programType
+//        holder.type.text = mData.get(position).countDescription.toString()
+        holder.type.text = "%s %s".format(mData.get(position).countDescription.toString(), mData.get(position).typeName)
 
         holder.imageViewCerto.visibility = View.INVISIBLE
 
         val status = mData.get(position).enrollmentStatus
-        if (status) {
+        if (!status) {
             holder.imageViewCerto.visibility = View.VISIBLE
         }
 
