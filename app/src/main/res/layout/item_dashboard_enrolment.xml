@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="60dp"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    app:cardElevation="2dp"
+    android:layout_margin="3dp"
+    app:cardCornerRadius="15dp">
+
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <ImageView
+            android:id="@+id/enrollment_image"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginStart="8dp"
+            android:layout_centerVertical="true"
+            android:layout_gravity="start"
+            app:srcCompat="@drawable/agregado" />
+
+        <TextView
+            android:id="@+id/displayName"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
+            tools:text="Nome do programa"
+            android:textSize="15sp"
+            android:layout_centerInParent="false"
+            android:layout_marginStart="12dp"
+            android:layout_marginTop="8dp"
+            android:layout_toEndOf="@id/enrollment_image" />
+
+        <TextView
+            android:id="@+id/name_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            tools:text="eventos"
+            android:textSize="14sp"
+            android:layout_below="@id/displayName"
+            android:layout_marginStart="12dp"
+            android:layout_alignParentBottom="true"
+            android:layout_toEndOf="@id/enrollment_image"
+            />
+<!--        android:layout_alignParentBottom="true"-->
+<!--        android:layout_marginBottom="8dp"-->
+<!--        android:layout_marginTop="40dp"-->
+<!--        android:layout_centerVertical="true"-->
+        <ImageView
+            android:id="@+id/imageViewStatus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="16dp"
+            android:layout_alignParentEnd="true"
+            app:srcCompat="@drawable/ic_success"
+            android:contentDescription="@string/search"
+            android:layout_centerVertical="true"/>
+    </RelativeLayout>
+
+</androidx.cardview.widget.CardView>
