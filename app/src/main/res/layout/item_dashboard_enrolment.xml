@@ -45,10 +45,7 @@
             android:layout_alignParentBottom="true"
             android:layout_toEndOf="@id/enrollment_image"
             />
-<!--        android:layout_alignParentBottom="true"-->
-<!--        android:layout_marginBottom="8dp"-->
-<!--        android:layout_marginTop="40dp"-->
-<!--        android:layout_centerVertical="true"-->
+        
         <ImageView
             android:id="@+id/imageViewStatus"
             android:layout_width="wrap_content"
