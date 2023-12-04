@@ -171,6 +171,10 @@ class SearchTEList : FragmentGlobalAbstract() {
                         visible = !isScrollingDown,
                         closeFilterVisibility = isFilterOpened,
                         isLandscape = isLandscape(),
+                        onScanResult = {
+                            viewModel.updateQueryData(it)
+                            viewModel.performSearch()
+                        },
                         onClick = { viewModel.setSearchScreen() },
                         onCloseFilters = { viewModel.onFiltersClick(isLandscape()) }
                     )

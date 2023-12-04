@@ -128,7 +128,8 @@ fun FullSearchButton(modifier: Modifier, visible: Boolean = true, onClick: () ->
         exit = slideOutVertically()
     ) {
         SearchButton(
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
                 .height(48.dp),
             onClick = onClick
         )

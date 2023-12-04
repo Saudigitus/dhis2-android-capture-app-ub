@@ -300,6 +300,7 @@
                     app:layout_constraintHorizontal_bias="0.5"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent"
+                    android:visibility="gone"
                     tools:text="2 min ago" />
 
 
@@ -364,9 +365,18 @@
                     android:layout_marginTop="5dp"
                     android:layout_marginBottom="5dp"
                     app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintEnd_toStartOf="@id/showAttributesButton"/>
+                    app:layout_constraintEnd_toStartOf="@id/composer_counter"/>
 
-                <ImageView
+                <androidx.compose.ui.platform.ComposeView
+                    android:id="@+id/composer_counter"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:layout_marginTop="2dp"
+                    android:layout_marginBottom="5dp"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"/>
+                <!--<ImageView
                     android:id="@+id/showAttributesButton"
                     style="@style/ActionIconSmallPadding"
                     android:layout_width="wrap_content"
@@ -377,7 +387,7 @@
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:srcCompat="@drawable/ic_arrow_down"
-                    app:tint="#61333333" />
+                    app:tint="#61333333" />-->
             </androidx.constraintlayout.widget.ConstraintLayout>
 
             <View

@@ -91,6 +91,10 @@ dependencies {
     api(libs.androidx.compose.ui)
     api(libs.androidx.compose.livedata)
 
+    api("androidx.compose.material3:material3:1.1.1")
+    api("androidx.compose.material:material-icons-core:1.4.3")
+    api("androidx.compose.material:material-icons-extended:1.4.3")
+
     api(libs.google.material)
     api(libs.google.gson)
     api(libs.dagger)

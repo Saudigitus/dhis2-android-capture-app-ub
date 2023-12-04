@@ -1,4 +1,4 @@
-package org.dhis2.Bindings
+package org.dhis2.commons.bindings
 
 import android.content.Context
 import android.graphics.Color
@@ -28,6 +28,7 @@ import java.io.File
 import java.util.ArrayList
 import java.util.Date
 import org.dhis2.commons.R
+import org.dhis2.commons.components.CountComponent
 import org.dhis2.commons.data.EnrollmentIconData
 import org.dhis2.commons.data.SearchTeiModel
 import org.dhis2.commons.databinding.ItemFieldValueBinding
@@ -118,6 +119,16 @@ fun List<EnrollmentIconData>.paintAllEnrollmentIcons(parent: ComposeView) {
                         }
                     }
                 }
+            }
+        }
+    }
+}
+
+fun teiRelationshipCounter(parent: ComposeView, teiRelationshipCount: Int) {
+    parent.apply {
+        setContent {
+            MdcTheme {
+                CountComponent(teiRelationshipCount)
             }
         }
     }
@@ -301,7 +312,7 @@ fun SearchTeiModel.setTeiImage(
 
 fun LinkedHashMap<String, TrackedEntityAttributeValue>.setAttributeList(
     parentLayout: LinearLayout,
-    showAttributesButton: ImageView,
+    //showAttributesButton: ImageView,
     adapterPosition: Int,
     listIsOpen: Boolean,
     sortingKey: String?,
@@ -351,11 +362,11 @@ fun LinkedHashMap<String, TrackedEntityAttributeValue>.setAttributeList(
             binding.root.tag = adapterPosition.toString() + "_" + sortingValue
             parentLayout.addView(binding.root)
         }
-        showAttributesButton.scaleY = if (listIsOpen) -1F else 1F
+        /*showAttributesButton.scaleY = if (listIsOpen) -1F else 1F
         showAttributesButton.setOnClickListener {
             showList()
-        }
+        }*/
     } else {
-        showAttributesButton.setOnClickListener(null)
+        //showAttributesButton.setOnClickListener(null)
     }
 }

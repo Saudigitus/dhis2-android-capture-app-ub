@@ -1,5 +1,13 @@
 package org.dhis2.usescases.searchTrackEntity.ui
 
+import android.annotation.SuppressLint
+import android.app.Activity
+import android.content.Context
+import android.content.Intent
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.ActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.slideInVertically
@@ -34,7 +42,10 @@ import androidx.compose.material.SnackbarHost
 import androidx.compose.material.SnackbarHostState
 import androidx.compose.material.Text
 import androidx.compose.material.TextButton
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -64,8 +75,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
 import org.dhis2.R
+import org.dhis2.commons.Constants
 import org.dhis2.commons.resources.ColorUtils
+import org.dhis2.form.model.ActionType
+import org.dhis2.form.model.RowAction
+import org.dhis2.usescases.qrScanner.ScanActivity
 import org.dhis2.usescases.searchTrackEntity.listView.SearchResult
+import org.dhis2.usescases.uiboost.data.model.SearchTE
+import org.dhis2.usescases.uiboost.data.model.toRowAction
 
 @Composable
 fun SearchResultUi(searchResult: SearchResult, onSearchOutsideClick: () -> Unit) {
@@ -95,7 +112,28 @@ fun SearchResultUi(searchResult: SearchResult, onSearchOutsideClick: () -> Unit)
 }
 
 @Composable
-fun SearchButton(modifier: Modifier = Modifier, onClick: () -> Unit) {
+fun SearchButton(
+    modifier: Modifier = Modifier,
+    searchTEType: SearchTEType,
+    onScanResult: (result: RowAction) -> Unit = {},
+    onClick: () -> Unit
+) {
+    val context = LocalContext.current
+    var startScanner by remember { mutableStateOf(false) }
+
+    QrSearch(context, startScanner) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            SearchTE.fromJson(result.data?.extras?.getString(Constants.EXTRA_DATA))
+                ?.toRowAction()?.let {
+                    onScanResult.invoke(it)
+                }
+        } else {
+            Toast.makeText(context, context.getString(R.string.error), Toast.LENGTH_SHORT).show()
+        }
+        startScanner = false
+    }
+
+
     Button(
         modifier = modifier,
         onClick = onClick,
@@ -119,10 +157,37 @@ fun SearchButton(modifier: Modifier = Modifier, onClick: () -> Unit) {
                 )
             )
             Spacer(modifier = Modifier.size(16.dp))
-            Text(
-                text = stringResource(id = R.string.search),
-                color = colorResource(id = R.color.textSecondary)
-            )
+            if (searchTEType == SearchTEType.FULL_SEARCH) {
+                Text(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f),
+                    text = stringResource(id = R.string.search),
+                    color = colorResource(id = R.color.textSecondary)
+                )
+            } else {
+                Text(
+                    text = stringResource(id = R.string.search),
+                    color = colorResource(id = R.color.textSecondary)
+                )
+            }
+            Spacer(modifier = Modifier.size(16.dp))
+            IconButton(
+                modifier = Modifier
+                    .align(Alignment.CenterVertically),
+                onClick = { startScanner = true }
+            ) {
+                Icon(
+                    imageVector = Icons.Default.QrCodeScanner,
+                    contentDescription = "",
+                    tint = Color(
+                        ColorUtils.getPrimaryColor(
+                            LocalContext.current,
+                            ColorUtils.ColorType.PRIMARY
+                        )
+                    )
+                )
+            }
         }
     }
 }
@@ -133,8 +198,26 @@ fun WrappedSearchButton(onClick: () -> Unit) {
         modifier = Modifier
             .wrapContentWidth(align = Alignment.CenterHorizontally)
             .height(44.dp),
+        searchTEType = SearchTEType.WRAPPED_SEARCH,
         onClick = onClick
     )
+}
+
+@Composable
+fun QrSearch(
+    context: Context,
+    launchQr: Boolean,
+    onResult: (result: ActivityResult) -> Unit
+) {
+    val launcher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult(),
+        onResult = onResult
+    )
+    if (launchQr) {
+        LaunchedEffect(Unit) {
+            launcher.launch(Intent(context, ScanActivity::class.java))
+        }
+    }
 }
 
 @ExperimentalAnimationApi
@@ -144,6 +227,7 @@ fun FullSearchButton(
     visible: Boolean = true,
     closeFilterVisibility: Boolean = false,
     isLandscape: Boolean = false,
+    onScanResult: (result: RowAction) -> Unit = {},
     onClick: () -> Unit = {},
     onCloseFilters: () -> Unit = {}
 ) {
@@ -160,6 +244,8 @@ fun FullSearchButton(
                 modifier = Modifier
                     .weight(weight = 1f)
                     .height(48.dp),
+                searchTEType = SearchTEType.FULL_SEARCH,
+                onScanResult = onScanResult,
                 onClick = onClick
             )
             if (!isLandscape && closeFilterVisibility) {
@@ -557,6 +643,7 @@ fun MinAttributesMessage(minAttributes: Int) {
     }
 }
 
+@SuppressLint("CoroutineCreationDuringComposition")
 @Composable
 fun MinAttributesSnackbar(minAttributes: Int) {
     val message = stringResource(R.string.search_min_attributes_message)
