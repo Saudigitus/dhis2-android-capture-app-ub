@@ -11,4 +11,5 @@ interface UBDataStoreRepository {
 
 //    suspend fun getDataStore(): Flow<List<DataStoreEntry>>
     suspend fun getFilteredMediaDataStore(): Flow<MediaStoreConfig?>
+    suspend fun countTeiRelationship(uid: String): Int
 }

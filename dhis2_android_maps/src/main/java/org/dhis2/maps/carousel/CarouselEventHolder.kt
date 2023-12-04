@@ -3,7 +3,7 @@ package org.dhis2.maps.carousel
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.recyclerview.widget.RecyclerView
-import org.dhis2.Bindings.setTeiImage
+import org.dhis2.commons.bindings.setTeiImage
 import org.dhis2.commons.data.SearchTeiModel
 import org.dhis2.commons.date.DateUtils
 import org.dhis2.commons.resources.ColorUtils

@@ -481,4 +481,8 @@
     <color name="pink_500">#E91E63</color>
 
     <color name="light_shadow">#1F000000</color>
+
+    <color name="enrollment_active">#DEFFDC</color>
+    <color name="enrollment_completed">#FFF4C5</color>
+    <color name="enrollment_cancelled">#FFDBDB</color>
 </resources>

@@ -26,6 +26,9 @@ public class SearchTeiModel implements CarouselItemModel {
     private boolean isOnline;
 
     private TrackedEntityInstance tei;
+
+    private int teiRelationshipCount;
+
     private String profilePicturePath;
     private String defaultTypeIcon;
 
@@ -121,8 +124,16 @@ public class SearchTeiModel implements CarouselItemModel {
         this.tei = tei;
     }
 
+    public void setTeiRelationshipCount(int teiRelationshipCount) {
+        this.teiRelationshipCount = teiRelationshipCount;
+    }
+
     public TrackedEntityInstance getTei() {
         return tei;
+    }
+
+    public int getTeiRelationshipCount() {
+        return teiRelationshipCount;
     }
 
     public void setProfilePicture(String profilePicturePath) {
