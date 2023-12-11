@@ -2,11 +2,11 @@
 <androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="60dp"
+    android:layout_height="65dp"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    app:cardElevation="2dp"
-    android:layout_margin="3dp"
-    app:cardCornerRadius="15dp">
+    app:cardElevation="0dp"
+    android:layout_margin="1dp"
+    app:cardCornerRadius="0dp">
 
 
     <RelativeLayout
@@ -39,15 +39,13 @@
             android:layout_height="wrap_content"
             tools:text="eventos"
             android:textSize="14sp"
+            android:layout_marginTop="2dp"
             android:layout_below="@id/displayName"
             android:layout_marginStart="12dp"
             android:layout_alignParentBottom="true"
             android:layout_toEndOf="@id/enrollment_image"
             />
-<!--        android:layout_alignParentBottom="true"-->
-<!--        android:layout_marginBottom="8dp"-->
-<!--        android:layout_marginTop="40dp"-->
-<!--        android:layout_centerVertical="true"-->
+
         <ImageView
             android:id="@+id/imageViewStatus"
             android:layout_width="wrap_content"
@@ -57,6 +55,12 @@
             app:srcCompat="@drawable/ic_success"
             android:contentDescription="@string/search"
             android:layout_centerVertical="true"/>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="0.1dp"
+            android:background="@android:color/darker_gray"
+            android:layout_alignParentBottom="true"/>
     </RelativeLayout>
 
 </androidx.cardview.widget.CardView>
