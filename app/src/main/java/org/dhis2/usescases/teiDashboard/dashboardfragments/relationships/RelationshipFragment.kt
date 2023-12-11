@@ -7,6 +7,20 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.Text
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.databinding.DataBindingUtil
 import com.mapbox.geojson.BoundingBox
 import com.mapbox.geojson.FeatureCollection
@@ -31,10 +45,13 @@ import org.dhis2.ui.ThemeManager
 import org.dhis2.usescases.eventsWithoutRegistration.eventCapture.EventCaptureActivity
 import org.dhis2.usescases.general.FragmentGlobalAbstract
 import org.dhis2.usescases.teiDashboard.TeiDashboardMobileActivity
+import org.dhis2.usescases.teiDashboard.dashboardfragments.relationships.ui.components.ShowCard
+import org.dhis2.usescases.teiDashboard.dashboardfragments.relationships.ui.components.TeiCountComponent
 import org.dhis2.utils.EventMode
 import org.dhis2.utils.OnDialogClickListener
 import org.dhis2.utils.dialFloatingActionButton.DialItem
 import org.hisp.dhis.android.core.relationship.RelationshipType
+import timber.log.Timber
 
 class RelationshipFragment : FragmentGlobalAbstract(), RelationshipView, OnMapClickListener {
     @Inject
@@ -120,6 +137,39 @@ class RelationshipFragment : FragmentGlobalAbstract(), RelationshipView, OnMapCl
             layerDialog.show(childFragmentManager, MapLayerDialog::class.java.name)
         }
         binding.mapPositionButton.setOnClickListener { handleMapPositionClick() }
+        //binding.teiCountContainer.teiCount.text = "$12 Membros"
+        /*binding.relationshipList.setContent {
+            Text(
+                text ="Membros do Agregado",
+                maxLines = 1,
+                softWrap = true,
+                overflow = TextOverflow.Ellipsis,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.Black.copy(.8f),
+                modifier = Modifier.padding(16.dp)
+            )
+            LazyColumn {
+                items(relationshipAdapter.currentList) { item ->
+                    ShowCard(
+                        checked = true,
+                        name = item.displayRelationshipName(),
+                        gender = "Male",
+                        age = "10"
+                    )
+                }
+            }
+            Row(
+                modifier = Modifier.padding(16.dp),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                TeiCountComponent(
+                    teiCount = 10
+                )
+            }
+        }*/
+
         return binding.root
     }
 
@@ -185,6 +235,7 @@ class RelationshipFragment : FragmentGlobalAbstract(), RelationshipView, OnMapCl
 
     override fun setRelationships(relationships: List<RelationshipViewModel>) {
         relationshipAdapter.submitList(relationships)
+        binding.teiCountContainer.teiCount.text = "${relationships.size} Membros"
         if (relationships.isNotEmpty()) {
             binding.emptyRelationships.visibility = View.GONE
         } else {
