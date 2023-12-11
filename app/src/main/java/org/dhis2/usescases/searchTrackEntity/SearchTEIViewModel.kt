@@ -293,7 +293,7 @@ class SearchTEIViewModel(
         performSearch(onMinAttributes)
     }
 
-    private fun performSearch(onMinAttributes: (Int) -> Unit = {}) {
+    fun performSearch(onMinAttributes: (Int) -> Unit = {}) {
         viewModelScope.launch {
             if (canPerformSearch()) {
                 searching = queryData.isNotEmpty()

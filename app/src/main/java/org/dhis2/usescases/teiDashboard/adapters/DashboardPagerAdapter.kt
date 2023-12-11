@@ -11,6 +11,7 @@ import org.dhis2.usescases.teiDashboard.dashboardfragments.indicators.VISUALIZAT
 import org.dhis2.usescases.teiDashboard.dashboardfragments.indicators.VisualizationType
 import org.dhis2.usescases.teiDashboard.dashboardfragments.relationships.RelationshipFragment
 import org.dhis2.usescases.teiDashboard.dashboardfragments.teidata.TEIDataFragment
+import org.dhis2.usescases.teiDashboard.data.ProgramWithEnrollment
 import org.dhis2.utils.isLandscape
 
 class DashboardPagerAdapter(
@@ -19,7 +20,8 @@ class DashboardPagerAdapter(
     private val teiUid: String,
     private val enrollmentUid: String?,
     private val displayAnalyticScreen: Boolean = true,
-    private val displayRelationshipScreen: Boolean
+    private val displayRelationshipScreen: Boolean,
+    private val programs: MutableList<ProgramWithEnrollment>
 ) : FragmentStateAdapter(fragmentActivity) {
 
     enum class DashboardPageType {
@@ -60,7 +62,8 @@ class DashboardPagerAdapter(
             DashboardPageType.TEI_DETAIL -> TEIDataFragment.newInstance(
                 currentProgram,
                 teiUid,
-                enrollmentUid
+                enrollmentUid,
+                programs
             )
             DashboardPageType.ANALYTICS -> {
                 if (indicatorsFragment == null) {

@@ -1,18 +1,22 @@
 package org.dhis2.usescases.searchTrackEntity.adapters
 
 import android.view.View
+import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.recyclerview.widget.RecyclerView
-import org.dhis2.Bindings.getEnrollmentIconsData
-import org.dhis2.Bindings.hasFollowUp
-import org.dhis2.Bindings.paintAllEnrollmentIcons
-import org.dhis2.Bindings.setAttributeList
-import org.dhis2.Bindings.setStatusText
-import org.dhis2.Bindings.setTeiImage
+import org.dhis2.R
+import org.dhis2.commons.bindings.getEnrollmentIconsData
+import org.dhis2.commons.bindings.hasFollowUp
+import org.dhis2.commons.bindings.paintAllEnrollmentIcons
+import org.dhis2.commons.bindings.setAttributeList
+import org.dhis2.commons.bindings.setStatusText
+import org.dhis2.commons.bindings.setTeiImage
+import org.dhis2.commons.bindings.teiRelationshipCounter
 import org.dhis2.commons.data.EnrollmentIconData
 import org.dhis2.commons.data.SearchTeiModel
 import org.dhis2.commons.date.toDateSpan
 import org.dhis2.databinding.ItemSearchTrackedEntityBinding
+import org.hisp.dhis.android.core.enrollment.EnrollmentStatus
 
 abstract class BaseTeiViewHolder(
     private val binding: ItemSearchTrackedEntityBinding
@@ -26,6 +30,9 @@ abstract class BaseTeiViewHolder(
 
     init {
         binding.composeProgramList.setViewCompositionStrategy(
+            ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed
+        )
+        binding.composerCounter.setViewCompositionStrategy(
             ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed
         )
     }
@@ -64,6 +71,7 @@ abstract class BaseTeiViewHolder(
             enrollmentIconDataList.paintAllEnrollmentIcons(
                 binding.composeProgramList
             )
+            teiRelationshipCounter(binding.composerCounter, teiRelationshipCount)
             if (selectedEnrollment != null) {
                 selectedEnrollment.setStatusText(
                     itemView.context,
@@ -71,7 +79,14 @@ abstract class BaseTeiViewHolder(
                     isHasOverdue,
                     overdueDate
                 )
+                when(selectedEnrollment.status()) {
+                    EnrollmentStatus.ACTIVE -> binding.cardView.setBackgroundColor(binding.root.context.resources.getColor(R.color.enrollment_active))
+                    EnrollmentStatus.COMPLETED -> binding.cardView.setBackgroundColor(binding.root.context.resources.getColor(R.color.enrollment_completed))
+                    EnrollmentStatus.CANCELLED -> binding.cardView.setBackgroundColor(binding.root.context.resources.getColor(R.color.enrollment_cancelled))
+                    else -> {}
+                }
             }
+
             setTeiImage(
                 itemView.context,
                 binding.trackedEntityImage,
@@ -80,7 +95,7 @@ abstract class BaseTeiViewHolder(
             )
             attributeValues.setAttributeList(
                 binding.attributeList,
-                binding.showAttributesButton,
+                //binding.showAttributesButton,
                 adapterPosition,
                 teiModel.isAttributeListOpen,
                 teiModel.sortingKey,
@@ -115,4 +130,5 @@ abstract class BaseTeiViewHolder(
         binding.entityOrgUnit.visibility = View.VISIBLE
         binding.sortingFieldValue.visibility = View.VISIBLE
     }
+
 }

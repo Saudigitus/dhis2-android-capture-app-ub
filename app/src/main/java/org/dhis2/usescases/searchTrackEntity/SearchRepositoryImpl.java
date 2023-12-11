@@ -757,6 +757,7 @@ public class SearchRepositoryImpl implements SearchRepository {
                 d2.trackedEntityModule().trackedEntityInstances().uid(tei.uid()).blockingGet().state() != State.RELATIONSHIP) {
             TrackedEntityInstance localTei = d2.trackedEntityModule().trackedEntityInstances().byUid().eq(tei.uid()).one().blockingGet();
             searchTei.setTei(localTei);
+            searchTei.setTeiRelationshipCount(countTeiRelationship(localTei.uid()));
             if (selectedProgram != null && d2.enrollmentModule().enrollments().byTrackedEntityInstance().eq(localTei.uid()).byProgram().eq(selectedProgram.uid()).one().blockingExists()) {
                 List<Enrollment> possibleEnrollments = d2.enrollmentModule().enrollments()
                         .byTrackedEntityInstance().eq(localTei.uid())
@@ -798,6 +799,7 @@ public class SearchRepositoryImpl implements SearchRepository {
             searchTei.setProfilePicture(profilePicturePath(tei, selectedProgram));
         } else {
             searchTei.setTei(tei);
+            searchTei.setTeiRelationshipCount(countTeiRelationship(tei.uid()));
             searchTei.setEnrolledOrgUnit(d2.organisationUnitModule().organisationUnits().uid(searchTei.getTei().organisationUnit()).blockingGet().name());
             if (tei.trackedEntityAttributeValues() != null) {
                 if (selectedProgram != null) {
@@ -845,6 +847,12 @@ public class SearchRepositoryImpl implements SearchRepository {
         searchTei.setSortingValue(sortingValueSetter.setSortingItem(searchTei, sortingItem));
         searchTei.setTEType(d2.trackedEntityModule().trackedEntityTypes().uid(teiType).blockingGet().displayName());
         return searchTei;
+    }
+
+    private int countTeiRelationship(String uid) {
+        return d2.relationshipModule().relationshipTypes()
+                .byAvailableForTrackedEntityInstance(uid)
+                .blockingCount();
     }
 
     private void addAttribute(SearchTeiModel searchTei, TrackedEntityAttributeValue attrValue, TrackedEntityAttribute attribute) {

@@ -4,12 +4,12 @@ import android.view.View
 import android.widget.Toast
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.recyclerview.widget.RecyclerView
-import org.dhis2.Bindings.getEnrollmentIconsData
-import org.dhis2.Bindings.hasFollowUp
-import org.dhis2.Bindings.paintAllEnrollmentIcons
-import org.dhis2.Bindings.setAttributeList
-import org.dhis2.Bindings.setStatusText
-import org.dhis2.Bindings.setTeiImage
+import org.dhis2.commons.bindings.getEnrollmentIconsData
+import org.dhis2.commons.bindings.hasFollowUp
+import org.dhis2.commons.bindings.paintAllEnrollmentIcons
+import org.dhis2.commons.bindings.setAttributeList
+import org.dhis2.commons.bindings.setStatusText
+import org.dhis2.commons.bindings.setTeiImage
 import org.dhis2.commons.data.EnrollmentIconData
 import org.dhis2.commons.data.SearchTeiModel
 import org.dhis2.commons.date.toDateSpan
@@ -84,7 +84,7 @@ class CarouselTeiHolder(
             )
             attributeValues.setAttributeList(
                 binding.attributeList,
-                binding.showAttributesButton,
+                //binding.showAttributesButton,
                 adapterPosition,
                 data.isAttributeListOpen,
                 data.sortingKey,

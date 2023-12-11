@@ -96,6 +96,7 @@ class ScanActivity : ActivityGlobalAbstract() {
         permissions: Array<String>,
         grantResults: IntArray
     ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         capture.onRequestPermissionsResult(requestCode, permissions, grantResults)
     }
 

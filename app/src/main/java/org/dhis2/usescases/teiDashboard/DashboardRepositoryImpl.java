@@ -1,12 +1,17 @@
 package org.dhis2.usescases.teiDashboard;
 
+import static org.hisp.dhis.android.core.program.ProgramType.WITHOUT_REGISTRATION;
+import static org.hisp.dhis.android.core.program.ProgramType.WITH_REGISTRATION;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import org.dhis2.R;
 import org.dhis2.commons.data.tuples.Pair;
 import org.dhis2.commons.data.tuples.Trio;
+import org.dhis2.commons.filters.data.FilterPresenter;
 import org.dhis2.commons.resources.ResourceManager;
+import org.dhis2.usescases.teiDashboard.data.ProgramWithEnrollment;
 import org.dhis2.utils.AuthorityException;
 import org.dhis2.utils.DateUtils;
 import org.dhis2.utils.ValueUtils;
@@ -24,6 +29,7 @@ import org.hisp.dhis.android.core.enrollment.EnrollmentObjectRepository;
 import org.hisp.dhis.android.core.enrollment.EnrollmentStatus;
 import org.hisp.dhis.android.core.event.Event;
 import org.hisp.dhis.android.core.event.EventStatus;
+import org.hisp.dhis.android.core.event.search.EventQueryCollectionRepository;
 import org.hisp.dhis.android.core.legendset.Legend;
 import org.hisp.dhis.android.core.maintenance.D2Error;
 import org.hisp.dhis.android.core.organisationunit.OrganisationUnit;
@@ -38,10 +44,11 @@ import org.hisp.dhis.android.core.trackedentity.TrackedEntityAttribute;
 import org.hisp.dhis.android.core.trackedentity.TrackedEntityAttributeValue;
 import org.hisp.dhis.android.core.trackedentity.TrackedEntityInstance;
 import org.hisp.dhis.android.core.trackedentity.TrackedEntityType;
-import org.hisp.dhis.android.core.trackedentity.TrackedEntityTypeAttribute;
+import org.hisp.dhis.android.core.trackedentity.search.TrackedEntityInstanceQueryCollectionRepository;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import dhis2.org.analytics.charts.Charts;
 import io.reactivex.Flowable;
@@ -62,6 +69,8 @@ public class DashboardRepositoryImpl implements DashboardRepository {
     private String programUid;
 
     private TeiAttributesProvider teiAttributesProvider;
+
+    FilterPresenter filterPresenter;
 
 
     public DashboardRepositoryImpl(D2 d2,
@@ -263,7 +272,7 @@ public class DashboardRepositoryImpl implements DashboardRepository {
             String teType = d2.trackedEntityModule().trackedEntityInstances().uid(teiUid).blockingGet().trackedEntityType();
             List<TrackedEntityAttributeValue> attributeValues = new ArrayList<>();
 
-            for (TrackedEntityAttributeValue attributeValue: teiAttributesProvider.getValuesFromTrackedEntityTypeAttributes(teType, teiUid)) {
+            for (TrackedEntityAttributeValue attributeValue : teiAttributesProvider.getValuesFromTrackedEntityTypeAttributes(teType, teiUid)) {
                 if (attributeValue != null) {
                     TrackedEntityAttribute attribute = d2.trackedEntityModule().trackedEntityAttributes().uid(attributeValue.trackedEntityAttribute()).blockingGet();
                     if (attribute.valueType() != ValueType.IMAGE && attributeValue.value() != null) {
@@ -275,7 +284,7 @@ public class DashboardRepositoryImpl implements DashboardRepository {
             }
 
             if (attributeValues.isEmpty()) {
-                for (TrackedEntityAttributeValue attributeValue: teiAttributesProvider.getValuesFromProgramTrackedEntityAttributes(teType, teiUid)) {
+                for (TrackedEntityAttributeValue attributeValue : teiAttributesProvider.getValuesFromProgramTrackedEntityAttributes(teType, teiUid)) {
                     if (attributeValue != null) {
                         TrackedEntityAttribute attribute = d2.trackedEntityModule().trackedEntityAttributes().uid(attributeValue.trackedEntityAttribute()).blockingGet();
                         attributeValues.add(
@@ -532,4 +541,79 @@ public class DashboardRepositoryImpl implements DashboardRepository {
                         .toObservable()
         ).blockingFirst().displayName();
     }
+
+    @Override
+    public List<ProgramWithEnrollment> getProgramDashboard(String ou, String trackerId) {
+        return d2.programModule().programs()
+                .byOrganisationUnitUid(ou)
+                .withTrackedEntityType()
+                .blockingGet().stream().map(
+                        n -> new ProgramWithEnrollment(
+                                n.uid(),
+                                n.displayName(),
+                                n.programType().name(),
+                                getTypeName(n),
+                                getEnrollment(n.uid(), trackerId),
+                                applyFilters(n)
+                        )
+                ).collect(Collectors.toList());
+    }
+
+    public List<Program> testEnrollment() {
+        return d2.programModule().programs()
+                .blockingGet();
+    }
+
+    private boolean getEnrollment(String programId, String trackerId) {
+        return d2.enrollmentModule()
+                .enrollments()
+                .byProgram().eq(programId)
+                .byTrackedEntityInstance().eq(trackerId)
+                .byStatus().eq(EnrollmentStatus.ACTIVE)
+                .blockingIsEmpty();
+    }
+
+    private int applyFilters(Program program) {
+        if (program.programType() == WITHOUT_REGISTRATION) {
+            return getSingleEventCount(program).blockingCount();
+        } else {
+            return getTrackerTeiCountAndOverdue(program).blockingCount();
+        }
+    }
+
+    private String getTypeName(Program program) {
+        if (program.programType() == WITHOUT_REGISTRATION) {
+            return "events";
+        } else {
+            return ""+program.trackedEntityType().name();
+        }
+    }
+
+    private TrackedEntityInstanceQueryCollectionRepository getTrackerTeiName(Program program) {
+        return d2.trackedEntityModule().trackedEntityInstanceQuery()
+                .byProgram().eq(program.uid());
+    }
+
+    private TrackedEntityInstanceQueryCollectionRepository getTrackerTeiCountAndOverdue(Program program) {
+        return d2.trackedEntityModule().trackedEntityInstanceQuery()
+                .byProgram().eq(program.uid());
+    }
+
+    private EventQueryCollectionRepository getSingleEventCount(Program program) {
+        return d2.eventModule()
+                .eventQuery()
+                .byIncludeDeleted().eq(false)
+                .byProgram().eq(program.uid());
+    }
+
+    @Override
+    public Enrollment getEnrollmentOU(String programUid, String trackerId) {
+        return d2.enrollmentModule()
+                .enrollments()
+                .byProgram().eq(programUid)
+                .byTrackedEntityInstance().eq(trackerId)
+                .one()
+                .blockingGet();
+    }
+
 }
