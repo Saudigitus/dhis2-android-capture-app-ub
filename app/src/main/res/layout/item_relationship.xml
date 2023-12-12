@@ -55,7 +55,6 @@
                 android:textSize="20sp"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
-
                 tools:text="A"
                 />
 
@@ -108,6 +107,7 @@
                 app:layout_constraintStart_toEndOf="@id/relationshipGender"
                 app:layout_constraintEnd_toEndOf="@id/clearButton"
                 tools:ignore="MissingConstraints"
+                android:visibility="invisible"
                 android:contentDescription="@string/check_button_content_description"/>
 
             <ImageView
