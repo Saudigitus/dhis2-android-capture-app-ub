@@ -336,7 +336,9 @@ public class TeiDashboardMobileActivity extends ActivityGlobalAbstract implement
                                 binding.searchFilterGeneral.setVisibility(View.VISIBLE);
                             }
                             if (adapter.pageType(position) == DashboardPagerAdapter.DashboardPageType.RELATIONSHIPS) {
-                                binding.relationshipMapIcon.setVisibility(View.VISIBLE);
+                                binding.relationshipMapIcon.setVisibility(View.GONE);
+                                binding.searchFilterGeneral.setVisibility(View.VISIBLE);
+                                binding.syncButton.setVisibility(View.VISIBLE);
                             } else {
                                 binding.relationshipMapIcon.setVisibility(View.GONE);
                             }
