@@ -122,10 +122,6 @@ public class TeiDashboardMobileActivity extends ActivityGlobalAbstract implement
     private static final String TEI_SYNC = "SYNC_TEI";
     private boolean restartingActivity = false;
 
-    private ProgramDashboardAdapter programDashboardAdapter;
-
-    private RecyclerView recyclerView;
-
     public static Intent intent(Context context,
                                 String teiUid,
                                 String programUid,
@@ -247,13 +243,6 @@ public class TeiDashboardMobileActivity extends ActivityGlobalAbstract implement
             openSyncDialog();
         }
 
-
-        recyclerView = findViewById(R.id.recycler_dashboard_program);
-        recyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
-
-
-        programDashboardAdapter = new ProgramDashboardAdapter(presenter.programsDashboard(enrollmentOuUid, teiUid), this);
-        recyclerView.setAdapter(programDashboardAdapter);
     }
 
 
