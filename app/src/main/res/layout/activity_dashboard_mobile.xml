@@ -30,7 +30,8 @@
 
     <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:background="?colorPrimary">
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/toolbar"
@@ -156,7 +157,10 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_below="@+id/toolbar"
-            android:layout_marginBottom="40dp"/>
+            android:layout_marginBottom="40dp"
+            android:background="@drawable/ic_front_home_backdrop_bg"
+            android:clipToPadding="false"
+            android:elevation="1dp"/>
 
 
         <org.dhis2.utils.customviews.navigationbar.NavigationBottomBar
