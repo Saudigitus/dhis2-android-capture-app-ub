@@ -106,7 +106,6 @@ class DialFloatingActionButtonLayout @JvmOverloads constructor(
         id = FAB_ID
         icon = context.getDrawable(R.drawable.ic_add_accent)
         text = "Criar novo"
-
         val colorPrimary = ColorUtils.getPrimaryColor(
             context,
             ColorUtils.ColorType.PRIMARY
