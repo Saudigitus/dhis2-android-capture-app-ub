@@ -4,19 +4,23 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.content.res.ColorStateList
 import android.util.AttributeSet
+import android.util.TypedValue
 import android.view.LayoutInflater
 import android.view.View
 import androidx.compose.ui.graphics.Color
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.constraintlayout.widget.ConstraintSet
 import androidx.core.view.marginBottom
+import androidx.core.view.size
 import androidx.core.view.updateLayoutParams
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import org.dhis2.Bindings.clipWithAllRoundedCorners
 import java.util.LinkedList
 import org.dhis2.Bindings.dp
 import org.dhis2.Bindings.hideDialItem
 import org.dhis2.Bindings.initDialItem
+import org.dhis2.Bindings.px
 import org.dhis2.Bindings.rotate
 import org.dhis2.Bindings.showDialItem
 import org.dhis2.R
@@ -105,14 +109,16 @@ class DialFloatingActionButtonLayout @JvmOverloads constructor(
     private fun initFab(context: Context) = ExtendedFloatingActionButton(context).apply {
         id = FAB_ID
         icon = context.getDrawable(R.drawable.ic_add_accent)
-        text = "Criar novo"
+        text = "Adicionar novo".lowercase()
+        setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
+
         val colorPrimary = ColorUtils.getPrimaryColor(
             context,
             ColorUtils.ColorType.PRIMARY
         )
 
         val colorWhite = ColorUtils.parseColor("#fff")
-
+        cornerRadius = 45
         supportBackgroundTintList = ColorStateList.valueOf(colorWhite)
         iconTint = ColorStateList.valueOf(colorPrimary)
         //background =  context.getDrawable(R.color.white)
@@ -120,11 +126,10 @@ class DialFloatingActionButtonLayout @JvmOverloads constructor(
         //supportImageTintList = ColorStateList.valueOf(ColorUtils.getContrastColor(colorPrimary))
         setOnClickListener { onFabClick() }
         layoutParams =
-            LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT).apply {
+            LayoutParams(LayoutParams.WRAP_CONTENT, 180).apply {
                 setMargins(0, 0, 0, 16.dp)
                 marginEnd = 16.dp
             }
-
         //size = FloatingActionButton.SIZE_NORMAL
     }
 
