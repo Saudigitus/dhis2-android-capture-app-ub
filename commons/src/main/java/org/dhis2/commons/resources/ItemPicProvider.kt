@@ -50,17 +50,17 @@ fun ImageView.setItemPic(
             textView?.clipWithAllRoundedCorners(20.dp)
             setImageDrawable(null)
             textView?.text = defaultValue.first().toString().toUpperCase(Locale.getDefault())
-            textView?.setTextColor(ColorUtils.getAlphaContrastColor(defaultColorRes))
-            textView?.setBackgroundColor(defaultColorRes)
+            textView?.setTextColor(ColorUtils.getAlphaContrastColor(colorPrimary))
+            textView?.setBackgroundColor(colorPrimary)
         }
         else -> {
             visibility = View.VISIBLE
             textView?.visibility = View.GONE
-            setBackgroundColor(defaultColorRes)
+            setBackgroundColor(colorPrimary)
             clipWithAllRoundedCorners(6.dp)
             ContextCompat.getDrawable(context, defaultImageRes)?.let {
                 Glide.with(context).load(
-                    ColorUtils.tintDrawableReosurce(it, defaultColorRes)
+                    ColorUtils.tintDrawableReosurce(it, colorPrimary)
                 ).transform(RoundedCorners(6.dp))
                     .placeholder(defaultImageRes)
                     .error(defaultImageRes)
