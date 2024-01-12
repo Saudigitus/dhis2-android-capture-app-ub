@@ -235,7 +235,10 @@ class RelationshipFragment : FragmentGlobalAbstract(), RelationshipView, OnMapCl
 
     override fun setRelationships(relationships: List<RelationshipViewModel>) {
         relationshipAdapter.submitList(relationships)
-        binding.teiCountContainer.teiCount.text = "${relationships.size} Membros"
+        Timber.tag("RELATIONSHIP_LL").d("$relationships")
+        binding.relationshipViewHeader.text = relationships[0].relationshipType.fromToName()?: "-"
+        var ext = relationships[0].relationshipType.toFromName() ?: "Members"
+        binding.teiCountContainer.teiCount.text = "${relationships.size} $ext"
         if (relationships.isNotEmpty()) {
             binding.emptyRelationships.visibility = View.GONE
         } else {
