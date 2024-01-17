@@ -1,5 +1,7 @@
 package org.dhis2.usescases.searchTrackEntity;
 
+import static org.dhis2.usescases.uiboost.data.util.Constants.RELATIONSHIP_CONFIG;
+
 import android.database.sqlite.SQLiteConstraintException;
 
 import androidx.annotation.NonNull;
@@ -42,6 +44,9 @@ import org.dhis2.metadata.usecases.ProgramConfiguration;
 import org.dhis2.metadata.usecases.TrackedEntityInstanceConfiguration;
 import org.dhis2.ui.ThemeManager;
 import org.dhis2.usescases.teiDownload.TeiDownloader;
+import org.dhis2.usescases.uiboost.data.model.Attribute;
+import org.dhis2.usescases.uiboost.data.model.Config;
+import org.dhis2.usescases.uiboost.data.model.RelationshipConfig;
 import org.dhis2.utils.DateUtils;
 import org.dhis2.utils.ValueUtils;
 import org.hisp.dhis.android.core.D2;
@@ -53,6 +58,8 @@ import org.hisp.dhis.android.core.common.FeatureType;
 import org.hisp.dhis.android.core.common.ObjectStyle;
 import org.hisp.dhis.android.core.common.State;
 import org.hisp.dhis.android.core.common.ValueType;
+import org.hisp.dhis.android.core.common.ValueTypeRenderingType;
+import org.hisp.dhis.android.core.datastore.DataStoreEntry;
 import org.hisp.dhis.android.core.enrollment.Enrollment;
 import org.hisp.dhis.android.core.enrollment.EnrollmentCreateProjection;
 import org.hisp.dhis.android.core.enrollment.EnrollmentStatus;
@@ -88,6 +95,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 
 import dhis2.org.analytics.charts.Charts;
 import io.reactivex.Flowable;
@@ -623,6 +631,35 @@ public class SearchRepositoryImpl implements SearchRepository {
     }
 
     @Override
+    public List<Attribute> getAttributeSearch(@NonNull String programUid) {
+        List<ProgramTrackedEntityAttribute> searchableAttributes = d2.programModule()
+                .programTrackedEntityAttributes()
+                .withRenderType()
+                .byProgram().eq(programUid)
+                .blockingGet();
+
+        if (searchableAttributes != null) {
+            List<Attribute> attributes = new ArrayList<>();
+
+            for (ProgramTrackedEntityAttribute attr : searchableAttributes) {
+                if (attr.renderType() != null && (attr.renderType().mobile() != null &&
+                        (attr.renderType().mobile().type() == ValueTypeRenderingType.BAR_CODE ||
+                                attr.renderType().mobile().type() == ValueTypeRenderingType.QR_CODE))) {
+                    String displayName = attr.displayName() != null ? attr.displayName() : "";
+                    assert displayName != null;
+                    attributes.add(
+                            new Attribute(attr.uid(), displayName)
+                    );
+                }
+            }
+
+            return attributes;
+        } else {
+            return Collections.emptyList();
+        }
+    }
+
+    @Override
     public Observable<TrackedEntityType> getTrackedEntityType(String trackedEntityUid) {
         return d2.trackedEntityModule().trackedEntityTypes().byUid().eq(trackedEntityUid).one().get().toObservable();
     }
@@ -748,6 +785,24 @@ public class SearchRepositoryImpl implements SearchRepository {
         }
     }
 
+    private List<Config> relationshipConfig() {
+        DataStoreEntry dsValue = d2.dataStoreModule().dataStore()
+                .byKey().eq(RELATIONSHIP_CONFIG)
+                .one().blockingGet();
+
+        if (dsValue != null) {
+            RelationshipConfig config = RelationshipConfig.fromJson(dsValue.value());
+
+            if (config != null) {
+                return config.getConfig();
+            } else {
+                return Collections.emptyList();
+            }
+        } else {
+            return Collections.emptyList();
+        }
+    }
+
     private SearchTeiModel transform(TrackedEntityInstance tei, @Nullable Program selectedProgram, boolean offlineOnly, SortingItem sortingItem) {
         if (!fetchedTeiUids.contains(tei.uid())) {
             fetchedTeiUids.add(tei.uid());
@@ -757,7 +812,18 @@ public class SearchRepositoryImpl implements SearchRepository {
                 d2.trackedEntityModule().trackedEntityInstances().uid(tei.uid()).blockingGet().state() != State.RELATIONSHIP) {
             TrackedEntityInstance localTei = d2.trackedEntityModule().trackedEntityInstances().byUid().eq(tei.uid()).one().blockingGet();
             searchTei.setTei(localTei);
-            searchTei.setTeiRelationshipCount(countTeiRelationship(localTei.uid()));
+
+            Optional<Config> config = relationshipConfig().stream().parallel().filter(config1 ->
+                config1.getProgram().equals(selectedProgram.uid())).findFirst();
+
+            config.ifPresent(value -> {
+                if (!value.getRelationShipType().isEmpty()) {
+                    org.dhis2.usescases.uiboost.data.model.RelationshipType relationshipType = value.getRelationShipType().get(0);
+
+                    searchTei.setTeiRelationshipCount(countTeiRelationship(relationshipType.getId(), localTei.uid()));
+                }
+            });
+
             if (selectedProgram != null && d2.enrollmentModule().enrollments().byTrackedEntityInstance().eq(localTei.uid()).byProgram().eq(selectedProgram.uid()).one().blockingExists()) {
                 List<Enrollment> possibleEnrollments = d2.enrollmentModule().enrollments()
                         .byTrackedEntityInstance().eq(localTei.uid())
@@ -799,7 +865,18 @@ public class SearchRepositoryImpl implements SearchRepository {
             searchTei.setProfilePicture(profilePicturePath(tei, selectedProgram));
         } else {
             searchTei.setTei(tei);
-            searchTei.setTeiRelationshipCount(countTeiRelationship(tei.uid()));
+
+            Optional<Config> config = relationshipConfig().stream().parallel().filter(config1 ->
+                    config1.getProgram().equals(selectedProgram.uid())).findFirst();
+
+            config.ifPresent(value -> {
+                if (!value.getRelationShipType().isEmpty()) {
+                    org.dhis2.usescases.uiboost.data.model.RelationshipType relationshipType = value.getRelationShipType().get(0);
+
+                    searchTei.setTeiRelationshipCount(countTeiRelationship(relationshipType.getId(), tei.uid()));
+                }
+            });
+
             searchTei.setEnrolledOrgUnit(d2.organisationUnitModule().organisationUnits().uid(searchTei.getTei().organisationUnit()).blockingGet().name());
             if (tei.trackedEntityAttributeValues() != null) {
                 if (selectedProgram != null) {
@@ -849,9 +926,10 @@ public class SearchRepositoryImpl implements SearchRepository {
         return searchTei;
     }
 
-    private int countTeiRelationship(String uid) {
+    private int countTeiRelationship(String relationshipType, String tei) {
         return d2.relationshipModule().relationshipTypes()
-                .byAvailableForTrackedEntityInstance(uid)
+                .byUid().eq(relationshipType)
+                .byAvailableForTrackedEntityInstance(tei)
                 .blockingCount();
     }
 

@@ -9,12 +9,17 @@ import org.dhis2.form.model.RowAction
 import org.dhis2.usescases.uiboost.data.model.Mapper.translateJsonToObject
 
 data class SearchTE(
-    val id: String,
     val value: String
 ) {
     private fun toJson(): String = Mapper.translateJsonToObject().writeValueAsString(this)
 
     companion object {
+        fun stringToObject(value: String?): SearchTE? = if (value != null) {
+            SearchTE(value =  value)
+        } else {
+            null
+        }
+
         fun fromJson(json: String?): SearchTE? = if (json != null) {
             translateJsonToObject()
                 .readValue(json, SearchTE::class.java)
@@ -37,8 +42,8 @@ object Mapper {
     }
 }
 
-fun SearchTE.toRowAction() = RowAction(
-    id = this.id,
+fun SearchTE.toRowAction(id: String) = RowAction(
+    id = id,
     value = this.value,
     type = ActionType.ON_SAVE
 )

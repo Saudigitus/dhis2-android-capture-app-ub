@@ -3,10 +3,12 @@ package org.dhis2.usescases.searchTrackEntity.listView
 import android.content.Context
 import android.content.res.Configuration
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
@@ -166,6 +168,8 @@ class SearchTEList : FragmentGlobalAbstract() {
                 ) {
                     val isScrollingDown by viewModel.isScrollingDown.observeAsState(false)
                     val isFilterOpened by viewModel.filtersOpened.observeAsState(false)
+                    val searchAttrs by viewModel.searchAttrs.collectAsState()
+
                     FullSearchButton(
                         modifier = Modifier,
                         visible = !isScrollingDown,
@@ -175,6 +179,7 @@ class SearchTEList : FragmentGlobalAbstract() {
                             viewModel.updateQueryData(it)
                             viewModel.performSearch()
                         },
+                        searchAttrs = searchAttrs,
                         onClick = { viewModel.setSearchScreen() },
                         onCloseFilters = { viewModel.onFiltersClick(isLandscape()) }
                     )
