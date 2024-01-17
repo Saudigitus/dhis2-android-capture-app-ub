@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.ActivityResult
@@ -27,6 +28,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.CircleShape
@@ -34,6 +36,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Button
 import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.CircularProgressIndicator
+import androidx.compose.material.DropdownMenu
+import androidx.compose.material.DropdownMenuItem
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.LocalTextStyle
@@ -81,6 +85,7 @@ import org.dhis2.form.model.ActionType
 import org.dhis2.form.model.RowAction
 import org.dhis2.usescases.qrScanner.ScanActivity
 import org.dhis2.usescases.searchTrackEntity.listView.SearchResult
+import org.dhis2.usescases.uiboost.data.model.Attribute
 import org.dhis2.usescases.uiboost.data.model.SearchTE
 import org.dhis2.usescases.uiboost.data.model.toRowAction
 
@@ -116,15 +121,18 @@ fun SearchButton(
     modifier: Modifier = Modifier,
     searchTEType: SearchTEType,
     onScanResult: (result: RowAction) -> Unit = {},
+    searchAttrs: List<Attribute> = emptyList(),
     onClick: () -> Unit
 ) {
     val context = LocalContext.current
     var startScanner by remember { mutableStateOf(false) }
+    var isExpanded by remember { mutableStateOf(false) }
+    var searchedAttr by remember { mutableStateOf("") }
 
     QrSearch(context, startScanner) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
-            SearchTE.fromJson(result.data?.extras?.getString(Constants.EXTRA_DATA))
-                ?.toRowAction()?.let {
+            SearchTE.stringToObject(result.data?.extras?.getString(Constants.EXTRA_DATA))
+                ?.toRowAction(searchedAttr)?.let {
                     onScanResult.invoke(it)
                 }
         } else {
@@ -172,33 +180,60 @@ fun SearchButton(
                 )
             }
             Spacer(modifier = Modifier.size(16.dp))
-            IconButton(
+            Column(
                 modifier = Modifier
-                    .align(Alignment.CenterVertically),
-                onClick = { startScanner = true }
+                    .align(Alignment.CenterVertically)
             ) {
-                Icon(
-                    imageVector = Icons.Default.QrCodeScanner,
-                    contentDescription = "",
-                    tint = Color(
-                        ColorUtils.getPrimaryColor(
-                            LocalContext.current,
-                            ColorUtils.ColorType.PRIMARY
+                IconButton(
+                    onClick = {
+                        if (searchAttrs.isEmpty() || searchAttrs.size == 1) {
+                            startScanner = true
+                        } else {
+                            isExpanded = !isExpanded
+                        }
+                    }
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.QrCodeScanner,
+                        contentDescription = "",
+                        tint = Color(
+                            ColorUtils.getPrimaryColor(
+                                LocalContext.current,
+                                ColorUtils.ColorType.PRIMARY
+                            )
                         )
                     )
-                )
+                }
+                DropdownMenu(
+                    expanded = isExpanded,
+                    onDismissRequest = { isExpanded = !isExpanded }
+                ) {
+                    searchAttrs.forEach {
+                        DropdownMenuItem(onClick = {
+                            searchedAttr = it.uid
+                            startScanner = true
+                            isExpanded = !isExpanded
+                        }) {
+                            Text(text = it.name)
+                        }
+                    }
+                }
             }
         }
     }
 }
 
 @Composable
-fun WrappedSearchButton(onClick: () -> Unit) {
+fun WrappedSearchButton(
+    searchAttrs: List<Attribute> = emptyList(),
+    onClick: () -> Unit
+) {
     SearchButton(
         modifier = Modifier
             .wrapContentWidth(align = Alignment.CenterHorizontally)
             .height(44.dp),
         searchTEType = SearchTEType.WRAPPED_SEARCH,
+        searchAttrs = searchAttrs,
         onClick = onClick
     )
 }
@@ -228,6 +263,7 @@ fun FullSearchButton(
     closeFilterVisibility: Boolean = false,
     isLandscape: Boolean = false,
     onScanResult: (result: RowAction) -> Unit = {},
+    searchAttrs: List<Attribute> = emptyList(),
     onClick: () -> Unit = {},
     onCloseFilters: () -> Unit = {}
 ) {
@@ -245,6 +281,7 @@ fun FullSearchButton(
                     .weight(weight = 1f)
                     .height(48.dp),
                 searchTEType = SearchTEType.FULL_SEARCH,
+                searchAttrs = searchAttrs,
                 onScanResult = onScanResult,
                 onClick = onClick
             )

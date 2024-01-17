@@ -1,11 +1,14 @@
 package org.dhis2.usescases.searchTrackEntity
 
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.PagedList
 import kotlinx.coroutines.async
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.dhis2.commons.data.SearchTeiModel
@@ -19,6 +22,7 @@ import org.dhis2.maps.layer.basemaps.BaseMapStyle
 import org.dhis2.maps.usecases.MapStyleConfiguration
 import org.dhis2.usescases.searchTrackEntity.listView.SearchResult
 import org.dhis2.usescases.searchTrackEntity.ui.UnableToSearchOutsideData
+import org.dhis2.usescases.uiboost.data.model.Attribute
 import org.dhis2.utils.customviews.navigationbar.NavigationPageConfigurator
 import org.hisp.dhis.android.core.maintenance.D2ErrorCode
 import timber.log.Timber
@@ -70,6 +74,9 @@ class SearchTEIViewModel(
     private val _filtersOpened = MutableLiveData(false)
     val filtersOpened: LiveData<Boolean> = _filtersOpened
 
+    private val _searchAttrs = MutableStateFlow<List<Attribute>>(emptyList())
+    val searchAttrs: StateFlow<List<Attribute>> = _searchAttrs
+
     init {
         viewModelScope.launch(dispatchers.io()) {
             createButtonScrollVisibility.postValue(
@@ -77,6 +84,8 @@ class SearchTEIViewModel(
             )
             _pageConfiguration.postValue(searchNavPageConfigurator.initVariables())
         }
+
+        loadSearchAttrs()
     }
 
     fun setListScreen() {
@@ -291,6 +300,14 @@ class SearchTEIViewModel(
     fun onSearchClick(onMinAttributes: (Int) -> Unit = {}) {
         searchRepository.clearFetchedList()
         performSearch(onMinAttributes)
+    }
+
+    private fun loadSearchAttrs() {
+        viewModelScope.launch {
+            _searchAttrs.value = initialProgramUid?.let {
+                searchRepository.getAttributeSearch(it)
+            } ?: emptyList()
+        }
     }
 
     fun performSearch(onMinAttributes: (Int) -> Unit = {}) {
