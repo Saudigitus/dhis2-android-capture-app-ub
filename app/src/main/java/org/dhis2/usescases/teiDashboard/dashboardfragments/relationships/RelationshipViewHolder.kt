@@ -25,6 +25,7 @@ class RelationshipViewHolder(
         binding.apply {
             relationshipCard.setOnClickListener {
                 if (relationships.canBeOpened) {
+                    Timber.tag("REL_RESP_OPEN").d("$relationships")
                     presenter.onRelationshipClicked(
                         relationships.ownerType,
                         relationships.ownerUid
@@ -45,6 +46,8 @@ class RelationshipViewHolder(
 //            relationshipGender.text = relationships.displayRelationshipTypeName()
 //            relationshipAge.text = relationships.toValues[0].second
 
+            textName.text = relationships.toValues.getOrNull(0)?.first
+            //textName.text = "Nome"
             toRelationshipName.text = relationships.toValues.getOrNull(0)?.second
 
             textGender.text = relationships.toValues.getOrNull(1)?.first
@@ -69,7 +72,7 @@ class RelationshipViewHolder(
                     toTeiImage.setItemPic(
                         imagePath,
                         defaultRes,
-                        relationships.ownerDefaultColorResource,
+                        -2,
                         relationships.displayRelationshipName(),
                         relationships.isEvent(),
                         binding.imageText

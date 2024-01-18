@@ -22,10 +22,10 @@
             android:layout_weight="0.5" />
 
         <androidx.cardview.widget.CardView
-            android:layout_width="170dp"
-            android:layout_height="55dp"
+            android:layout_width="150dp"
+            android:layout_height="45dp"
             app:cardBackgroundColor="@color/white"
-            app:cardCornerRadius="20dp"
+            app:cardCornerRadius="15dp"
             app:cardElevation="5dp"
             tools:ignore="MissingConstraints">
 
@@ -41,26 +41,26 @@
                     android:layout_width="20dp"
                     android:layout_height="20dp"
                     android:layout_marginStart="20dp"
-                    android:layout_marginTop="18dp"
-                    android:layout_marginEnd="10dp"
+                    android:layout_marginTop="12dp"
+                    android:layout_marginEnd="0dp"
                     android:layout_marginBottom="10dp"
-                    android:layout_weight="1"
+                    android:layout_weight="0"
                     app:srcCompat="@drawable/ic_person_outline"
-                    app:tint="@color/colorPrimary" />
+                    app:tint="@color/whiteBgTextColor" />
 
                 <TextView
                     android:id="@+id/teiCount"
-                    android:layout_width="100dp"
+                    android:layout_width="90dp"
                     android:layout_height="30dp"
-                    android:layout_marginStart="10dp"
-                    android:layout_marginTop="13dp"
+                    android:layout_marginStart="0dp"
+                    android:layout_marginTop="8dp"
                     android:layout_marginEnd="10dp"
                     android:layout_marginBottom="10dp"
                     android:gravity="center"
                     android:text="10 Membros"
-                    android:textColor="@color/colorPrimary"
+                    android:textColor="@color/whiteBgTextColor"
                     android:textFontWeight="600"
-                    android:textSize="14sp" />
+                    android:textSize="12sp" />
 
 
             </LinearLayout>

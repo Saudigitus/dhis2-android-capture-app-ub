@@ -78,6 +78,7 @@ import javax.inject.Inject;
 
 import kotlin.Unit;
 import kotlin.jvm.functions.Function1;
+import timber.log.Timber;
 
 public class TeiDashboardMobileActivity extends ActivityGlobalAbstract implements TeiDashboardContracts.View, MapButtonObservable, ProgramDashboardAdapter.OnItemClickListener {
 
@@ -162,8 +163,11 @@ public class TeiDashboardMobileActivity extends ActivityGlobalAbstract implement
         showLoadingProgress(true);
         binding.setPresenter(presenter);
 
-        Enrollment enrollment = presenter.getEnrollmentOU(programUid, teiUid);
-        enrollmentOuUid = enrollment.organisationUnit();
+        if (programUid != null && !programUid.isEmpty()) {
+            Timber.tag("programUid_NELL").d("SEE_PROG2 "+programUid+ " TEI2: "+teiUid);
+            Enrollment enrollment = presenter.getEnrollmentOU(programUid, teiUid);
+            enrollmentOuUid = enrollment.organisationUnit();
+        }
 
         filterManager.setUnsupportedFilters(Filters.ENROLLMENT_DATE, Filters.ENROLLMENT_STATUS);
         binding.setTotalFilters(filterManager.getTotalFilters());
