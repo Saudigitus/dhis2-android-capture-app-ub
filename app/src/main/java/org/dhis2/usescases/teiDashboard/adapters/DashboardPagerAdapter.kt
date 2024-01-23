@@ -4,7 +4,9 @@ import android.os.Bundle
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import androidx.viewpager2.adapter.FragmentStateAdapter
+import io.reactivex.Flowable
 import org.dhis2.R
+import org.dhis2.usescases.main.program.ProgramViewModel
 import org.dhis2.usescases.notes.NotesFragment
 import org.dhis2.usescases.teiDashboard.dashboardfragments.indicators.IndicatorsFragment
 import org.dhis2.usescases.teiDashboard.dashboardfragments.indicators.VISUALIZATION_TYPE
@@ -21,7 +23,7 @@ class DashboardPagerAdapter(
     private val enrollmentUid: String?,
     private val displayAnalyticScreen: Boolean = true,
     private val displayRelationshipScreen: Boolean,
-    private val programs: MutableList<ProgramWithEnrollment>
+    private val programs: MutableList<ProgramWithEnrollment>,
 ) : FragmentStateAdapter(fragmentActivity) {
 
     enum class DashboardPageType {
