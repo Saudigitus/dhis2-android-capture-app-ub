@@ -470,7 +470,8 @@ public class SearchTEPresenter implements SearchTEContractsModule.Presenter {
     }
 
     private void openDashboard(String teiUid, String enrollmentUid) {
-        view.openDashboard(teiUid, selectedProgram != null ? selectedProgram.uid() : null, enrollmentUid);
+        assert selectedProgram != null;
+        view.openDashboard(teiUid, selectedProgram != null ? selectedProgram.uid() : null, enrollmentUid, selectedProgram.trackedEntityType().uid());
     }
 
     @Override
