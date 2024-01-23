@@ -734,7 +734,7 @@ public class SearchRepositoryImpl implements SearchRepository {
 
     @Override
     public TeiDownloadResult download(String teiUid, @Nullable String enrollmentUid, @Nullable String reason) {
-        return teiDownloader.download(teiUid, enrollmentUid, reason);
+        return teiDownloader.download(teiUid, enrollmentUid, reason, null);
     }
 
     private SearchTeiModel transformResult(Result<TrackedEntityInstance, D2Error> result, @Nullable Program selectedProgram, boolean offlineOnly, SortingItem sortingItem) {
