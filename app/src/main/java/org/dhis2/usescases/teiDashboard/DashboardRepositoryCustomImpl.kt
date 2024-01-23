@@ -7,6 +7,7 @@ import io.reactivex.Single
 import org.dhis2.commons.data.tuples.Pair
 import org.dhis2.commons.data.tuples.Trio
 import org.dhis2.commons.resources.ResourceManager
+import org.dhis2.usescases.main.program.ProgramViewModel
 import org.dhis2.usescases.teiDashboard.data.ProgramWithEnrollment
 import org.dhis2.utils.AuthorityException
 import org.hisp.dhis.android.core.D2
@@ -73,6 +74,10 @@ class DashboardRepositoryCustomImpl(
         programUid: String?,
         teiUid: String?
     ): Observable<MutableList<TrackedEntityAttributeValue>> {
+        TODO("Not yet implemented")
+    }
+
+    override fun allPrograms(trackedEntityId: String?): Flowable<MutableList<ProgramViewModel>> {
         TODO("Not yet implemented")
     }
 
@@ -315,7 +320,8 @@ class DashboardRepositoryCustomImpl(
 
     override fun getProgramDashboard(
         ou: String?,
-        trackerId: String?
+        trackerId: String?,
+        trackedEntityId: String?
     ): MutableList<ProgramWithEnrollment> {
         TODO("Not yet implemented")
     }
