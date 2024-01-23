@@ -9,7 +9,8 @@ data class ProgramWithEnrollment(
     val programType: String?,
     val typeName: String?,
     val enrollmentStatus: Boolean,
-    val countDescription: Int = 0
+    val countDescription: Int = 0,
+    val countEnrollment: Int? = null
 ): Parcelable {
     constructor(parcel: Parcel) : this(
         parcel.readString(),
