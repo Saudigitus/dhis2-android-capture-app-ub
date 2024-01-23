@@ -7,6 +7,7 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import org.dhis2.R
+import org.dhis2.usescases.main.program.ProgramViewModel
 import org.dhis2.usescases.teiDashboard.data.ProgramDashboardModel
 import org.dhis2.usescases.teiDashboard.data.ProgramWithEnrollment
 import org.hisp.dhis.android.core.program.Program
@@ -14,10 +15,11 @@ import timber.log.Timber
 
 class ProgramDashboardAdapter(
     private val mData: List<ProgramWithEnrollment>,
+    private val programUid: String,
     private val listener: ProgramDashboardAdapter.OnItemClickListener
 ) : RecyclerView.Adapter<ProgramDashboardAdapter.MyViewHolder>() {
     interface OnItemClickListener {
-        fun onItemClick(position: Int);
+        fun onItemClick(position: Int, data: List<ProgramWithEnrollment>);
     }
 
     inner class MyViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView),
@@ -30,7 +32,7 @@ class ProgramDashboardAdapter(
             val position = adapterPosition
 
             if (position != RecyclerView.NO_POSITION) {
-                listener.onItemClick(position)
+                listener.onItemClick(position, mData)
             }
         }
 
@@ -48,22 +50,51 @@ class ProgramDashboardAdapter(
 
     override fun onBindViewHolder(holder: MyViewHolder, position: Int) {
 
-        holder.name.text = mData.get(position).displayName
-//        holder.type.text = mData.get(position).programType
-//        holder.type.text = mData.get(position).countDescription.toString()
-        holder.type.text = "%s %s".format(mData.get(position).countDescription.toString(), mData.get(position).typeName)
+//        holder.name.text = mData.get(position).description
+//        holder.type.text = "%s %s".format(
+//            mData.get(position).count,
+//            ""
+////            mData.get(position).typeName
+//        )
 
+//        holder.type.text = "%s %s".format(
+//            mData.get(position).countDescription.toString(),
+//            mData.get(position).typeName
+//        )
+//        holder.imageViewCerto.visibility = View.INVISIBLE
+//
+//        val status = mData.get(position).enrollmentStatus
+//        if (status) {
+//            holder.imageViewCerto.visibility = View.VISIBLE
+//        }
+//
+        holder.name.text = mData.get(position).displayName
+//            holder.name.text = mData.get(position).countEnrollment.toString()
+
+        holder.type.text = "%s %s".format(
+            mData.get(position).countDescription.toString(),
+            mData.get(position).typeName
+        )
         holder.imageViewCerto.visibility = View.INVISIBLE
 
+        holder.imageViewCerto.isClickable = true
+
+        if (mData.get(position).countEnrollment == 0) {
+            holder.imageViewCerto.setImageResource(R.drawable.ic_add_circle_outline_24)
+        } else {
+            holder.imageViewCerto.setImageResource(R.drawable.ic_success)
+        }
+        Timber.tag("HOJE").d("${mData.get(position).countEnrollment}")
+
         val status = mData.get(position).enrollmentStatus
-        if (!status) {
+        if (status) {
             holder.imageViewCerto.visibility = View.VISIBLE
         }
-
-
     }
 
-    override fun getItemCount() = mData.size
+    override fun getItemCount() = mData.filter {
+        it.programId != programUid
+    }.size
 
 
 }
