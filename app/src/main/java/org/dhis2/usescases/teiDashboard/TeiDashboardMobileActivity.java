@@ -78,6 +78,7 @@ import javax.inject.Inject;
 
 import kotlin.Unit;
 import kotlin.jvm.functions.Function1;
+import timber.log.Timber;
 
 public class TeiDashboardMobileActivity extends ActivityGlobalAbstract implements TeiDashboardContracts.View, MapButtonObservable, ProgramDashboardAdapter.OnItemClickListener {
 
@@ -107,6 +108,8 @@ public class TeiDashboardMobileActivity extends ActivityGlobalAbstract implement
     protected String enrollmentUid;
     protected String enrollmentOuUid;
 
+    protected String trackedEntityTypeUid;
+
     ActivityDashboardMobileBinding binding;
     protected DashboardPagerAdapter adapter;
 
@@ -135,6 +138,21 @@ public class TeiDashboardMobileActivity extends ActivityGlobalAbstract implement
         return intent;
     }
 
+    public static Intent intent(Context context,
+                                String teiUid,
+                                String programUid,
+                                String enrollmentUid,
+                                String trackedEntityTypeUid) {
+        Intent intent = new Intent(context, TeiDashboardMobileActivity.class);
+
+        intent.putExtra(TEI_UID, teiUid);
+        intent.putExtra(PROGRAM_UID, programUid);
+        intent.putExtra(ENROLLMENT_UID, enrollmentUid);
+        intent.putExtra("TRACKED_ENTITY_TYPE_UID", trackedEntityTypeUid);
+
+        return intent;
+    }
+
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -147,6 +165,7 @@ public class TeiDashboardMobileActivity extends ActivityGlobalAbstract implement
             teiUid = getIntent().getStringExtra(TEI_UID);
             programUid = getIntent().getStringExtra(PROGRAM_UID);
             enrollmentUid = getIntent().getStringExtra(ENROLLMENT_UID);
+            trackedEntityTypeUid = getIntent().getStringExtra("TRACKED_ENTITY_TYPE_UID");
         }
 
         ((App) getApplicationContext()).createDashboardComponent(new TeiDashboardModule(this, teiUid, programUid, enrollmentUid, OrientationUtilsKt.isPortrait(this))).inject(this);
@@ -291,7 +310,7 @@ public class TeiDashboardMobileActivity extends ActivityGlobalAbstract implement
                 .onDismissListener(hasChanged -> {
                     if (hasChanged && !restartingActivity) {
                         restartingActivity = true;
-                        startActivity(intent(getContext(), teiUid, programUid, enrollmentUid));
+                        startActivity(intent(getContext(), teiUid, programUid, enrollmentUid, trackedEntityTypeUid));
                         finish();
                         overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
                     }
@@ -305,7 +324,7 @@ public class TeiDashboardMobileActivity extends ActivityGlobalAbstract implement
                 enrollmentUid,
                 pageConfigurator.displayAnalytics(),
                 pageConfigurator.displayRelationships(),
-                presenter.programsDashboard(enrollmentOuUid, teiUid)
+                presenter.programsDashboard(enrollmentOuUid, teiUid, trackedEntityTypeUid)
         );
 
         if (OrientationUtilsKt.isPortrait(this)) {
@@ -401,7 +420,7 @@ public class TeiDashboardMobileActivity extends ActivityGlobalAbstract implement
                 setViewpagerAdapter();
             }
             getSupportFragmentManager().beginTransaction()
-                    .replace(R.id.tei_main_view, TEIDataFragment.newInstance(programUid, teiUid, enrollmentUid, presenter.programsDashboard(enrollmentOuUid, teiUid)))
+                    .replace(R.id.tei_main_view, TEIDataFragment.newInstance(programUid, teiUid, enrollmentUid, presenter.programsDashboard(enrollmentOuUid, teiUid, trackedEntityTypeUid)))
                     .commitAllowingStateLoss();
         } else {
             if (binding.teiPager.getAdapter() == null) {
@@ -464,7 +483,7 @@ public class TeiDashboardMobileActivity extends ActivityGlobalAbstract implement
 
         if (OrientationUtilsKt.isLandscape(this)) {
             getSupportFragmentManager().beginTransaction()
-                    .replace(R.id.tei_main_view, TEIDataFragment.newInstance(programUid, teiUid, enrollmentUid, presenter.programsDashboard(enrollmentOuUid, teiUid)))
+                    .replace(R.id.tei_main_view, TEIDataFragment.newInstance(programUid, teiUid, enrollmentUid, presenter.programsDashboard(enrollmentOuUid, teiUid, trackedEntityTypeUid)))
                     .commitAllowingStateLoss();
 
             binding.filterCounter.setVisibility(View.GONE);
@@ -499,7 +518,8 @@ public class TeiDashboardMobileActivity extends ActivityGlobalAbstract implement
 
             if (data.hasExtra(CHANGE_PROGRAM)) {
                 startActivity(intent(this, teiUid, data.getStringExtra(CHANGE_PROGRAM),
-                        data.getStringExtra(CHANGE_PROGRAM_ENROLLMENT)));
+                        data.getStringExtra(CHANGE_PROGRAM_ENROLLMENT)
+                ));
                 finish();
             }
 
@@ -723,12 +743,13 @@ public class TeiDashboardMobileActivity extends ActivityGlobalAbstract implement
     }
 
     @Override
-    public void onItemClick(int position) {
-        Bundle bundle = new Bundle();
-        bundle.putString(PROGRAM_UID, programUid);
-        bundle.putString(TEI_UID, teiUid);
-        bundle.putString(ENROLLMENT_UID, enrollmentUid);
-        startActivity(TeiDashboardMobileActivity.class, bundle, true, false, null);
-        finish();
+    public void onItemClick(int position, List<ProgramWithEnrollment> mData) {
+//        Bundle bundle = new Bundle();
+//        bundle.putString(PROGRAM_UID, programUid);
+//        bundle.putString(TEI_UID, teiUid);
+//        bundle.putString(ENROLLMENT_UID, enrollmentUid);
+//        startActivity(TeiDashboardMobileActivity.class, bundle, true, false, null);
+//        finish();
     }
+
 }
