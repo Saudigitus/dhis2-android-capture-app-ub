@@ -473,10 +473,11 @@ public class SearchTEActivity extends ActivityGlobalAbstract implements SearchTE
     private void observeDownload() {
         viewModel.getDownloadResult().observe(this, result ->
                 result.handleResult(
-                        (teiUid, programUid, enrollmentUid) -> {
+                        (teiUid, programUid, enrollmentUid, trackedEntityTypeUid) -> {
                             openDashboard(teiUid,
                                     programUid,
-                                    enrollmentUid);
+                                    enrollmentUid,
+                                    trackedEntityTypeUid);
                             return Unit.INSTANCE;
                         },
                         (teiUid, enrollmentUid) -> {
@@ -669,8 +670,8 @@ public class SearchTEActivity extends ActivityGlobalAbstract implements SearchTE
     }
 
     @Override
-    public void openDashboard(String teiUid, String programUid, String enrollmentUid) {
-        searchNavigator.openDashboard(teiUid, programUid, enrollmentUid);
+    public void openDashboard(String teiUid, String programUid, String enrollmentUid, String trackedEntityTypeUid) {
+        searchNavigator.openDashboard(teiUid, programUid, enrollmentUid, trackedEntityTypeUid);
     }
 
     public void refreshData() {
