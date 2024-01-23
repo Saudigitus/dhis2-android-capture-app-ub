@@ -2,7 +2,6 @@ package org.dhis2.usescases.teiDashboard.dashboardfragments.teidata;
 
 import static android.app.Activity.RESULT_OK;
 import static com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions.withCrossFade;
-import static org.antlr.v4.runtime.misc.MurmurHash.finish;
 import static org.dhis2.commons.Constants.ENROLLMENT_UID;
 import static org.dhis2.commons.Constants.EVENT_CREATION_TYPE;
 import static org.dhis2.commons.Constants.EVENT_PERIOD_TYPE;
@@ -12,6 +11,8 @@ import static org.dhis2.commons.Constants.ORG_UNIT;
 import static org.dhis2.commons.Constants.PROGRAM_UID;
 import static org.dhis2.commons.Constants.TEI_UID;
 import static org.dhis2.commons.Constants.TRACKED_ENTITY_INSTANCE;
+import static org.dhis2.usescases.teiDashboard.DataConstantsKt.GO_TO_ENROLLMENT;
+import static org.dhis2.usescases.teiDashboard.DataConstantsKt.GO_TO_ENROLLMENT_PROGRAM;
 import static org.dhis2.utils.analytics.AnalyticsConstants.CREATE_EVENT_TEI;
 import static org.dhis2.utils.analytics.AnalyticsConstants.TYPE_EVENT_TEI;
 
@@ -23,10 +24,12 @@ import android.os.Parcelable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.DatePicker;
 import android.widget.PopupMenu;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 import androidx.databinding.DataBindingUtil;
 import androidx.databinding.ObservableBoolean;
 import androidx.fragment.app.FragmentManager;
@@ -47,16 +50,23 @@ import org.dhis2.commons.data.EventViewModel;
 import org.dhis2.commons.data.StageSection;
 import org.dhis2.commons.dialogs.CustomDialog;
 import org.dhis2.commons.dialogs.DialogClickListener;
+import org.dhis2.commons.dialogs.calendarpicker.CalendarPicker;
+import org.dhis2.commons.dialogs.calendarpicker.OnDatePickerListener;
 import org.dhis2.commons.dialogs.imagedetail.ImageDetailBottomDialog;
 import org.dhis2.commons.filters.FilterItem;
 import org.dhis2.commons.filters.FilterManager;
 import org.dhis2.commons.filters.FiltersAdapter;
 import org.dhis2.commons.orgunitselector.OUTreeFragment;
+import org.dhis2.commons.orgunitselector.OrgUnitSelectorScope;
 import org.dhis2.commons.resources.ObjectStyleUtils;
 import org.dhis2.commons.sync.SyncContext;
 import org.dhis2.databinding.FragmentTeiDataBinding;
+import org.dhis2.ui.ThemeManager;
+import org.dhis2.usescases.enrollment.EnrollmentActivity;
 import org.dhis2.usescases.eventsWithoutRegistration.eventInitial.EventInitialActivity;
 import org.dhis2.usescases.general.FragmentGlobalAbstract;
+import org.dhis2.usescases.main.program.ProgramDownloadState;
+import org.dhis2.usescases.main.program.ProgramViewModel;
 import org.dhis2.usescases.programStageSelection.ProgramStageSelectionActivity;
 import org.dhis2.usescases.teiDashboard.DashboardProgramModel;
 import org.dhis2.usescases.teiDashboard.DashboardViewModel;
@@ -66,12 +76,18 @@ import org.dhis2.usescases.teiDashboard.dashboardfragments.teidata.teievents.Cat
 import org.dhis2.usescases.teiDashboard.dashboardfragments.teidata.teievents.EventAdapter;
 import org.dhis2.usescases.teiDashboard.dashboardfragments.teidata.teievents.EventCatComboOptionSelector;
 import org.dhis2.usescases.teiDashboard.data.ProgramWithEnrollment;
+import org.dhis2.usescases.teiDashboard.teiProgramList.EnrollmentViewModel;
+import org.dhis2.usescases.teiDashboard.teiProgramList.TeiProgramListContract;
+import org.dhis2.usescases.teiDashboard.teiProgramList.TeiProgramListRepository;
 import org.dhis2.usescases.teiDashboard.ui.DetailsButtonKt;
 import org.dhis2.utils.DateUtils;
 import org.dhis2.utils.category.CategoryDialog;
 import org.dhis2.utils.dialFloatingActionButton.DialItem;
 import org.dhis2.utils.granularsync.SyncStatusDialog;
+import org.hisp.dhis.android.core.D2;
+import org.hisp.dhis.android.core.common.State;
 import org.hisp.dhis.android.core.enrollment.Enrollment;
+import org.hisp.dhis.android.core.enrollment.EnrollmentCreateProjection;
 import org.hisp.dhis.android.core.enrollment.EnrollmentStatus;
 import org.hisp.dhis.android.core.organisationunit.OrganisationUnit;
 import org.hisp.dhis.android.core.program.Program;
@@ -81,19 +97,26 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 
 import javax.inject.Inject;
 
 import io.reactivex.Flowable;
+import io.reactivex.Observable;
 import io.reactivex.Single;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.functions.Consumer;
+import io.reactivex.schedulers.Schedulers;
 import kotlin.Unit;
 import kotlin.jvm.functions.Function1;
 import timber.log.Timber;
 
-public class TEIDataFragment extends FragmentGlobalAbstract implements TEIDataContracts.View, ProgramDashboardAdapter.OnItemClickListener {
+public class TEIDataFragment extends FragmentGlobalAbstract implements TEIDataContracts.View, ProgramDashboardAdapter.OnItemClickListener, TeiProgramListContract.View {
 
     private static final int REQ_DETAILS = 1001;
     private static final int REQ_EVENT = 2001;
@@ -109,6 +132,8 @@ public class TEIDataFragment extends FragmentGlobalAbstract implements TEIDataCo
 
     private FragmentTeiDataBinding binding;
 
+    private String programUidBase;
+
     @Inject
     TEIDataPresenter presenter;
 
@@ -117,6 +142,12 @@ public class TEIDataFragment extends FragmentGlobalAbstract implements TEIDataCo
 
     @Inject
     FiltersAdapter filtersAdapter;
+
+    @Inject
+    ThemeManager themeManager;
+
+    @Inject
+    D2 d2;
 
 
     private EventAdapter adapter;
@@ -134,6 +165,16 @@ public class TEIDataFragment extends FragmentGlobalAbstract implements TEIDataCo
     private ProgramDashboardAdapter programDashboardAdapter;
 
     private RecyclerView recyclerView;
+    public String programUid;
+
+    private Date selectedEnrollmentDate;
+    private CompositeDisposable compositeDisposable;
+
+    private TeiProgramListRepository teiProgramListRepository;
+
+    public void setProgramUid(String programUid) {
+        this.programUid = programUid;
+    }
 
     public static TEIDataFragment newInstance(String programUid, String teiUid, String enrollmentUid, List<ProgramWithEnrollment> programs) {
         TEIDataFragment fragment = new TEIDataFragment();
@@ -142,6 +183,7 @@ public class TEIDataFragment extends FragmentGlobalAbstract implements TEIDataCo
         args.putString("TEI_UID", teiUid);
         args.putString("ENROLLMENT_UID", enrollmentUid);
         args.putParcelableArrayList("PROGRAMS", (ArrayList<? extends Parcelable>) programs);
+//        args.putParcelableArrayList("PROGRAMS_2", (ArrayList<? extends Parcelable>) programs2.blockingSingle());
         fragment.setArguments(args);
         return fragment;
     }
@@ -150,6 +192,7 @@ public class TEIDataFragment extends FragmentGlobalAbstract implements TEIDataCo
     public void onAttach(@NotNull Context context) {
         super.onAttach(context);
         this.context = context;
+        this.setProgramUid(getArguments().getString("PROGRAM_UID"));
         activity = (TeiDashboardMobileActivity) context;
         ((App) context.getApplicationContext())
                 .dashboardComponent()
@@ -159,6 +202,8 @@ public class TEIDataFragment extends FragmentGlobalAbstract implements TEIDataCo
                         getArguments().getString("ENROLLMENT_UID")
                 ))
                 .inject(this);
+
+        compositeDisposable = new CompositeDisposable();
     }
 
     @Override
@@ -189,9 +234,90 @@ public class TEIDataFragment extends FragmentGlobalAbstract implements TEIDataCo
 
         binding.recyclerDashboardProgram.setLayoutManager(new LinearLayoutManager(getActivity()));
 
-
-        programDashboardAdapter = new ProgramDashboardAdapter(getArguments().getParcelableArrayList("PROGRAMS"), this);
+        programDashboardAdapter = new ProgramDashboardAdapter(getArguments().getParcelableArrayList("PROGRAMS"), programUid, this);
         binding.recyclerDashboardProgram.setAdapter(programDashboardAdapter);
+
+
+        teiProgramListRepository = new TeiProgramListRepository() {
+            @NonNull
+            @Override
+            public Observable<List<EnrollmentViewModel>> activeEnrollments(String trackedEntityId) {
+                return null;
+            }
+
+            @NonNull
+            @Override
+            public Observable<List<EnrollmentViewModel>> otherEnrollments(String trackedEntityId) {
+                return null;
+            }
+
+            @NonNull
+            @Override
+            public Flowable<List<ProgramViewModel>> allPrograms(String trackedEntityId) {
+                return null;
+            }
+
+            @NonNull
+            @Override
+            public Observable<List<Program>> alreadyEnrolledPrograms(String trackedEntityId) {
+                return Observable.fromCallable(() ->
+                                d2.enrollmentModule().enrollments()
+                                        .byTrackedEntityInstance().eq(trackedEntityId)
+                                        .byDeleted().eq(false).blockingGet())
+                        .flatMapIterable(enrollments -> enrollments)
+                        .map(enrollment -> d2.programModule().programs().byUid().eq(enrollment.program()).one().blockingGet())
+                        .toList()
+                        .toObservable();
+            }
+
+            @NonNull
+            @Override
+            public Observable<String> saveToEnroll(@NonNull String orgUnit, @NonNull String programUid, @NonNull String teiUid, Date enrollmentDate) {
+                return d2.enrollmentModule().enrollments().add(
+                                EnrollmentCreateProjection.builder()
+                                        .organisationUnit(orgUnit)
+                                        .program(programUid)
+                                        .trackedEntityInstance(teiUid)
+                                        .build())
+                        .map(enrollmentUid ->
+                                d2.enrollmentModule().enrollments().uid(enrollmentUid))
+                        .map(enrollmentRepository -> {
+                            if (d2.programModule().programs().uid(programUid).blockingGet().displayIncidentDate()) {
+                                enrollmentRepository.setIncidentDate(DateUtils.getInstance().getToday());
+                            }
+                            enrollmentRepository.setEnrollmentDate(enrollmentDate);
+                            enrollmentRepository.setFollowUp(false);
+                            return enrollmentRepository.blockingGet().uid();
+                        }).toObservable();
+            }
+
+            @Override
+            public Observable<List<OrganisationUnit>> getOrgUnits(String programUid) {
+                if (programUid != null)
+                    return d2.organisationUnitModule().organisationUnits().byOrganisationUnitScope(OrganisationUnit.Scope.SCOPE_DATA_CAPTURE)
+                            .byProgramUids(Collections.singletonList(programUid)).get().toObservable();
+                else
+                    return d2.organisationUnitModule().organisationUnits().byOrganisationUnitScope(OrganisationUnit.Scope.SCOPE_DATA_CAPTURE).get().toObservable();
+            }
+
+            @Override
+            public String getProgramColor(@NonNull String programUid) {
+                Program program = d2.programModule().programs().byUid().eq(programUid).one().blockingGet();
+                return program.style() != null ? program.style().color() : null;
+            }
+
+            @Override
+            public Program getProgram(String programUid) {
+                Program program = d2.programModule().programs().byUid().eq(programUid).one().blockingGet();
+                return program;
+            }
+
+            @Override
+            public ProgramViewModel updateProgramViewModel(ProgramViewModel programViewModel, ProgramDownloadState programDownloadState) {
+//                return programViewModelMapper.map(programViewModel, programDownloadState);
+                return null;
+            }
+        };
 
         return binding.getRoot();
     }
@@ -698,12 +824,202 @@ public class TEIDataFragment extends FragmentGlobalAbstract implements TEIDataCo
     }
 
     @Override
-    public void onItemClick(int position) {
-        Bundle bundle = new Bundle();
-        bundle.putString(PROGRAM_UID, getArguments().getString("PROGRAM_UID"));
-        bundle.putString(TEI_UID, getArguments().getString("TEI_UID"));
-        bundle.putString(ENROLLMENT_UID, getArguments().getString("ENROLLMENT_UID"));
-        startActivity(TeiDashboardMobileActivity.class, bundle, true, false, null);
+    public void onItemClick(int position, List<ProgramWithEnrollment> mData) {
+        String programUid = getArguments().getString("PROGRAM_UID");
+        String teiUid = getArguments().getString("TEI_UID");
+        String enrollmentUid = getArguments().getString("ENROLLMENT_UID");
+
+        enroll(programUid, teiUid);
+    }
+
+    private void showCustomCalendar(String programUid, String uid, OUTreeFragment orgUnitDialog) {
+        CalendarPicker dialog = new CalendarPicker(getContext());
+
+        Program selectedProgram = getProgramFromUid(programUid);
+        if (selectedProgram != null && !selectedProgram.selectEnrollmentDatesInFuture()) {
+            dialog.setMaxDate(new Date(System.currentTimeMillis()));
+        }
+
+        if (selectedProgram != null) {
+            dialog.setTitle(selectedProgram.enrollmentDateLabel());
+        }
+
+        dialog.setListener(new OnDatePickerListener() {
+            @Override
+            public void onNegativeClick() {
+                dialog.dismiss();
+            }
+
+            @Override
+            public void onPositiveClick(@NotNull DatePicker datePicker) {
+                Calendar selectedCalendar = Calendar.getInstance();
+                selectedCalendar.set(Calendar.YEAR, datePicker.getYear());
+                selectedCalendar.set(Calendar.MONTH, datePicker.getMonth());
+                selectedCalendar.set(Calendar.DAY_OF_MONTH, datePicker.getDayOfMonth());
+                selectedCalendar.set(Calendar.HOUR_OF_DAY, 0);
+                selectedCalendar.set(Calendar.MINUTE, 0);
+                selectedCalendar.set(Calendar.SECOND, 0);
+                selectedCalendar.set(Calendar.MILLISECOND, 0);
+                selectedEnrollmentDate = selectedCalendar.getTime();
+
+                compositeDisposable.add(getOrgUnits(programUid)
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(allOrgUnits -> {
+                                    List<OrganisationUnit> orgUnits = filterOrgUnits(allOrgUnits);
+                                    handleCalendarResult(orgUnitDialog, orgUnits, programUid, uid);
+                                },
+                                Timber::d
+                        ));
+            }
+        });
+
+        dialog.show();
+    }
+
+    public void enroll(String programUid, String uid) {
+        selectedEnrollmentDate = Calendar.getInstance().getTime();
+        OUTreeFragment orgUnitDialog = new OUTreeFragment.Builder()
+                .showAsDialog()
+                .singleSelection()
+                .onSelection(selectedOrgUnits -> {
+                    if (!selectedOrgUnits.isEmpty())
+                        enrollInOrgUnit(selectedOrgUnits.get(0).uid(), programUid, uid, selectedEnrollmentDate);
+                    return Unit.INSTANCE;
+                })
+                .orgUnitScope(new OrgUnitSelectorScope.ProgramCaptureScope(programUid))
+                .build();
+
+        showCustomCalendar(programUid, uid, orgUnitDialog);
+    }
+
+    private void handleCalendarResult(
+            OUTreeFragment orgUnitDialog,
+            List<OrganisationUnit> orgUnits,
+            String programUid,
+            String uid) {
+        if (orgUnits.size() > 1) {
+            orgUnitDialog.show(getAbstracContext().getSupportFragmentManager(), "OrgUnitEnrollment");
+        } else if (!orgUnits.isEmpty()) {
+            enrollInOrgUnit(orgUnits.get(0).uid(), programUid, uid, selectedEnrollmentDate);
+        } else {
+            displayMessage(getContext().getString(R.string.no_org_units));
+        }
+    }
+
+    private List<OrganisationUnit> filterOrgUnits(List<OrganisationUnit> allOrgUnits) {
+        ArrayList<OrganisationUnit> orgUnits = new ArrayList<>();
+        for (OrganisationUnit orgUnit : allOrgUnits) {
+            boolean afterOpening = false;
+            boolean beforeClosing = false;
+            if (orgUnit.openingDate() == null || !selectedEnrollmentDate.before(orgUnit.openingDate()))
+                afterOpening = true;
+            if (orgUnit.closedDate() == null || !selectedEnrollmentDate.after(orgUnit.closedDate()))
+                beforeClosing = true;
+            if (afterOpening && beforeClosing)
+                orgUnits.add(orgUnit);
+        }
+        return orgUnits;
+    }
+
+    public Program getProgramFromUid(String programUid) {
+        return teiProgramListRepository.getProgram(programUid);
+    }
+
+    public Observable<List<OrganisationUnit>> getOrgUnits(String programUid) {
+        return teiProgramListRepository.getOrgUnits(programUid);
+    }
+
+    private void enrollInOrgUnit(String orgUnitUid, String programUid, String teiUid, Date enrollmentDate) {
+        compositeDisposable.add(
+                teiProgramListRepository.saveToEnroll(orgUnitUid, programUid, teiUid, enrollmentDate)
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(enrollmentUid -> {
+                                    goToEnrollmentScreen(enrollmentUid, programUid);
+                                },
+                                Timber::d)
+        );
+    }
+
+    @Override
+    public void setActiveEnrollments(List<EnrollmentViewModel> enrollments) {
+
+    }
+
+    @Override
+    public void setOtherEnrollments(List<EnrollmentViewModel> enrollments) {
+
+    }
+
+    @Override
+    public void setPrograms(List<ProgramViewModel> programs) {
+
+    }
+
+    @Override
+    public void goToEnrollmentScreen(String enrollmentUid, String programUid) {
+        themeManager.setProgramTheme(programUid);
+//        updateToolbar(programUid);
+//        Intent data = new Intent();
+//        data.putExtra("GO_TO_ENROLLMENT", enrollmentUid);
+//        data.putExtra("GO_TO_ENROLLMENT_PROGRAM", programUid);
+//        getActivity().setResult(RESULT_OK, data);
+
+        Intent refundActivity = new Intent(getContext(), EnrollmentActivity.class);
+        refundActivity.putExtra("amount", enrollmentUid);
+        refundActivity.putExtra("amountCredited", programUid);
+        startActivity(refundActivity);
+
+//        Intent intent = EnrollmentActivity.Companion.getIntent(this,
+//                data.getStringExtra(GO_TO_ENROLLMENT),
+//                data.getStringExtra(GO_TO_ENROLLMENT_PROGRAM),
+//                EnrollmentActivity.EnrollmentMode.NEW,
+//                false);
+//        startActivity(intent);
+//        finish();
+
+
+        Intent intent = EnrollmentActivity.Companion.getIntent(getActivity(),
+                enrollmentUid,
+                programUid,
+                EnrollmentActivity.EnrollmentMode.NEW,
+                false);
+        startActivity(intent);
+
         getActivity().finish();
     }
+
+    @Override
+    public void changeCurrentProgram(String program, String uid) {
+
+    }
+
+    @Override
+    public void displayBreakGlassError(String trackedEntityTypeName) {
+
+    }
+
+    @Override
+    public void displayAccessError() {
+
+    }
+
+    private void updateToolbar(String programUid) {
+//        themeManager.getThemePrimaryColor(
+//                programUid,
+//                programColor -> {
+//                    binding.toolbar.setBackgroundColor(programColor);
+//                    return Unit.INSTANCE;
+//                },
+//                themeColorRes -> {
+//                    binding.toolbar.setBackgroundColor(ContextCompat.getColor(this, themeColorRes));
+//                    return Unit.INSTANCE;
+//                });
+    }
+
+//    public Program getProgramFromUid(String programUid) {
+//        return teiProgramListRepository.getProgram(programUid);
+//    }
+
 }
