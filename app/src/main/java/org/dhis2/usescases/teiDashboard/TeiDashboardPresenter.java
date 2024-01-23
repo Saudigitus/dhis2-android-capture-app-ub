@@ -5,6 +5,7 @@ import com.google.gson.reflect.TypeToken;
 import org.dhis2.commons.prefs.Preference;
 import org.dhis2.commons.prefs.PreferenceProvider;
 import org.dhis2.commons.schedulers.SchedulerProvider;
+import org.dhis2.usescases.main.program.ProgramViewModel;
 import org.dhis2.usescases.teiDashboard.data.ProgramWithEnrollment;
 import org.dhis2.utils.AuthorityException;
 import org.dhis2.commons.Constants;
@@ -20,6 +21,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import io.reactivex.Flowable;
 import io.reactivex.Observable;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.processors.PublishProcessor;
@@ -155,8 +157,13 @@ public class TeiDashboardPresenter implements TeiDashboardContracts.Presenter {
     }
 
     @Override
-    public List<ProgramWithEnrollment> programsDashboard(String ou, String trackerId) {
-        return dashboardRepository.getProgramDashboard(ou, trackerId);
+    public List<ProgramWithEnrollment> programsDashboard(String ou, String trackerId, String trackedEntityTypeUid) {
+        return dashboardRepository.getProgramDashboard(ou, trackerId, trackedEntityTypeUid);
+    }
+
+    @Override
+    public Flowable<List<ProgramViewModel>> programsDashboardAll(String trackerId) {
+        return dashboardRepository.allPrograms(trackerId);
     }
 
     @Override
