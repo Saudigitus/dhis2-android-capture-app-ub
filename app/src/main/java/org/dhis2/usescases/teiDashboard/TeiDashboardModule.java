@@ -11,6 +11,7 @@ import org.dhis2.data.forms.dataentry.EnrollmentRuleEngineRepository;
 import org.dhis2.data.forms.dataentry.RuleEngineRepository;
 import org.dhis2.commons.schedulers.SchedulerProvider;
 import org.dhis2.usescases.main.program.ProgramViewModelMapper;
+import org.dhis2.usescases.teiDashboard.data.ProgramWithEnrollmentMapper;
 import org.dhis2.utils.analytics.AnalyticsHelper;
 import org.dhis2.commons.matomo.MatomoAnalyticsController;
 import org.dhis2.utils.customviews.navigationbar.NavigationPageConfigurator;
@@ -71,7 +72,7 @@ public class TeiDashboardModule {
     @Provides
     @PerActivity
     DashboardRepository dashboardRepository(D2 d2, Charts charts, ResourceManager resources, TeiAttributesProvider teiAttributesProvider) {
-        return new DashboardRepositoryImpl(d2, charts, teiUid, programUid, enrollmentUid, resources, teiAttributesProvider, new ProgramViewModelMapper(new ResourceManager(view.getContext())));
+        return new DashboardRepositoryImpl(d2, charts, teiUid, programUid, enrollmentUid, resources, teiAttributesProvider, new ProgramViewModelMapper(new ResourceManager(view.getContext())), new ProgramWithEnrollmentMapper(new ResourceManager(view.getContext())));
     }
 
     @Provides
