@@ -1,7 +1,6 @@
 package org.dhis2.usescases.teiDashboard;
 
 import static org.hisp.dhis.android.core.program.ProgramType.WITHOUT_REGISTRATION;
-import static org.hisp.dhis.android.core.program.ProgramType.WITH_REGISTRATION;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -14,6 +13,7 @@ import org.dhis2.commons.resources.ResourceManager;
 import org.dhis2.usescases.main.program.ProgramViewModel;
 import org.dhis2.usescases.main.program.ProgramViewModelMapper;
 import org.dhis2.usescases.teiDashboard.data.ProgramWithEnrollment;
+import org.dhis2.usescases.teiDashboard.data.ProgramWithEnrollmentMapper;
 import org.dhis2.utils.AuthorityException;
 import org.dhis2.utils.DateUtils;
 import org.dhis2.utils.ValueUtils;
@@ -75,6 +75,8 @@ public class DashboardRepositoryImpl implements DashboardRepository {
 
     private final ProgramViewModelMapper programViewModelMapper;
 
+    private final ProgramWithEnrollmentMapper programWithEnrollmentMapper;
+
     FilterPresenter filterPresenter;
 
 
@@ -85,7 +87,8 @@ public class DashboardRepositoryImpl implements DashboardRepository {
                                    String enrollmentUid,
                                    ResourceManager resources,
                                    TeiAttributesProvider teiAttributesProvider,
-                                   ProgramViewModelMapper programViewModelMapper) {
+                                   ProgramViewModelMapper programViewModelMapper,
+                                   ProgramWithEnrollmentMapper programWithEnrollmentMapper) {
         this.d2 = d2;
         this.teiUid = teiUid;
         this.programUid = programUid;
@@ -94,6 +97,7 @@ public class DashboardRepositoryImpl implements DashboardRepository {
         this.charts = charts;
         this.teiAttributesProvider = teiAttributesProvider;
         this.programViewModelMapper = programViewModelMapper;
+        this.programWithEnrollmentMapper = programWithEnrollmentMapper;
     }
 
     @Override
@@ -555,17 +559,30 @@ public class DashboardRepositoryImpl implements DashboardRepository {
                 .byOrganisationUnitUid(ou)
                 .byTrackedEntityTypeUid().eq(trackedEntityTypeUid)
                 .withTrackedEntityType()
-                .blockingGet().stream().map(
-                        n -> new ProgramWithEnrollment(
-                                n.uid(),
-                                n.displayName(),
-                                n.programType().name(),
-                                getTypeName(n),
-                                getEnrollment(n.uid(), trackerId),
+                .blockingGet().stream()
+//                .map(
+//                        n -> new ProgramWithEnrollment(
+//                                n.uid(),
+//                                n.displayName(),
+//                                n.programType().name(),
+//                                getTypeName(n),
+//                                getEnrollment(n.uid(), trackerId),
+//                                applyFilters(n),
+//                                countEnrollments(n.uid(), trackerId),
+//                                null
+//                        )
+//                )
+                .map(n ->
+                        programWithEnrollmentMapper.map(
+                                n,
+                                countEnrollments(n.uid(), trackerId),
                                 applyFilters(n),
-                                countEnrollments(n.uid(), trackerId)
+                                getTypeName(n),
+                                getEnrollment(n.uid(), trackerId)
                         )
-                ).collect(Collectors.toList());
+
+                )
+                .collect(Collectors.toList());
     }
 
     @Override
