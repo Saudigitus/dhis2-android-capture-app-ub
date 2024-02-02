@@ -1,17 +1,17 @@
 package org.dhis2.usescases.teiDashboard.adapters
 
+import android.R.attr.bitmap
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
+import com.mapbox.mapboxsdk.style.expressions.Expression
+import com.mapbox.mapboxsdk.style.expressions.Expression.image
 import org.dhis2.R
-import org.dhis2.usescases.main.program.ProgramViewModel
-import org.dhis2.usescases.teiDashboard.data.ProgramDashboardModel
 import org.dhis2.usescases.teiDashboard.data.ProgramWithEnrollment
-import org.hisp.dhis.android.core.program.Program
-import timber.log.Timber
+
 
 class ProgramDashboardAdapter(
     private val mData: List<ProgramWithEnrollment>,
@@ -39,6 +39,7 @@ class ProgramDashboardAdapter(
         val name = itemView.findViewById<TextView?>(R.id.displayName)
         val type = itemView.findViewById<TextView?>(R.id.name_text)
         val imageViewCerto = itemView.findViewById<ImageView?>(R.id.imageViewStatus)
+        val imageViewLogo = itemView.findViewById<ImageView>(R.id.enrollment_image)
 
     }
 
@@ -75,20 +76,27 @@ class ProgramDashboardAdapter(
             mData.get(position).countDescription.toString(),
             mData.get(position).typeName
         )
-        holder.imageViewCerto.visibility = View.INVISIBLE
+
+
+        holder.imageViewLogo.setImageResource(mData.get(position).metadataIconData.iconResource)
+        holder.imageViewLogo.setColorFilter(mData.get(position).metadataIconData.programColor);
+
+        holder.imageViewCerto.visibility = View.VISIBLE
 
         holder.imageViewCerto.isClickable = true
 
-        if (mData.get(position).countEnrollment == 0) {
-            holder.imageViewCerto.setImageResource(R.drawable.ic_add_circle_outline_24)
-        } else {
-            holder.imageViewCerto.setImageResource(R.drawable.ic_success)
-        }
-        Timber.tag("HOJE").d("${mData.get(position).countEnrollment}")
+//        if (mData.get(position).countEnrollment == 0) {
+//            holder.imageViewCerto.setImageResource(R.drawable.ic_add_circle_outline_24)
+//        } else {
+//            holder.imageViewCerto.setImageResource(R.drawable.ic_success)
+//        }
+//        Timber.tag("HOJE").d("${mData.get(position).countEnrollment}")
 
         val status = mData.get(position).enrollmentStatus
         if (status) {
-            holder.imageViewCerto.visibility = View.VISIBLE
+            holder.imageViewCerto.setImageResource(R.drawable.ic_success)
+        } else {
+            holder.imageViewCerto.setImageResource(R.drawable.ic_add_circle_outline_24)
         }
     }
 
