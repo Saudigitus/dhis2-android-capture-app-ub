@@ -102,22 +102,25 @@
         <!--        tools:listitem="@layout/item_event"-->
         <!--        android:paddingBottom="200dp"-->
 
-        <LinearLayout
+        <RelativeLayout
             android:id="@+id/program_layout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="45dp"
             android:gravity="center"
             android:orientation="vertical"
-            app:layout_constraintTop_toBottomOf="@id/tei_recycler">
+            app:layout_constraintTop_toBottomOf="@id/tei_recycler"
+            android:paddingBottom="200dp">
 
 
             <TextView
+                android:id="@+id/textView_title_program"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/avalaible_services"
                 android:textSize="18sp"
-                android:textStyle="bold" />
+                android:textStyle="bold"
+                android:layout_centerHorizontal="true"/>
 
 
             <androidx.recyclerview.widget.RecyclerView
@@ -125,9 +128,10 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="5dp"
-                android:paddingBottom="200dp" />
+                android:layout_below="@+id/textView_title_program"
+                android:paddingBottom="200dp"/>
 
-        </LinearLayout>
+        </RelativeLayout>
 
         <TextView
             android:id="@+id/empty_teis"
