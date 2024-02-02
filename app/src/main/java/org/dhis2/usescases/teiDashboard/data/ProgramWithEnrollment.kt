@@ -1,7 +1,9 @@
 package org.dhis2.usescases.teiDashboard.data
 
+import android.os.Build
 import android.os.Parcel
 import android.os.Parcelable
+import androidx.annotation.RequiresApi
 import org.dhis2.ui.MetadataIconData
 
 data class ProgramWithEnrollment(
@@ -37,10 +39,17 @@ data class ProgramWithEnrollment(
     }
 
     override fun describeContents(): Int {
-        TODO("Not yet implemented")
+       return 0
     }
 
-    override fun writeToParcel(p0: Parcel, p1: Int) {
-        TODO("Not yet implemented")
+    @RequiresApi(Build.VERSION_CODES.Q)
+    override fun writeToParcel(parcel: Parcel, p1: Int) {
+        parcel.writeString(programId)
+        parcel.writeString(displayName)
+        parcel.writeString(programType)
+        parcel.writeString(typeName)
+        parcel.writeBoolean(enrollmentStatus)
+        parcel.writeInt(countDescription)
+        parcel.writeInt(countEnrollment!!)
     }
 }
