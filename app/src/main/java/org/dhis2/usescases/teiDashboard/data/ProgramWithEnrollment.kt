@@ -2,6 +2,7 @@ package org.dhis2.usescases.teiDashboard.data
 
 import android.os.Parcel
 import android.os.Parcelable
+import org.dhis2.ui.MetadataIconData
 
 data class ProgramWithEnrollment(
     val programId: String?,
@@ -10,30 +11,22 @@ data class ProgramWithEnrollment(
     val typeName: String?,
     val enrollmentStatus: Boolean,
     val countDescription: Int = 0,
-    val countEnrollment: Int? = null
+    val countEnrollment: Int? = null,
+    val metadataIconData: MetadataIconData,
 ): Parcelable {
+
     constructor(parcel: Parcel) : this(
         parcel.readString(),
         parcel.readString(),
         parcel.readString(),
         parcel.readString(),
         parcel.readByte() != 0.toByte(),
-        parcel.readInt()
+        parcel.readInt(),
+        parcel.readValue(Int::class.java.classLoader) as? Int,
+        TODO("metadataIconData")
     ) {
     }
 
-    override fun writeToParcel(parcel: Parcel, flags: Int) {
-        parcel.writeString(programId)
-        parcel.writeString(displayName)
-        parcel.writeString(programType)
-        parcel.writeString(typeName)
-        parcel.writeByte(if (enrollmentStatus) 1 else 0)
-        parcel.writeInt(countDescription)
-    }
-
-    override fun describeContents(): Int {
-        return 0
-    }
 
     companion object CREATOR : Parcelable.Creator<ProgramWithEnrollment> {
         override fun createFromParcel(parcel: Parcel): ProgramWithEnrollment {
@@ -45,4 +38,11 @@ data class ProgramWithEnrollment(
         }
     }
 
+    override fun describeContents(): Int {
+        TODO("Not yet implemented")
+    }
+
+    override fun writeToParcel(p0: Parcel, p1: Int) {
+        TODO("Not yet implemented")
+    }
 }
