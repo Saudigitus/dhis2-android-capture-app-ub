@@ -9,10 +9,7 @@ import static org.dhis2.commons.Constants.EVENT_REPEATABLE;
 import static org.dhis2.commons.Constants.EVENT_SCHEDULE_INTERVAL;
 import static org.dhis2.commons.Constants.ORG_UNIT;
 import static org.dhis2.commons.Constants.PROGRAM_UID;
-import static org.dhis2.commons.Constants.TEI_UID;
 import static org.dhis2.commons.Constants.TRACKED_ENTITY_INSTANCE;
-import static org.dhis2.usescases.teiDashboard.DataConstantsKt.GO_TO_ENROLLMENT;
-import static org.dhis2.usescases.teiDashboard.DataConstantsKt.GO_TO_ENROLLMENT_PROGRAM;
 import static org.dhis2.utils.analytics.AnalyticsConstants.CREATE_EVENT_TEI;
 import static org.dhis2.utils.analytics.AnalyticsConstants.TYPE_EVENT_TEI;
 
@@ -29,7 +26,6 @@ import android.widget.PopupMenu;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.core.content.ContextCompat;
 import androidx.databinding.DataBindingUtil;
 import androidx.databinding.ObservableBoolean;
 import androidx.fragment.app.FragmentManager;
@@ -85,7 +81,6 @@ import org.dhis2.utils.category.CategoryDialog;
 import org.dhis2.utils.dialFloatingActionButton.DialItem;
 import org.dhis2.utils.granularsync.SyncStatusDialog;
 import org.hisp.dhis.android.core.D2;
-import org.hisp.dhis.android.core.common.State;
 import org.hisp.dhis.android.core.enrollment.Enrollment;
 import org.hisp.dhis.android.core.enrollment.EnrollmentCreateProjection;
 import org.hisp.dhis.android.core.enrollment.EnrollmentStatus;
@@ -100,7 +95,6 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
-import java.util.Iterator;
 import java.util.List;
 
 import javax.inject.Inject;
@@ -825,11 +819,14 @@ public class TEIDataFragment extends FragmentGlobalAbstract implements TEIDataCo
 
     @Override
     public void onItemClick(int position, List<ProgramWithEnrollment> mData) {
-        String programUid = getArguments().getString("PROGRAM_UID");
-        String teiUid = getArguments().getString("TEI_UID");
-        String enrollmentUid = getArguments().getString("ENROLLMENT_UID");
 
-        enroll(programUid, teiUid);
+        if (!mData.get(position).getEnrollmentStatus()) {
+            String programUid = getArguments().getString("PROGRAM_UID");
+            String teiUid = getArguments().getString("TEI_UID");
+            String enrollmentUid = getArguments().getString("ENROLLMENT_UID");
+
+            enroll(programUid, teiUid);
+        }
     }
 
     private void showCustomCalendar(String programUid, String uid, OUTreeFragment orgUnitDialog) {
@@ -960,31 +957,12 @@ public class TEIDataFragment extends FragmentGlobalAbstract implements TEIDataCo
     @Override
     public void goToEnrollmentScreen(String enrollmentUid, String programUid) {
         themeManager.setProgramTheme(programUid);
-//        updateToolbar(programUid);
-//        Intent data = new Intent();
-//        data.putExtra("GO_TO_ENROLLMENT", enrollmentUid);
-//        data.putExtra("GO_TO_ENROLLMENT_PROGRAM", programUid);
-//        getActivity().setResult(RESULT_OK, data);
-
-        Intent refundActivity = new Intent(getContext(), EnrollmentActivity.class);
-        refundActivity.putExtra("amount", enrollmentUid);
-        refundActivity.putExtra("amountCredited", programUid);
-        startActivity(refundActivity);
-
-//        Intent intent = EnrollmentActivity.Companion.getIntent(this,
-//                data.getStringExtra(GO_TO_ENROLLMENT),
-//                data.getStringExtra(GO_TO_ENROLLMENT_PROGRAM),
-//                EnrollmentActivity.EnrollmentMode.NEW,
-//                false);
-//        startActivity(intent);
-//        finish();
-
-
         Intent intent = EnrollmentActivity.Companion.getIntent(getActivity(),
                 enrollmentUid,
                 programUid,
                 EnrollmentActivity.EnrollmentMode.NEW,
                 false);
+
         startActivity(intent);
 
         getActivity().finish();
