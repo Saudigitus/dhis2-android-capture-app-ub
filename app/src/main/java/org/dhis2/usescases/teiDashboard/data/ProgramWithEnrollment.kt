@@ -24,9 +24,7 @@ data class ProgramWithEnrollment(
         parcel.readInt(),
         parcel.readValue(Int::class.java.classLoader) as? Int,
         TODO("metadataIconData")
-    ) {
-    }
-
+    )
 
     companion object CREATOR : Parcelable.Creator<ProgramWithEnrollment> {
         override fun createFromParcel(parcel: Parcel): ProgramWithEnrollment {
