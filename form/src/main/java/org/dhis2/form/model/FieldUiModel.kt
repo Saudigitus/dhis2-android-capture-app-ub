@@ -69,6 +69,8 @@ interface FieldUiModel {
 
     val isLoadingData: Boolean
 
+    val isSingle: Boolean
+
     fun setCallback(callback: Callback)
 
     fun equals(item: FieldUiModel): Boolean

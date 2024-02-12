@@ -2,6 +2,7 @@ package org.dhis2.form.ui
 
 import android.media.MediaPlayer
 import android.os.Environment
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -27,6 +28,7 @@ import org.dhis2.form.model.ActionType
 import org.dhis2.form.model.FieldUiModel
 import org.dhis2.form.model.InfoUiModel
 import org.dhis2.form.model.RowAction
+import org.dhis2.form.model.SectionUiModelImpl
 import org.dhis2.form.model.StoreResult
 import org.dhis2.form.model.UiRenderType
 import org.dhis2.form.model.ValueStoreResult
@@ -607,7 +609,17 @@ class FormViewModel(
                 repository.fetchFormItems(openErrorLocation)
             }
             try {
-                _items.postValue(result.await())
+                val sectionIndexes = result.await().mapIndexedNotNull { index, data ->
+                    if(data is SectionUiModelImpl) index else null
+                }
+
+                val data = result.await().subList(sectionIndexes[0], sectionIndexes[1])
+
+                Log.e("INDEX", "$sectionIndexes")
+                Log.e("RTR", "${data[1]}")
+
+                _items.postValue(data.subList(0, 2))
+
             } catch (e: Exception) {
                 Timber.e(e)
                 _items.postValue(emptyList())

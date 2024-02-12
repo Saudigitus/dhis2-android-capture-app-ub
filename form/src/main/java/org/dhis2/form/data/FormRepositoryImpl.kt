@@ -1,5 +1,6 @@
 package org.dhis2.form.data
 
+import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
@@ -262,7 +263,7 @@ class FormRepositoryImpl(
     }
 
     private fun List<FieldUiModel>.setOpenedSection(): List<FieldUiModel> {
-        return map { field ->
+        return mapIndexed { index, field ->
             if (field.isSection()) {
                 updateSection(field, this)
             } else {

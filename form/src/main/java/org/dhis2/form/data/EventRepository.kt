@@ -1,6 +1,7 @@
 package org.dhis2.form.data
 
 import android.text.TextUtils
+import android.util.Log
 import io.reactivex.Flowable
 import io.reactivex.Single
 import org.dhis2.Bindings.blockingGetValueCheck
@@ -84,32 +85,38 @@ class EventRepository(
                 fields.add(
                     transformSection(
                         programStageSection.uid(),
-                        programStageSection.displayName()
+                        programStageSection.displayName(),
+                        totalFields = programStageSection.dataElements()?.size ?: 0
                     )
                 )
-                programStageSection.dataElements()?.forEach { dataElement ->
-                    d2.programModule().programStageDataElements().withRenderType()
-                        .byProgramStage().eq(event.programStage())
-                        .byDataElement().eq(dataElement.uid())
-                        .one().blockingGet()?.let {
-                            fields.add(
-                                transform(it)
-                            )
-                        }
+                programStageSection.dataElements()?.forEachIndexed { index, dataElement ->
+                    //if (index == 0) {
+                        d2.programModule().programStageDataElements().withRenderType()
+                            .byProgramStage().eq(event.programStage())
+                            .byDataElement().eq(dataElement.uid())
+                            .one().blockingGet()?.let {
+                                fields.add(
+                                    transform(it, true)
+                                )
+                            }
+                    //}
                 }
             }
             return@fromCallable fields
         }
     }
 
-    private fun transform(programStageDataElement: ProgramStageDataElement): FieldUiModel {
+    private fun transform(
+        programStageDataElement: ProgramStageDataElement,
+        single: Boolean = false
+    ): FieldUiModel {
         val de = d2.dataElementModule().dataElements().uid(
             programStageDataElement.dataElement()!!.uid()
         ).blockingGet()
         val valueRepository =
             d2.trackedEntityModule().trackedEntityDataValues().value(eventUid, de.uid())
         val programStageSection: ProgramStageSection? = sectionMap.values.firstOrNull { section ->
-            section.dataElements()?.map { it.uid() }?.contains(de.uid()) ?: false
+            section.dataElements()?.map { it.  uid() }?.contains(de.uid()) ?: false
         }
         val uid = de.uid()
         val displayName = de.displayName()!!
@@ -178,7 +185,8 @@ class EventRepository(
             objectStyle,
             de.fieldMask(),
             optionSetConfig,
-            featureType
+            featureType,
+            single
         )
 
         if (!error.isNullOrEmpty()) {

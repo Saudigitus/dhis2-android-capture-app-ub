@@ -41,7 +41,8 @@ data class SectionUiModelImpl(
     var rendering: String? = null,
     var selectedField: ObservableField<String?> = ObservableField(null),
     override val isLoadingData: Boolean = false,
-    override var optionSetConfiguration: OptionSetConfiguration? = null
+    override var optionSetConfiguration: OptionSetConfiguration? = null,
+    override val isSingle: Boolean
 ) : FieldUiModel {
 
     private var sectionNumber: Int = 0

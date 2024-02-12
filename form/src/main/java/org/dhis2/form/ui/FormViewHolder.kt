@@ -1,6 +1,7 @@
 package org.dhis2.form.ui
 
 import android.text.TextWatcher
+import android.util.Log
 import android.widget.ImageView
 import androidx.databinding.ViewDataBinding
 import androidx.recyclerview.widget.RecyclerView
@@ -27,6 +28,7 @@ class FormViewHolder(private val binding: ViewDataBinding) : RecyclerView.ViewHo
         textWatcher: TextWatcher,
         coordinateTextWatcher: LatitudeLongitudeTextWatcher
     ) {
+        Log.e("FRDATA", "$uiModel")
         val itemCallback: FieldUiModel.Callback = object : FieldUiModel.Callback {
             override fun recyclerViewUiEvents(uiEvent: RecyclerViewUiEvents) {
                 callback.recyclerViewEvent(uiEvent)

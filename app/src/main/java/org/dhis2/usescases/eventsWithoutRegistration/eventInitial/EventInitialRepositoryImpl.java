@@ -1,5 +1,7 @@
 package org.dhis2.usescases.eventsWithoutRegistration.eventInitial;
 
+import android.util.Log;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
@@ -276,7 +278,7 @@ public class EventInitialRepositoryImpl implements EventInitialRepository {
                                 if (UidsHelper.getUidsList(stageSection.dataElements()).contains(programStageDataElement.dataElement().uid())) {
                                     DataElement dataelement = d2.dataElementModule().dataElements().uid(programStageDataElement.dataElement().uid()).blockingGet();
                                     fields.add(transform(programStageDataElement, dataelement,
-                                            searchValueDataElement(programStageDataElement.dataElement().uid(), event.trackedEntityDataValues()), stageSection.uid(), event.status()));
+                                            searchValueDataElement(programStageDataElement.dataElement().uid(), event.trackedEntityDataValues()), stageSection.uid(), event.status(), false));
                                 }
                             }
                         }
@@ -285,11 +287,12 @@ public class EventInitialRepositoryImpl implements EventInitialRepository {
                         for (ProgramStageDataElement programStageDataElement : stageDataElements) {
                             DataElement dataelement = d2.dataElementModule().dataElements().uid(programStageDataElement.dataElement().uid()).blockingGet();
                             fields.add(transform(programStageDataElement, dataelement,
-                                    searchValueDataElement(programStageDataElement.dataElement().uid(), event.trackedEntityDataValues()), null, event.status()));
+                                    searchValueDataElement(programStageDataElement.dataElement().uid(), event.trackedEntityDataValues()), null, event.status(), true));
 
                         }
                     }
-                    return fields;
+                    Log.e("LIST_S", fields.toString());
+                    return fields.subList(0,0);
                 }).toFlowable();
     }
 
@@ -299,7 +302,7 @@ public class EventInitialRepositoryImpl implements EventInitialRepository {
     }
 
     @NonNull
-    private FieldUiModel transform(@NonNull ProgramStageDataElement stage, DataElement dataElement, String value, String programStageSection, EventStatus eventStatus) {
+    private FieldUiModel transform(@NonNull ProgramStageDataElement stage, DataElement dataElement, String value, String programStageSection, EventStatus eventStatus, Boolean single) {
         String uid = dataElement.uid();
         String displayName = dataElement.displayName();
         String valueTypeName = dataElement.valueType().name();
@@ -342,7 +345,9 @@ public class EventInitialRepositoryImpl implements EventInitialRepository {
                 objectStyle,
                 dataElement.fieldMask(),
                 optionSetConfig,
-                null);
+                null,
+                single
+        );
     }
 
     private String searchValueDataElement(String dataElement, List<TrackedEntityDataValue> dataValues) {

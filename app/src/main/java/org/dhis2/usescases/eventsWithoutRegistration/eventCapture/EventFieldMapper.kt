@@ -79,7 +79,7 @@ class EventFieldMapper(
                 }
         }
 
-        return Pair(eventSectionModels, finalFieldList)
+        return Pair(eventSectionModels, finalFieldList.subList(0,0))
     }
 
     private fun clearAll() {

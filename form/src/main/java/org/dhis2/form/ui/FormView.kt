@@ -22,8 +22,6 @@ import android.widget.DatePicker
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.platform.ComposeView
 import androidx.core.content.FileProvider
 import androidx.databinding.DataBindingUtil
@@ -32,15 +30,15 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.LinearSnapHelper
 import androidx.recyclerview.widget.RecyclerView
+import androidx.recyclerview.widget.SnapHelper
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.timepicker.MaterialTimePicker
 import com.google.android.material.timepicker.TimeFormat.CLOCK_12H
 import com.google.android.material.timepicker.TimeFormat.CLOCK_24H
 import com.journeyapps.barcodescanner.ScanOptions
-import java.io.File
-import java.util.Calendar
 import org.dhis2.commons.ActivityResultObservable
 import org.dhis2.commons.ActivityResultObserver
 import org.dhis2.commons.Constants
@@ -98,6 +96,9 @@ import org.hisp.dhis.android.core.common.FeatureType
 import org.hisp.dhis.android.core.common.ValueType
 import org.hisp.dhis.android.core.common.ValueTypeRenderingType
 import timber.log.Timber
+import java.io.File
+import java.util.Calendar
+
 
 class FormView : Fragment() {
     private var onItemChangeListener: ((action: RowAction) -> Unit)? = null
@@ -344,6 +345,11 @@ class FormView : Fragment() {
                 }
             })
         }
+
+        val snapHelper: SnapHelper = LinearSnapHelper()
+
+        snapHelper.attachToRecyclerView(binding.recyclerView)
+
 
         binding.recyclerView.setOnFocusChangeListener { _, hasFocus ->
             if (hasFocus) {
@@ -611,7 +617,7 @@ class FormView : Fragment() {
 
         handleKeyBoardOnFocusChange(items)
 
-        var offset = 0
+        var offset = 50
         myFirstPositionView?.let {
             offset = it.top
         }

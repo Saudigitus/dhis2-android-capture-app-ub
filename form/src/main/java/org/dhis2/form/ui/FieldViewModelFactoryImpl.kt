@@ -50,7 +50,8 @@ class FieldViewModelFactoryImpl(
         objectStyle: ObjectStyle,
         fieldMask: String?,
         optionSetConfiguration: OptionSetConfiguration?,
-        featureType: FeatureType?
+        featureType: FeatureType?,
+        single: Boolean
     ): FieldUiModel {
         var isMandatory = mandatory
         isNull(valueType, "type must be supplied")
@@ -94,7 +95,8 @@ class FieldViewModelFactoryImpl(
             ),
             optionSetConfiguration = optionSetConfiguration,
             keyboardActionType = keyboardActionProvider.provideKeyboardAction(valueType),
-            fieldMask = fieldMask
+            fieldMask = fieldMask,
+            isSingle = single
         )
     }
 
@@ -161,7 +163,8 @@ class FieldViewModelFactoryImpl(
             0,
             0,
             SectionRenderingType.LISTING.name,
-            currentSection
+            currentSection,
+            isSingle = false
         )
     }
 
@@ -203,7 +206,8 @@ class FieldViewModelFactoryImpl(
             0,
             0,
             rendering,
-            currentSection
+            currentSection,
+            isSingle = false
         )
     }
 
@@ -237,7 +241,8 @@ class FieldViewModelFactoryImpl(
             0,
             0,
             SectionRenderingType.LISTING.name,
-            currentSection
+            currentSection,
+            isSingle = false
         )
     }
 }
