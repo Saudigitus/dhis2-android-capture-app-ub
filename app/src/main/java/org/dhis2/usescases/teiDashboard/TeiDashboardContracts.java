@@ -1,6 +1,8 @@
 package org.dhis2.usescases.teiDashboard;
 
 import org.dhis2.usescases.general.AbstractActivityContracts;
+import org.dhis2.usescases.main.program.ProgramView;
+import org.dhis2.usescases.main.program.ProgramViewModel;
 import org.dhis2.usescases.teiDashboard.data.ProgramDashboardModel;
 import org.dhis2.usescases.teiDashboard.data.ProgramWithEnrollment;
 import org.hisp.dhis.android.core.enrollment.Enrollment;
@@ -8,6 +10,8 @@ import org.hisp.dhis.android.core.enrollment.EnrollmentStatus;
 import org.hisp.dhis.android.core.program.Program;
 
 import java.util.List;
+
+import io.reactivex.Flowable;
 
 public class TeiDashboardContracts {
 
@@ -88,7 +92,8 @@ public class TeiDashboardContracts {
 
         void trackDashboardNotes();
 
-        List<ProgramWithEnrollment> programsDashboard(String ou, String tracker);
+        List<ProgramWithEnrollment> programsDashboard(String ou, String tracker, String trackedEntityUid);
+        Flowable<List<ProgramViewModel>> programsDashboardAll(String trackerId);
         Enrollment getEnrollmentOU(String program, String tracker);
     }
 }

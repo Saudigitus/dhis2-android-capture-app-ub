@@ -1,5 +1,7 @@
 package org.dhis2.usescases.main.program
 
+import android.os.Parcel
+import android.os.Parcelable
 import org.dhis2.ui.MetadataIconData
 import org.hisp.dhis.android.core.common.State
 
@@ -20,8 +22,35 @@ data class ProgramViewModel(
     val downloadState: ProgramDownloadState,
     val downloadActive: Boolean = false,
     val reference: String? = null
-) {
+): Parcelable {
+
+
+
+
     private var hasShownCompleteSyncAnimation = false
+
+    constructor(parcel: Parcel) : this(
+        parcel.readString()!!,
+        parcel.readString()!!,
+        TODO("metadataIconData"),
+        parcel.readInt(),
+        parcel.readString(),
+        parcel.readString()!!,
+        parcel.readString()!!,
+        parcel.readString(),
+        parcel.readByte() != 0.toByte(),
+        parcel.readByte() != 0.toByte(),
+        TODO("state"),
+        parcel.readByte() != 0.toByte(),
+        parcel.readByte() != 0.toByte(),
+        TODO("downloadState"),
+        parcel.readByte() != 0.toByte(),
+        parcel.readString()
+    )
+
+//    {
+//        hasShownCompleteSyncAnimation = parcel.readByte() != 0.toByte()
+//    }
 
     fun setCompleteSyncAnimation() {
         hasShownCompleteSyncAnimation = true
@@ -41,6 +70,25 @@ data class ProgramViewModel(
         0.5f
     } else {
         1f
+    }
+
+
+    override fun describeContents(): Int {
+        TODO("Not yet implemented")
+    }
+
+    override fun writeToParcel(p0: Parcel, p1: Int) {
+        TODO("Not yet implemented")
+    }
+
+    companion object CREATOR : Parcelable.Creator<ProgramViewModel> {
+        override fun createFromParcel(parcel: Parcel): ProgramViewModel {
+            return ProgramViewModel(parcel)
+        }
+
+        override fun newArray(size: Int): Array<ProgramViewModel?> {
+            return arrayOfNulls(size)
+        }
     }
 }
 

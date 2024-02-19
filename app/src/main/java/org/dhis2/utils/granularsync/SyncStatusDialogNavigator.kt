@@ -126,7 +126,7 @@ class SyncStatusDialogNavigator(
                 context,
                 teiSyncType.teiUid,
                 teiSyncType.programUid,
-                teiSyncType.enrollmentUid
+                teiSyncType.enrollmentUid,
             ).launchSyncDialog()
         } else {
             null

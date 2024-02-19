@@ -51,7 +51,7 @@ public class SearchTEContractsModule {
 
         Consumer<D2Progress> downloadProgress();
 
-        void openDashboard(String teiUid, String programUid, String enrollmentUid);
+        void openDashboard(String teiUid, String programUid, String enrollmentUid, String trackedEntityUid);
 
         void showBreakTheGlass(String teiUid, String enrollmentUid);
 

@@ -1,7 +1,6 @@
 package org.dhis2.usescases.teiDashboard;
 
 import static org.hisp.dhis.android.core.program.ProgramType.WITHOUT_REGISTRATION;
-import static org.hisp.dhis.android.core.program.ProgramType.WITH_REGISTRATION;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -11,7 +10,10 @@ import org.dhis2.commons.data.tuples.Pair;
 import org.dhis2.commons.data.tuples.Trio;
 import org.dhis2.commons.filters.data.FilterPresenter;
 import org.dhis2.commons.resources.ResourceManager;
+import org.dhis2.usescases.main.program.ProgramViewModel;
+import org.dhis2.usescases.main.program.ProgramViewModelMapper;
 import org.dhis2.usescases.teiDashboard.data.ProgramWithEnrollment;
+import org.dhis2.usescases.teiDashboard.data.ProgramWithEnrollmentMapper;
 import org.dhis2.utils.AuthorityException;
 import org.dhis2.utils.DateUtils;
 import org.dhis2.utils.ValueUtils;
@@ -47,6 +49,7 @@ import org.hisp.dhis.android.core.trackedentity.TrackedEntityType;
 import org.hisp.dhis.android.core.trackedentity.search.TrackedEntityInstanceQueryCollectionRepository;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -70,6 +73,10 @@ public class DashboardRepositoryImpl implements DashboardRepository {
 
     private TeiAttributesProvider teiAttributesProvider;
 
+    private final ProgramViewModelMapper programViewModelMapper;
+
+    private final ProgramWithEnrollmentMapper programWithEnrollmentMapper;
+
     FilterPresenter filterPresenter;
 
 
@@ -79,7 +86,9 @@ public class DashboardRepositoryImpl implements DashboardRepository {
                                    String programUid,
                                    String enrollmentUid,
                                    ResourceManager resources,
-                                   TeiAttributesProvider teiAttributesProvider) {
+                                   TeiAttributesProvider teiAttributesProvider,
+                                   ProgramViewModelMapper programViewModelMapper,
+                                   ProgramWithEnrollmentMapper programWithEnrollmentMapper) {
         this.d2 = d2;
         this.teiUid = teiUid;
         this.programUid = programUid;
@@ -87,6 +96,8 @@ public class DashboardRepositoryImpl implements DashboardRepository {
         this.resources = resources;
         this.charts = charts;
         this.teiAttributesProvider = teiAttributesProvider;
+        this.programViewModelMapper = programViewModelMapper;
+        this.programWithEnrollmentMapper = programWithEnrollmentMapper;
     }
 
     @Override
@@ -543,20 +554,66 @@ public class DashboardRepositoryImpl implements DashboardRepository {
     }
 
     @Override
-    public List<ProgramWithEnrollment> getProgramDashboard(String ou, String trackerId) {
+    public List<ProgramWithEnrollment> getProgramDashboard(String ou, String trackerId, String trackedEntityTypeUid) {
         return d2.programModule().programs()
                 .byOrganisationUnitUid(ou)
+                .byTrackedEntityTypeUid().eq(trackedEntityTypeUid)
                 .withTrackedEntityType()
-                .blockingGet().stream().map(
-                        n -> new ProgramWithEnrollment(
-                                n.uid(),
-                                n.displayName(),
-                                n.programType().name(),
+                .blockingGet().stream()
+//                .map(
+//                        n -> new ProgramWithEnrollment(
+//                                n.uid(),
+//                                n.displayName(),
+//                                n.programType().name(),
+//                                getTypeName(n),
+//                                getEnrollment(n.uid(), trackerId),
+//                                applyFilters(n),
+//                                countEnrollments(n.uid(), trackerId),
+//                                null
+//                        )
+//                )
+                .map(n ->
+                        programWithEnrollmentMapper.map(
+                                n,
+                                countEnrollments(n.uid(), trackerId),
+                                applyFilters(n),
                                 getTypeName(n),
-                                getEnrollment(n.uid(), trackerId),
-                                applyFilters(n)
+                                getEnrollment(n.uid(), trackerId)
                         )
-                ).collect(Collectors.toList());
+
+                )
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public Flowable<List<ProgramViewModel>> allPrograms(String trackedEntityId) {
+        String trackedEntityType = d2.trackedEntityModule().trackedEntityInstances().byUid().eq(trackedEntityId).one().blockingGet().trackedEntityType();
+        return Flowable.just(d2.organisationUnitModule().organisationUnits().byOrganisationUnitScope(OrganisationUnit.Scope.SCOPE_DATA_CAPTURE).blockingGet())
+                .map(captureOrgUnits -> {
+                    Iterator<OrganisationUnit> it = captureOrgUnits.iterator();
+                    List<String> captureOrgUnitUids = new ArrayList();
+                    while (it.hasNext()) {
+                        OrganisationUnit ou = it.next();
+                        captureOrgUnitUids.add(ou.uid());
+                    }
+                    return captureOrgUnitUids;
+                })
+                .flatMap(orgUnits -> Flowable.fromCallable(() -> d2.programModule().programs()
+                        .byOrganisationUnitList(orgUnits)
+                        .byTrackedEntityTypeUid().eq(trackedEntityType).blockingGet()))
+                .flatMapIterable(programs -> programs)
+                .map(program ->
+                        programViewModelMapper.map(
+                                program,
+                                0,
+                                "",
+                                State.SYNCED,
+                                false,
+                                false
+                        )
+                )
+                .toList()
+                .toFlowable();
     }
 
     public List<Program> testEnrollment() {
@@ -569,8 +626,15 @@ public class DashboardRepositoryImpl implements DashboardRepository {
                 .enrollments()
                 .byProgram().eq(programId)
                 .byTrackedEntityInstance().eq(trackerId)
-                .byStatus().eq(EnrollmentStatus.ACTIVE)
                 .blockingIsEmpty();
+    }
+
+    private int countEnrollments(String programUid, String trackerId) {
+        return d2.enrollmentModule()
+                .enrollments()
+                .byProgram().eq(programUid)
+//                .byTrackedEntityInstance().eq(trackerId)
+                .blockingCount();
     }
 
     private int applyFilters(Program program) {
@@ -585,7 +649,7 @@ public class DashboardRepositoryImpl implements DashboardRepository {
         if (program.programType() == WITHOUT_REGISTRATION) {
             return "events";
         } else {
-            return ""+program.trackedEntityType().name();
+            return "" + program.trackedEntityType().name();
         }
     }
 

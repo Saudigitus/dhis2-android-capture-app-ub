@@ -45,8 +45,10 @@
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
-         <LinearLayout
+        android:layout_height="match_parent"
+        android:background="@drawable/ic_front_home_backdrop_bg">
+
+        <LinearLayout
             android:id="@+id/cardLayout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -97,25 +99,28 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/cardLayout" />
-<!--        tools:listitem="@layout/item_event"-->
-<!--        android:paddingBottom="200dp"-->
+        <!--        tools:listitem="@layout/item_event"-->
+        <!--        android:paddingBottom="200dp"-->
 
-        <LinearLayout
+        <RelativeLayout
             android:id="@+id/program_layout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
             android:layout_marginTop="45dp"
             android:gravity="center"
-            app:layout_constraintTop_toBottomOf="@id/tei_recycler">
+            android:orientation="vertical"
+            app:layout_constraintTop_toBottomOf="@id/tei_recycler"
+            android:paddingBottom="200dp">
 
 
             <TextView
+                android:id="@+id/textView_title_program"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/avalaible_services"
                 android:textSize="18sp"
-                android:textStyle="bold"/>
+                android:textStyle="bold"
+                android:layout_centerHorizontal="true"/>
 
 
             <androidx.recyclerview.widget.RecyclerView
@@ -123,9 +128,10 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="5dp"
+                android:layout_below="@+id/textView_title_program"
                 android:paddingBottom="200dp"/>
 
-        </LinearLayout>
+        </RelativeLayout>
 
         <TextView
             android:id="@+id/empty_teis"
@@ -152,15 +158,15 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/cardLayout" />
 
-    <org.dhis2.utils.dialFloatingActionButton.DialFloatingActionButtonLayout
-        android:id="@+id/dialFabLayout"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        app:fab_extra_bottom_margin="@{16}"
-        app:fab_visibility="@{enrollment==null || enrollment.status() != EnrollmentStatus.ACTIVE || isGrouping || !canAddEvents}"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
+        <org.dhis2.utils.dialFloatingActionButton.DialFloatingActionButtonLayout
+            android:id="@+id/dialFabLayout"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:fab_extra_bottom_margin="@{16}"
+            app:fab_visibility="@{enrollment==null || enrollment.status() != EnrollmentStatus.ACTIVE || isGrouping || !canAddEvents}"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
 
-    </org.dhis2.utils.dialFloatingActionButton.DialFloatingActionButtonLayout>
+        </org.dhis2.utils.dialFloatingActionButton.DialFloatingActionButtonLayout>
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

@@ -4,7 +4,8 @@ sealed class TeiDownloadResult {
     data class DownloadedResult(
         val teiUid: String,
         val programUid: String?,
-        val enrollmentUid: String?
+        val enrollmentUid: String?,
+        val trackedEntityTypeUid: String?
     ) : TeiDownloadResult()
 
     data class TeiToEnroll(
@@ -25,14 +26,14 @@ sealed class TeiDownloadResult {
     ) : TeiDownloadResult()
 
     fun handleResult(
-        onOpenDashboard: (teiUid: String, programUid: String?, enrollmentUid: String?) -> Unit,
+        onOpenDashboard: (teiUid: String, programUid: String?, enrollmentUid: String?, trackedEntityTypeUid: String?) -> Unit,
         onBreakTheGlassResult: (teiUid: String, enrollmentUid: String?) -> Unit,
         onNotDownloaded: (teiUid: String) -> Unit,
         onError: (errorMessage: String) -> Unit
     ) {
         when (this) {
             is BreakTheGlassResult -> onBreakTheGlassResult(teiUid, enrollmentUid)
-            is DownloadedResult -> onOpenDashboard(teiUid, programUid, enrollmentUid)
+            is DownloadedResult -> onOpenDashboard(teiUid, programUid, enrollmentUid,trackedEntityTypeUid)
             is ErrorResult -> onError(errorMessage)
             is TeiNotDownloaded -> onNotDownloaded(teiUid)
             is TeiToEnroll -> {}

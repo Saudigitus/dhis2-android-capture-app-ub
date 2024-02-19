@@ -19,11 +19,11 @@ class TeiDownloader(
 
     private var downloadRepository: TrackedEntityInstanceDownloader? = null
 
-    fun download(teiUid: String, enrollmentUid: String?, reason: String?): TeiDownloadResult {
+    fun download(teiUid: String, enrollmentUid: String?, reason: String?, trackedEntityTypeUid: String?): TeiDownloadResult {
         return if (isReadyForBreakTheGlass(reason)) {
             breakTheGlass(teiUid, reason!!)
         } else {
-            defaultDownload(teiUid, enrollmentUid)
+            defaultDownload(teiUid, enrollmentUid, trackedEntityTypeUid)
         }
     }
 
@@ -31,12 +31,12 @@ class TeiDownloader(
         return downloadRepository != null && reason != null
     }
 
-    private fun defaultDownload(teiUid: String, enrollmentUid: String?): TeiDownloadResult {
+    private fun defaultDownload(teiUid: String, enrollmentUid: String?, trackedEntityTypeUid: String?): TeiDownloadResult {
         downloadRepository = teiConfiguration.downloader(teiUid, currentProgram)
 
         return try {
             teiConfiguration.downloadAndOverwrite(downloadRepository!!)
-            checkDownload(teiUid, enrollmentUid)
+            checkDownload(teiUid, enrollmentUid, trackedEntityTypeUid)
         } catch (e: Exception) {
             when {
                 e is D2Error -> handleD2Error(e, teiUid, enrollmentUid)
@@ -70,13 +70,13 @@ class TeiDownloader(
             )
             fileConfiguration.download()
             downloadRepository = null
-            checkDownload(teiUid, null)
+            checkDownload(teiUid, null, null)
         } else {
             TeiDownloadResult.TeiNotDownloaded(teiUid)
         }
     }
 
-    private fun checkDownload(teiUid: String, enrollmentUid: String?): TeiDownloadResult {
+    private fun checkDownload(teiUid: String, enrollmentUid: String?, trackedEntityTypeUid: String?): TeiDownloadResult {
         return if (teiConfiguration.hasBeenDownloaded(teiUid)) {
             when {
                 hasEnrollmentInCurrentProgram(teiUid) ->
@@ -86,7 +86,8 @@ class TeiDownloader(
                         enrollmentUid = enrollmentUid ?: teiConfiguration.enrollmentUid(
                             teiUid,
                             currentProgram!!
-                        )
+                        ),
+                        trackedEntityTypeUid
                     )
                 canEnrollInCurrentProgram() ->
                     TeiDownloadResult.TeiToEnroll(teiUid)
@@ -94,7 +95,8 @@ class TeiDownloader(
                     TeiDownloadResult.DownloadedResult(
                         teiUid = teiUid,
                         programUid = currentProgram,
-                        enrollmentUid = null
+                        enrollmentUid = null,
+                        trackedEntityTypeUid = null
                     )
             }
         } else {
