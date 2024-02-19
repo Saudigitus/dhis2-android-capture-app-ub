@@ -120,7 +120,7 @@
                 app:srcCompat="@drawable/ic_map"
                 app:tint="@color/white"
                 tools:ignore="ContentDescription"
-                tools:visibility="visible" />
+                tools:visibility="gone" />
 
             <ImageView
                 android:id="@+id/moreOptions"
@@ -151,8 +151,9 @@
                 tools:visibility="visible" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
-
-        <androidx.viewpager2.widget.ViewPager2
+ 
+      
+      <androidx.viewpager2.widget.ViewPager2
             android:id="@+id/tei_pager"
             android:layout_width="match_parent"
             android:layout_height="match_parent"

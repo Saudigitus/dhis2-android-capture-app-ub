@@ -80,7 +80,6 @@ abstract class BaseTeiViewHolder(
                     overdueDate
                 )
                 when(selectedEnrollment.status()) {
-                    EnrollmentStatus.ACTIVE -> binding.cardView.setBackgroundColor(binding.root.context.resources.getColor(R.color.enrollment_active))
                     EnrollmentStatus.COMPLETED -> binding.cardView.setBackgroundColor(binding.root.context.resources.getColor(R.color.enrollment_completed))
                     EnrollmentStatus.CANCELLED -> binding.cardView.setBackgroundColor(binding.root.context.resources.getColor(R.color.enrollment_cancelled))
                     else -> {}

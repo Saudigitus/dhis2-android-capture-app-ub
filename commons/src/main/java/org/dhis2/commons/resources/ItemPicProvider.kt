@@ -15,6 +15,7 @@ import java.util.Locale
 import org.dhis2.commons.bindings.clipWithAllRoundedCorners
 import org.dhis2.commons.bindings.dp
 
+
 fun ImageView.setItemPic(
     imagePath: String?,
     defaultImageRes: Int,
@@ -23,6 +24,10 @@ fun ImageView.setItemPic(
     isSingleEvent: Boolean = false,
     textView: TextView?
 ) {
+    val colorPrimary = ColorUtils.getPrimaryColor(
+        context,
+        ColorUtils.ColorType.PRIMARY
+    )
     when {
         imagePath?.isNotEmpty() == true -> {
             visibility = View.VISIBLE
@@ -37,23 +42,25 @@ fun ImageView.setItemPic(
                 .skipMemoryCache(true)
                 .into(this)
         }
+
         defaultValue != null && !isSingleEvent -> {
             visibility = View.GONE
             textView?.visibility = View.VISIBLE
+            textView?.setBackgroundColor(colorPrimary)
             textView?.clipWithAllRoundedCorners(20.dp)
             setImageDrawable(null)
             textView?.text = defaultValue.first().toString().toUpperCase(Locale.getDefault())
-            textView?.setTextColor(ColorUtils.getAlphaContrastColor(defaultColorRes))
-            textView?.setBackgroundColor(defaultColorRes)
+            textView?.setTextColor(ColorUtils.getAlphaContrastColor(colorPrimary))
+            textView?.setBackgroundColor(colorPrimary)
         }
         else -> {
             visibility = View.VISIBLE
             textView?.visibility = View.GONE
-            setBackgroundColor(defaultColorRes)
+            setBackgroundColor(colorPrimary)
             clipWithAllRoundedCorners(6.dp)
             ContextCompat.getDrawable(context, defaultImageRes)?.let {
                 Glide.with(context).load(
-                    ColorUtils.tintDrawableReosurce(it, defaultColorRes)
+                    ColorUtils.tintDrawableReosurce(it, colorPrimary)
                 ).transform(RoundedCorners(6.dp))
                     .placeholder(defaultImageRes)
                     .error(defaultImageRes)
