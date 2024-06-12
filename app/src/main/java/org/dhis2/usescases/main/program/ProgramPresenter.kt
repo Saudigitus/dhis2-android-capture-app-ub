@@ -151,6 +151,16 @@ class ProgramPresenter internal constructor(
                 )
         )
         getStore()
+        getFiles()
+    }
+    fun getFiles() {
+        runBlocking(Dispatchers.IO) {
+            launch {
+//               val response = programRepository.downloadMediaToLocal("djduey498493")
+               val response = programRepository.downloadMediaToLocal("xCUZ3aNTSfm")
+                Timber.tag("DOWNLOAD").d("${response}")
+            }
+        }
     }
 
     fun onSyncStatusClick(program: ProgramViewModel) {
